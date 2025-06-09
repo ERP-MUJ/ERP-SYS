@@ -1,0 +1,61 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ main ]
+  merge_group:
+    types: [checks_requested]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout this repository (for workflow YAML)
+        uses: actions/checkout@v4
+
+      - name: Checkout ERP-SYS repo
+        uses: actions/checkout@v4
+        with:
+          repository: ERP-MUJ/ERP-SYS
+          path: erp-sys
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Install dependencies
+        working-directory: ./erp-sys
+        run: pnpm install
+
+      - name: Build project
+        working-directory: ./erp-sys
+        run: pnpm run build
+
+      - name: Run tests
+        working-directory: ./erp-sys
+        run: pnpm test
+
+      - name: Run lint
+        working-directory: ./erp-sys
+        run: pnpm lint
+
+      - name: Run format check
+        working-directory: ./erp-sys
+        run: pnpm format:check
+
+      - name: Test coverage
+        working-directory: ./erp-sys
+        run: pnpm coverage
+
+      - name: Type check
+        working-directory: ./erp-sys
+        run: pnpm typecheck
