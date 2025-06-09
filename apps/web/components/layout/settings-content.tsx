@@ -1,17 +1,30 @@
-"use client"
-import { usePathname } from "next/navigation"
+'use client';
+import { usePathname } from 'next/navigation';
 
-import { useState } from "react"
-import { Button } from "@workspace/ui/components/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
-import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
-import { Separator } from "@workspace/ui/components/separator"
-import { Switch } from "@workspace/ui/components/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
-import { Textarea } from "@workspace/ui/components/textarea"
+import { useState } from 'react';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import { Input } from '@workspace/ui/components/input';
+import { Label } from '@workspace/ui/components/label';
+import { RadioGroup, RadioGroupItem } from '@workspace/ui/components/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select';
+import { Separator } from '@workspace/ui/components/separator';
+import { Switch } from '@workspace/ui/components/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
+import { Textarea } from '@workspace/ui/components/textarea';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,30 +35,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@workspace/ui/components/alert-dialog"
-import { toast } from "sonner"
-import { useTheme } from "next-themes"
+} from '@workspace/ui/components/alert-dialog';
+import { toast } from 'sonner';
+import { useTheme } from 'next-themes';
 
 export function SettingsContent() {
-  const { theme, setTheme } = useTheme()
-  const pathname = usePathname()
-  const hiddenDarkModeRoutes = ["/faculty"];
-  const shouldShowDarkModeToggle = !hiddenDarkModeRoutes.some(route =>
-    pathname.startsWith(route)
-  );
+  const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+  const hiddenDarkModeRoutes = ['/faculty'];
+  const shouldShowDarkModeToggle = !hiddenDarkModeRoutes.some(route => pathname.startsWith(route));
 
-  const [isDarkMode, setIsDarkMode] = useState(theme === "dark")
+  const [isDarkMode, setIsDarkMode] = useState(theme === 'dark');
 
   const handleSaveChanges = () => {
-    toast("Settings saved",{
-      description: "Your settings have been saved successfully.",
-    })
-  }
+    toast('Settings saved', {
+      description: 'Your settings have been saved successfully.',
+    });
+  };
 
   const handleThemeChange = (checked: boolean) => {
-    setIsDarkMode(checked)
-    setTheme(checked ? "dark" : "light")
-  }
+    setIsDarkMode(checked);
+    setTheme(checked ? 'dark' : 'light');
+  };
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -111,42 +122,48 @@ export function SettingsContent() {
 
               <Separator />
               {shouldShowDarkModeToggle && (
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="dark-mode">Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">Enable dark mode for the application.</p>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dark-mode">Dark Mode</Label>
+                    <p className="text-muted-foreground text-sm">
+                      Enable dark mode for the application.
+                    </p>
+                  </div>
+                  <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleThemeChange} />
                 </div>
-                <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={handleThemeChange} />
-              </div>
               )}
               {shouldShowDarkModeToggle && (
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="theme-select">Theme Preference</Label>
-                  <p className="text-sm text-muted-foreground">Choose your preferred theme or use system settings.</p>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="theme-select">Theme Preference</Label>
+                    <p className="text-muted-foreground text-sm">
+                      Choose your preferred theme or use system settings.
+                    </p>
+                  </div>
+                  <Select
+                    defaultValue={theme}
+                    onValueChange={value => {
+                      setTheme(value);
+                      setIsDarkMode(value === 'dark');
+                    }}
+                  >
+                    <SelectTrigger id="theme-select" className="w-[180px]">
+                      <SelectValue placeholder="Select theme" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="system">System</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select
-                  defaultValue={theme}
-                  onValueChange={(value) => {
-                    setTheme(value)
-                    setIsDarkMode(value === "dark")
-                  }}
-                >
-                  <SelectTrigger id="theme-select" className="w-[180px]">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               )}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="auto-save">Auto Save</Label>
-                  <p className="text-sm text-muted-foreground">Automatically save form data while typing.</p>
+                  <p className="text-muted-foreground text-sm">
+                    Automatically save form data while typing.
+                  </p>
                 </div>
                 <Switch id="auto-save" defaultChecked />
               </div>
@@ -168,7 +185,7 @@ export function SettingsContent() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="email-notifications">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications via email.</p>
+                  <p className="text-muted-foreground text-sm">Receive notifications via email.</p>
                 </div>
                 <Switch id="email-notifications" defaultChecked />
               </div>
@@ -176,7 +193,9 @@ export function SettingsContent() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="deadline-reminders">Deadline Reminders</Label>
-                  <p className="text-sm text-muted-foreground">Receive reminders for upcoming deadlines.</p>
+                  <p className="text-muted-foreground text-sm">
+                    Receive reminders for upcoming deadlines.
+                  </p>
                 </div>
                 <Switch id="deadline-reminders" defaultChecked />
               </div>
@@ -184,7 +203,9 @@ export function SettingsContent() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="verification-updates">Verification Updates</Label>
-                  <p className="text-sm text-muted-foreground">Receive updates when entries are verified.</p>
+                  <p className="text-muted-foreground text-sm">
+                    Receive updates when entries are verified.
+                  </p>
                 </div>
                 <Switch id="verification-updates" defaultChecked />
               </div>
@@ -222,6 +243,5 @@ export function SettingsContent() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

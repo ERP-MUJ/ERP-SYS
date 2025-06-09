@@ -18,17 +18,17 @@ export async function GET(request: Request) {
           department: {
             select: {
               dept_id: true,
-              dept_name: true
-            }
+              dept_name: true,
+            },
           },
           assigned_kpi: {
             select: {
               assigned_kpi_id: true,
               kpi_name: true,
-              kpi_status: true
-            }
-          }
-        }
+              kpi_status: true,
+            },
+          },
+        },
       });
     } else {
       // Get all pillars
@@ -37,23 +37,20 @@ export async function GET(request: Request) {
           department: {
             select: {
               dept_id: true,
-              dept_name: true
-            }
+              dept_name: true,
+            },
           },
           _count: {
-            select: { assigned_kpi: true }
-          }
-        }
+            select: { assigned_kpi: true },
+          },
+        },
       });
     }
 
     return NextResponse.json({ success: true, pillars });
   } catch (error) {
     console.error('Error fetching pillars:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch pillars' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to fetch pillars' }, { status: 500 });
   }
 }
 
@@ -82,22 +79,19 @@ export async function POST(request: Request) {
 
     // Check if department exists
     const department = await prisma.departments.findUnique({
-      where: { dept_id: Number(department_id) }
+      where: { dept_id: Number(department_id) },
     });
 
     if (!department) {
-      return NextResponse.json(
-        { success: false, error: 'Department not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Department not found' }, { status: 404 });
     }
 
     // Check if pillar with same name already exists in that department
     const existingPillar = await prisma.pillars.findFirst({
       where: {
         pillar_name,
-        department_id: Number(department_id)
-      }
+        department_id: Number(department_id),
+      },
     });
 
     if (existingPillar) {
@@ -111,20 +105,17 @@ export async function POST(request: Request) {
     const newPillar = await prisma.pillars.create({
       data: {
         pillar_name,
-        department_id: Number(department_id)
-      }
+        department_id: Number(department_id),
+      },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Pillar created successfully', 
-      pillar: newPillar 
+    return NextResponse.json({
+      success: true,
+      message: 'Pillar created successfully',
+      pillar: newPillar,
     });
   } catch (error) {
     console.error('Error creating pillar:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create pillar' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to create pillar' }, { status: 500 });
   }
 }

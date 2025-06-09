@@ -20,25 +20,22 @@ export async function GET(
       include: {
         pillars: {
           include: {
-            assigned_kpi: true
-          }
+            assigned_kpi: true,
+          },
         },
         members: {
           select: {
             user_id: true,
             user_name: true,
             user_email: true,
-            user_role: true
-          }
-        }
-      }
+            user_role: true,
+          },
+        },
+      },
     });
 
     if (!department) {
-      return NextResponse.json(
-        { success: false, error: 'Department not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: 'Department not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, department });
