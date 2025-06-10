@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Document, Paragraph, TextRun, AlignmentType, HeadingLevel, Packer } from 'docx';
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API || '' });
+const genAI = new GoogleGenerativeAI({ apiKey: process.env.GOOGLE_API || '' });
 
 export async function POST(request: NextRequest) {
   try {

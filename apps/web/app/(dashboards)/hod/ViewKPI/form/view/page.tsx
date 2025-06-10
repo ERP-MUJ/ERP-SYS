@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { ArrowLeft, Edit } from 'lucide-react';
 import FormPreview from '@/components/formbuilder/form-preview';
 
-interface KpiViewPageProps {
+type Props = {
   params: {
     id: string;
   };
-}
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-export default async function KpiViewPage({ params }: KpiViewPageProps) {
+export default async function KpiViewPage({ params }: Props) {
   const kpi = await getKpiById(params.id);
 
   if (!kpi) {
