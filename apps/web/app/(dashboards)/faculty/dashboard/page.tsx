@@ -1,14 +1,37 @@
-import { BarChart3, BookOpen, CalendarIcon, FileText, LineChart, PieChart, Users } from "lucide-react"
-import { Button } from "@workspace/ui/components/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Progress } from "@workspace/ui/components/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@workspace/ui/components/table"
+import {
+  BarChart3,
+  BookOpen,
+  CalendarIcon,
+  FileText,
+  LineChart,
+  PieChart,
+  Users,
+} from 'lucide-react';
+import { Button } from '@workspace/ui/components/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card';
+import { Progress } from '@workspace/ui/components/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@workspace/ui/components/table';
 
 export function DashboardContent() {
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Faculty Dashboard</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
@@ -32,56 +55,56 @@ export function DashboardContent() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-card text-card-foreground">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base font-medium">Total KPI 3 Entries</CardTitle>
-                  <LineChart className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-medium">Total KPI 3 Entries</CardTitle>
+                <LineChart className="text-muted-foreground h-6 w-6" />
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">24</div>
-                <p className="text-xs text-muted-foreground">+4 from last month</p>
+                <p className="text-muted-foreground text-xs">+4 from last month</p>
                 <Progress className="mt-2" value={75} />
               </CardContent>
             </Card>
 
             <Card className="bg-card text-card-foreground">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base font-medium">Total KPI 4 Entries</CardTitle>
-                  <BarChart3 className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-medium">Total KPI 4 Entries</CardTitle>
+                <BarChart3 className="text-muted-foreground h-6 w-6" />
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">18</div>
-                <p className="text-xs text-muted-foreground">+2 from last month</p>
+                <p className="text-muted-foreground text-xs">+2 from last month</p>
                 <Progress className="mt-2" value={60} />
               </CardContent>
             </Card>
 
             <Card className="bg-card text-card-foreground">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base font-medium">Pending Verification</CardTitle>
-                  <PieChart className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-medium">Pending Verification</CardTitle>
+                <PieChart className="text-muted-foreground h-6 w-6" />
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">7</div>
-                <p className="text-xs text-muted-foreground">-3 since last week</p>
+                <p className="text-muted-foreground text-xs">-3 since last week</p>
                 <Progress className="mt-2" value={30} />
               </CardContent>
             </Card>
 
             <Card className="bg-card text-card-foreground">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base font-medium">Completion Rate</CardTitle>
-                  <Users className="h-6 w-6 text-muted-foreground" />
-                </CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-medium">Completion Rate</CardTitle>
+                <Users className="text-muted-foreground h-6 w-6" />
+              </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">92%</div>
-                <p className="text-xs text-muted-foreground">+5% from last month</p>
+                <p className="text-muted-foreground text-xs">+5% from last month</p>
                 <Progress className="mt-2" value={92} />
               </CardContent>
             </Card>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 bg-card text-card-foreground">
+            <Card className="bg-card text-card-foreground col-span-4">
               <CardHeader>
                 <CardTitle>Recent Submissions</CardTitle>
                 <CardDescription>Latest KPI entries submitted across departments</CardDescription>
@@ -138,7 +161,7 @@ export function DashboardContent() {
               </CardFooter>
             </Card>
 
-            <Card className="col-span-3 bg-card text-card-foreground">
+            <Card className="bg-card text-card-foreground col-span-3">
               <CardHeader>
                 <CardTitle>Department Participation</CardTitle>
                 <CardDescription>KPI submission rates by department</CardDescription>
@@ -148,7 +171,7 @@ export function DashboardContent() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
+                        <BookOpen className="text-primary h-6 w-6" />
                         <span className="text-base font-medium">Computer Science</span>
                       </div>
                       <span className="text-sm font-medium">95%</span>
@@ -159,7 +182,7 @@ export function DashboardContent() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
+                        <BookOpen className="text-primary h-6 w-6" />
                         <span className="text-base font-medium">Electrical Engineering</span>
                       </div>
                       <span className="text-sm font-medium">85%</span>
@@ -170,7 +193,7 @@ export function DashboardContent() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
+                        <BookOpen className="text-primary h-6 w-6" />
                         <span className="text-base font-medium">Mechanical Engineering</span>
                       </div>
                       <span className="text-sm font-medium">78%</span>
@@ -181,7 +204,7 @@ export function DashboardContent() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
+                        <BookOpen className="text-primary h-6 w-6" />
                         <span className="text-base font-medium">Civil Engineering</span>
                       </div>
                       <span className="text-sm font-medium">65%</span>
@@ -192,7 +215,7 @@ export function DashboardContent() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
+                        <BookOpen className="text-primary h-6 w-6" />
                         <span className="text-base font-medium">Electronics & Communication</span>
                       </div>
                       <span className="text-sm font-medium">90%</span>
@@ -209,10 +232,12 @@ export function DashboardContent() {
           <Card className="bg-card text-card-foreground">
             <CardHeader>
               <CardTitle>KPI Analytics</CardTitle>
-              <CardDescription>Detailed analysis of KPI submissions and verification rates</CardDescription>
+              <CardDescription>
+                Detailed analysis of KPI submissions and verification rates
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] w-full rounded-md border border-dashed flex items-center justify-center">
+              <div className="flex h-[400px] w-full items-center justify-center rounded-md border border-dashed">
                 <p className="text-muted-foreground">Analytics Dashboard Placeholder</p>
               </div>
             </CardContent>
@@ -226,7 +251,7 @@ export function DashboardContent() {
               <CardDescription>Download and view generated reports</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] w-full rounded-md border border-dashed flex items-center justify-center">
+              <div className="flex h-[400px] w-full items-center justify-center rounded-md border border-dashed">
                 <p className="text-muted-foreground">Reports Dashboard Placeholder</p>
               </div>
             </CardContent>
@@ -234,6 +259,5 @@ export function DashboardContent() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

@@ -1,5 +1,5 @@
 // pages/report-generator.tsx
-"use client"
+'use client';
 import React, { useState } from 'react';
 import Head from 'next/head';
 
@@ -12,7 +12,7 @@ export default function ReportGenerator() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Reset states
     setIsLoading(true);
     setError('');
@@ -30,7 +30,7 @@ export default function ReportGenerator() {
 
       // Check the content type to determine how to handle the response
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType && contentType.includes('application/json')) {
         // Handle JSON response (likely an error)
         const errorData = await response.json();
@@ -41,7 +41,7 @@ export default function ReportGenerator() {
       } else {
         // Success - this is a file download
         const blob = await response.blob();
-        
+
         // Create a download link and trigger it
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -50,10 +50,10 @@ export default function ReportGenerator() {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        
+
         // Clean up the URL
         window.URL.revokeObjectURL(url);
-        
+
         setSuccess(true);
       }
     } catch (err) {
@@ -64,14 +64,14 @@ export default function ReportGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <Head>
         <title>Professional Report Generator</title>
         <meta name="description" content="Generate professional reports using AI" />
       </Head>
-      
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-12">
+
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-12 text-center">
           <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
             Professional Report Generator
           </h1>
@@ -80,7 +80,7 @@ export default function ReportGenerator() {
           </p>
         </div>
 
-        <div className="bg-white shadow overflow-hidden rounded-lg">
+        <div className="overflow-hidden rounded-lg bg-white shadow">
           <form onSubmit={handleSubmit} className="px-6 py-8">
             <div className="space-y-6">
               <div>
@@ -92,8 +92,8 @@ export default function ReportGenerator() {
                     type="text"
                     id="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    onChange={e => setTitle(e.target.value)}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     placeholder="Enter a title for your report"
                     required
                   />
@@ -109,8 +109,8 @@ export default function ReportGenerator() {
                     id="description"
                     rows={6}
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                    onChange={e => setDescription(e.target.value)}
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     placeholder="Describe what you want the report to cover"
                     required
                   ></textarea>
@@ -148,15 +148,31 @@ export default function ReportGenerator() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    isLoading ? 'opacity-75 cursor-not-allowed' : ''
+                  className={`inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    isLoading ? 'cursor-not-allowed opacity-75' : ''
                   }`}
                 >
                   {isLoading ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="-ml-1 mr-3 h-5 w-5 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Generating...
                     </>
@@ -168,11 +184,9 @@ export default function ReportGenerator() {
             </div>
           </form>
         </div>
-        
+
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            Powered by Gemini AI • Creates professional DOCX reports
-          </p>
+          <p>Powered by Gemini AI • Creates professional DOCX reports</p>
         </div>
       </div>
     </div>

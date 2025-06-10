@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@repo/db' // Import Prisma client from the shared package
+import { prisma } from '@repo/db'; // Import Prisma client from the shared package
 
 // we will not be using this anymore
 
@@ -11,7 +11,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.log('Request body:', body);
 
     // Extract relevant fields from the JSON
-    const { id, title, elements, createdAt , value, description  } = body;
+    const { id, title, elements, createdAt, value, description } = body;
 
     // Save the data to the `kpi` table
     const newKpi = await prisma.kpi.create({
@@ -20,7 +20,6 @@ export async function POST(request: Request): Promise<NextResponse> {
         form_data: elements, // Save the `elements` field as JSON in `form_data`
         kpi_description: description || 'No description provided', // Use description or default
         kpi_value: value || 0, // Use value or default to 0
-        
 
         kpi_created_at: createdAt ? new Date(createdAt) : new Date(), // Use `createdAt` or default to now
       },
@@ -53,7 +52,7 @@ export async function GET(): Promise<NextResponse> {
     });
 
     // Format the response to include the elements field
-    const formattedKpis = kpis.map((kpi) => ({
+    const formattedKpis = kpis.map(kpi => ({
       id: `form-${kpi.kpi_id}`,
       title: kpi.kpi_name,
       value: kpi.kpi_value,

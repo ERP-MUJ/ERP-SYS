@@ -22,7 +22,6 @@ coverage
 .vercel
 
 # Build Outputs
-.next/
 out/
 build
 dist
@@ -34,3 +33,10 @@ npm-debug.log*
 # Misc
 .DS_Store
 *.pem
+
+# JetBrains IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/

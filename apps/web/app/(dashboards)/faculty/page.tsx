@@ -1,5 +1,4 @@
-import { DashboardContent } from "./dashboard/page"
-
+import { DashboardContent } from './dashboard/page';
 
 export default function Home() {
   // const renderContent = (activeSection: string) => {
@@ -18,8 +17,8 @@ export default function Home() {
   //   }
   // }
   return (
-     <>
-     <DashboardContent />
-     </>
-  )
+    <>
+      <DashboardContent />
+    </>
+  );
 }
