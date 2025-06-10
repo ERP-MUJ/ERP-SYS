@@ -1,0 +1,3 @@
+{
+  "/(dashboards)/hod/kpi-management/[id]/page": "app/(dashboards)/hod/kpi-management/[id]/page.js"
+}

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 23, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/apps/web/middleware.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\r\nimport type { NextRequest } from 'next/server';\r\n\r\nexport function middleware(request: NextRequest) {\r\n    // const isAuthenticated = request.cookies.get('authToken'); // Example: Check for an auth token in cookies\r\n\r\n    // if (!isAuthenticated) {\r\n    //     // Redirect to the login page if the user is not authenticated\r\n    //     return NextResponse.redirect(new URL('/login', request.url));\r\n    // }\r\n\r\n    // // Allow the request to proceed if authenticated\r\n    // return NextResponse.next();\r\n}\r\n \r\n\r\n"],"names":[],"mappings":";;;AAGO,SAAS,WAAW,OAAoB;AAC3C,2GAA2G;AAE3G,0BAA0B;AAC1B,qEAAqE;AACrE,oEAAoE;AACpE,IAAI;AAEJ,mDAAmD;AACnD,8BAA8B;AAClC"}}]
+}

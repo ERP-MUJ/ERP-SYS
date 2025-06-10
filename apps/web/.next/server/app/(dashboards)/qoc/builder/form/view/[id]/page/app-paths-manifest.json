@@ -1,0 +1,3 @@
+{
+  "/(dashboards)/qoc/builder/form/view/[id]/page": "app/(dashboards)/qoc/builder/form/view/[id]/page.js"
+}

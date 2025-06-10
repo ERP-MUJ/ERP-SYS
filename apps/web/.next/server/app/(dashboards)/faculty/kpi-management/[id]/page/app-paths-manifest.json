@@ -1,0 +1,3 @@
+{
+  "/(dashboards)/faculty/kpi-management/[id]/page": "app/(dashboards)/faculty/kpi-management/[id]/page.js"
+}
