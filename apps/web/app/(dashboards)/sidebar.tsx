@@ -15,6 +15,7 @@ import {
 import { ChevronDown, ChevronRight, } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { AppSidebarProps, SidebarItem } from "@/lib/types";
 import { useSidebarConfig } from "@/components/layout/sidebarconfig";
 import Image from "next/image"
@@ -22,6 +23,7 @@ import Image from "next/image"
 export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarProps) {
   const router = useRouter(); 
   const pathname = usePathname();
+  const { theme } = useTheme();
   const dashboardKey = pathname.startsWith("/qoc") ? "qoc" : pathname.startsWith("/hod") ? "hod" : "faculty";
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const sidebarConfig = useSidebarConfig();
