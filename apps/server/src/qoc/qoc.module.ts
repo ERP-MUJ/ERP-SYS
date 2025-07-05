@@ -4,6 +4,6 @@ import { QocController } from './qoc.controller';
 
 @Module({
   providers: [QocService],
-  controllers: [QocController]
+  controllers: [QocController],
 })
 export class QocModule {}

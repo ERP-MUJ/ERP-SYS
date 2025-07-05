@@ -11,14 +11,22 @@ import { useState } from "react"
 
 interface ElementSettingsProps {
   element: FormElementInstance
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (
+  id: string,
+  attributes: Record<string, string | number | boolean | string[] | number[] | undefined>
+) => void
+
   onClose: () => void
 }
 
 export default function ElementSettings({ element, updateElement, onClose }: ElementSettingsProps) {
   const { attributes } = element
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (
+  key: string,
+  value: string | number | boolean | string[] | number[] | undefined
+) => {
+
     updateElement(element.id, { [key]: value })
   }
 
@@ -164,7 +172,11 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
 
 interface OptionsEditorProps {
   element: FormElementInstance
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (
+  id: string,
+  attributes: Record<string, string | number | boolean | string[] | number[] | undefined>
+) => void
+
 }
 
 function OptionsEditor({ element, updateElement }: OptionsEditorProps) {
@@ -185,6 +197,7 @@ function OptionsEditor({ element, updateElement }: OptionsEditorProps) {
   }
 
   const updateOption = (index: number, field: "label" | "value", value: string) => {
+
     const updatedOptions = [...options]
     updatedOptions[index] = { ...updatedOptions[index], [field]: value }
     updateElement(element.id, { options: updatedOptions })

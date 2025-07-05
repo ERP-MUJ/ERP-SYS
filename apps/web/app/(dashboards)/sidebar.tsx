@@ -1,5 +1,6 @@
 "use client"
 import { usePathname } from "next/navigation";
+
 import {
   Sidebar,
   SidebarContent,
@@ -12,11 +13,12 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@workspace/ui/components/sidebar"
-import { ChevronDown, ChevronRight, Hammer, Check} from "lucide-react";
+import { ChevronDown, ChevronRight} from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppSidebarProps, SidebarItem } from "@/lib/types";
 import { useSidebarConfig } from "@/components/layout/sidebarconfig";
+import Image from "next/image"; //importing Image from next/image for optimized image handling
 
 export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarProps) {
   const router = useRouter(); 
@@ -41,7 +43,8 @@ export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarPr
     <Sidebar>
       <SidebarHeader>
         <div className="flex h-14 items-center border-b px-4">
-          <img src="/MUJ-Logo.png" alt="MUJ Logo" className="h-20 w-auto object-contain" />
+          {/* <img src="/MUJ-Logo.png" alt="MUJ Logo" className="h-20 w-auto object-contain" /> changed to what wrote below*/}
+          <Image src="/MUJ-Logo.png" alt="MUJ Logo" width={100} height={80} className="object-contain" />
         </div>
       </SidebarHeader>
       <SidebarContent>

@@ -10,7 +10,13 @@ import { Checkbox } from "@workspace/ui/components/checkbox"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger,  SelectValue } from "@workspace/ui/components/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/components/popover"
 import {
@@ -29,14 +35,24 @@ import {
 } from "lucide-react"
 import ElementSettings from "./element-settings"
 
+type Option = {
+  label: string
+  value: string
+}
+
 interface FormElementProps {
   element: FormElementInstance
   isOverlay?: boolean
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (id: string, attributes: Record<string, unknown>) => void
   removeElement: (id: string) => void
 }
 
-export default function FormElement({ element, isOverlay = false, updateElement, removeElement }: FormElementProps) {
+export default function FormElement({
+  element,
+  isOverlay = false,
+  updateElement,
+  removeElement,
+}: FormElementProps) {
   const [showSettings, setShowSettings] = useState(false)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -97,7 +113,12 @@ export default function FormElement({ element, isOverlay = false, updateElement,
         return (
           <div className="space-y-2">
             <Label>{attributes.label}</Label>
-            <Input type="number" placeholder={attributes.placeholder} min={attributes.min} max={attributes.max} />
+            <Input
+              type="number"
+              placeholder={attributes.placeholder}
+              min={attributes.min}
+              max={attributes.max}
+            />
           </div>
         )
       case "select":
@@ -109,7 +130,7 @@ export default function FormElement({ element, isOverlay = false, updateElement,
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map((option: any, index: number) => (
+                {(attributes.options as Option[])?.map((option: Option, index: number) => (
                   <SelectItem key={index} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -130,7 +151,7 @@ export default function FormElement({ element, isOverlay = false, updateElement,
           <div className="space-y-2">
             <Label>{attributes.label}</Label>
             <RadioGroup>
-              {attributes.options?.map((option: any, index: number) => (
+              {(attributes.options as Option[])?.map((option: Option, index: number) => (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} id={`radio-${element.id}-${index}`} />
                   <Label htmlFor={`radio-${element.id}-${index}`}>{option.label}</Label>
@@ -216,4 +237,3 @@ export default function FormElement({ element, isOverlay = false, updateElement,
     </Card>
   )
 }
-

@@ -11,9 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@workspace/ui/components/textarea"
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Button } from "@workspace/ui/components/button"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
+
+type Option = {
+  label: string
+  value: string
+}
+// import { Button } from "@workspace/ui/components/button"
+// import { Loader2 } from "lucide-react"
+// import { toast } from "sonner"
 
 
 
@@ -24,12 +29,13 @@ interface FormPreviewProps {
   isPreview?: boolean
 }
 
-export default function FormPreview({ formTitle, elements, description, isPreview = false }: FormPreviewProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({})
-  const [files, setFiles] = useState<Record<string, FileList | null>>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export default function FormPreview({ formTitle, elements, description }: FormPreviewProps) {
+  const [formData, setFormData] = useState<Record<string, string | number | boolean>>({})
 
-  const handleChange = (id: string, value: any) => {
+  const [files, setFiles] = useState<Record<string, FileList | null>>({})
+  // const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleChange = (id: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [id]: value }))
   }
 
@@ -110,11 +116,12 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map((option: any, index: number) => (
-                  <SelectItem key={index} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
+
+                  {attributes.options?.map((option: { label: string; value: string }, index: number) => (
+                <SelectItem key={index} value={option.value}>
+    {option.label}
+  </SelectItem>
+))}
               </SelectContent>
             </Select>
           </div>
@@ -146,12 +153,13 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
               onValueChange={(value) => handleChange(id, value)}
               required={attributes.required}
             >
-              {attributes.options?.map((option: any, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.value} id={`${id}-${index}`} />
-                  <Label htmlFor={`${id}-${index}`}>{option.label}</Label>
-                </div>
-              ))}
+              {attributes.options?.map((option: Option, index: number) => (
+  <div key={index} className="flex items-center space-x-2">
+    <RadioGroupItem value={option.value} id={`${id}-${index}`} />
+    <Label htmlFor={`${id}-${index}`}>{option.label}</Label>
+  </div>
+))}
+
             </RadioGroup>
           </div>
         )
