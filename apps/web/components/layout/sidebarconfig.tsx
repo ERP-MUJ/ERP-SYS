@@ -32,9 +32,9 @@ export function useSidebarConfig(): SidebarConfig {
       title: "QOC Dashboard",
       items: [
         { icon: Home, label: "Dashboard", id: "qoc-dashboard", path: "/qoc/" },
-        { icon: Hammer, label: "Build KPI", id: "form-builder", path: "/qoc/builder" },
-        { icon: User2, label:"Assign KPI", id:"assign-kpi", path:"/qoc/assign"},
-        { icon: Check, label: "Review KPI's", id: "review-submissions", path: "/qoc/review" },
+        { icon: Hammer, label: "KPI Builder", id: "form-builder", path: "/qoc/builder" },
+        { icon: User2, label:"Assign KPI to Department", id:"assign-kpi", path:"/qoc/assign"},
+        { icon: Check, label: "Review Submissions", id: "review-submissions", path: "/qoc/review" },
         {icon: DownloadCloudIcon , label: "Generate Report", id: "generate-report", path: "/qoc/report"},
         { icon: Settings, label: "Settings", id: "qoc-settings", path: "/qoc/settings" },
       ],

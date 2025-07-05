@@ -23,11 +23,17 @@ import Image from "next/image"
 export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarProps) {
   const router = useRouter(); 
   const pathname = usePathname();
-  const { theme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const dashboardKey = pathname.startsWith("/qoc") ? "qoc" : pathname.startsWith("/hod") ? "hod" : "faculty";
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const sidebarConfig = useSidebarConfig();
   const { title, items } = sidebarConfig[dashboardKey] as { title: string; items: SidebarItem[] };
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleSubmenu = (id: string) => {
     setExpandedMenu(expandedMenu === id ? null : id);
