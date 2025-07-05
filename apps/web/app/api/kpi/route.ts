@@ -4,7 +4,7 @@ import { prisma } from '@repo/db';
 /**
  * GET function to fetch all KPIs.
  */
-export async function GET(request: Request): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   try {
     const kpis = await prisma.kpi.findMany();
     
@@ -38,7 +38,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const body = await request.json();
     const { 
       id, 
-      title, 
+      // title, 
       elements, 
       createdAt, 
       updatedAt,

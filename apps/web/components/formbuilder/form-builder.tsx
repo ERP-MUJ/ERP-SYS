@@ -25,7 +25,7 @@ export default function FormBuilder({ initialForm }: { initialForm?: FormConfig 
   const [elements, setElements] = useState<FormElementInstance[]>(initialForm?.elements || [])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeElement, setActiveElement] = useState<FormElementInstance | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const [isSaving] = useState(false)
   const { mutate: saveForm } = useSaveForm();
   const router = useRouter();
 
@@ -126,16 +126,20 @@ export default function FormBuilder({ initialForm }: { initialForm?: FormConfig 
     }
   }
 
-  function updateElement(id: string, attributes: Record<string, any>) {
-    setElements(
-      elements.map((element) => {
-        if (element.id === id) {
-          return { ...element, attributes: { ...element.attributes, ...attributes } }
-        }
-        return element
-      }),
-    )
-  }
+  function updateElement(
+  id: string,
+  attributes: Record<string, string | number | boolean | string[] | number[] | undefined>
+) {
+  setElements(
+    elements.map((element) => {
+      if (element.id === id) {
+        return { ...element, attributes: { ...element.attributes, ...attributes } }
+      }
+      return element;
+    }),
+  );
+}
+
 
   function removeElement(id: string) {
     setElements(elements.filter((element) => element.id !== id))

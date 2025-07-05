@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { GoogleGenAI } from "@google/genai";
 import { Document, Paragraph, TextRun, AlignmentType, HeadingLevel, Packer } from "docx";
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API || '' });
+const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API || '' }); // the google api is set in the env variable in turbo json file inside the build task
 
 export async function POST(request: NextRequest) {
   try {

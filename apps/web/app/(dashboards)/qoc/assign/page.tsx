@@ -33,6 +33,16 @@ export default function AssignPage() {
   const pillars = departments?.find((dept) => dept.id.toString() === selectedDepartment)?.pillars || []
   const assignedTabPillars = departments?.find((dept) => dept.id.toString() === assignedTabDepartment)?.pillars || []
 
+    //Show loading screen while departments are fetched
+  if (isLoading) {
+    return (
+      <main className="container mx-auto py-8 px-4">
+        <p className="text-center text-gray-600">Loading departments...</p>
+      </main>
+    )
+  }
+
+
   const handleKpiCheckboxChange = (kpiId: string) => {
     setSelectedKpis((prev) => (prev.includes(kpiId) ? prev.filter((id) => id !== kpiId) : [...prev, kpiId]))
   }

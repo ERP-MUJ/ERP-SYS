@@ -6,7 +6,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ): Promise<NextResponse> {
     try {
-      const assigned_kpi_id = parseInt(params.id);
       // Convert the ID parameter to a number
       const assignedKpiId = parseInt(params.id);
   

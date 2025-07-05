@@ -1,22 +1,28 @@
 import { LucideIcon } from "lucide-react"
 
 type ErrorName = 
-| 'PROCESSING_ERROR';
+  | "PROCESSING_ERROR"
 
 export class ProcessError extends Error {
-  name: ErrorName;
-  message: string;
-  cause: Error | null;
+  name: ErrorName
+  message: string
+  cause: Error | null
 
-  constructor({name,message,cause} : {name: ErrorName; message: string; cause: any}) {
-    super(message);
-    this.name = name;
-    this.message = message;
-    this.cause = cause;
+  constructor({
+    name,
+    message,
+    cause,
+  }: {
+    name: ErrorName
+    message: string
+    cause: Error | null
+  }) {
+    super(message)
+    this.name = name
+    this.message = message
+    this.cause = cause
   }
 }
-
-
 
 export type FormElementType =
   | "text"
@@ -29,31 +35,44 @@ export type FormElementType =
   | "email"
   | "file"
 
+export interface FormElementAttributes {
+  label: string
+  placeholder?: string
+  required?: boolean
+  rows?: number
+  min?: number
+  max?: number
+  multiple?: boolean
+  acceptedFileTypes?: string
+  options?: { label: string; value: string }[]
+  [key: string]: unknown // To allow extensibility
+}
+
 export interface FormElementInstance {
   id: string
   type: FormElementType
-  attributes: Record<string, any>
+  attributes: FormElementAttributes
 }
 
 export interface PillarInstance {
   id: number
   name: string
   counts: {
-    assignedkpi: number;
+    assignedkpi: number
   }
 }
 
 export interface AssignKpiPayload {
-  pillarId: string;
-  departmentId: string;
-  kpiIds: string[];
+  pillarId: string
+  departmentId: string
+  kpiIds: string[]
 }
 
 export interface KpiFormData {
-  id: string;
+  id: string
   formData: {
-    entries: Record<string, any>[];
-  };
+    entries: Record<string, string | number | boolean | null | undefined>
+  }
 }
 
 export interface FormConfig {
@@ -68,8 +87,8 @@ export interface FormConfig {
 
 export interface FormSubmission {
   formTitle: string
-  formData: Record<string, any>
-  fileInfo?: Record<string, any>
+  formData: Record<string, string | number | boolean | null | undefined>
+  fileInfo?: Record<string, unknown>
 }
 
 export interface AppSidebarProps {
@@ -86,13 +105,12 @@ export interface SidebarItem {
 }
 
 export interface AssignedKPI {
-  assigned_kpi_id: number;
-  kpi_name: string;
-  kpi_status: string;
-  comments: string;
-  elements: FormElementInstance[];
+  assigned_kpi_id: number
+  kpi_name: string
+  kpi_status: string
+  comments: string
+  elements: FormElementInstance[]
 }
-
 
 export interface DeptConfig {
   id: string
@@ -103,4 +121,3 @@ export interface DeptConfig {
   membersCount: number
   pillars: PillarInstance[]
 }
-

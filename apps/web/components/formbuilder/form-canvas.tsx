@@ -5,11 +5,14 @@ import FormElement from "./form-element"
 import { useDroppable } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 
+type AttributeValue = string | number | boolean | string[] | number[] | undefined;
+
 interface FormCanvasProps {
-  elements: FormElementInstance[]
-  updateElement: (id: string, attributes: Record<string, any>) => void
-  removeElement: (id: string) => void
+  elements: FormElementInstance[];
+  updateElement: (id: string, attributes: Record<string, AttributeValue>) => void;
+  removeElement: (id: string) => void;
 }
+
 
 export default function FormCanvas({ elements, updateElement, removeElement }: FormCanvasProps) {
   const { setNodeRef } = useDroppable({
