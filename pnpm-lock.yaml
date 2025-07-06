@@ -431,6 +431,9 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      eslint:
+        specifier: ^9.0.0
+        version: 9.20.1(jiti@2.4.2)
       tailwindcss:
         specifier: ^4.0.8
         version: 4.0.8
