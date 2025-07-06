@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { usePathname } from "next/navigation";
 import {
   Sidebar,
@@ -11,29 +11,33 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@workspace/ui/components/sidebar"
-import { ChevronDown, ChevronRight, } from "lucide-react";
+} from "@workspace/ui/components/sidebar";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { AppSidebarProps, SidebarItem } from "@/lib/types";
 import { useSidebarConfig } from "@/components/layout/sidebarconfig";
-import Image from "next/image"
+import Image from "next/image";
 
-export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarProps) {
-  const router = useRouter(); 
+export function MainAppSidebar({
+  activeSection,
+  setActiveSection,
+}: AppSidebarProps) {
+  const router = useRouter();
   const pathname = usePathname();
-  const { theme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const dashboardKey = pathname.startsWith("/qoc") ? "qoc" : pathname.startsWith("/hod") ? "hod" : "faculty";
+  const dashboardKey = pathname.startsWith("/qoc")
+    ? "qoc"
+    : pathname.startsWith("/hod")
+      ? "hod"
+      : "faculty";
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const sidebarConfig = useSidebarConfig();
-  const { title, items } = sidebarConfig[dashboardKey] as { title: string; items: SidebarItem[] };
+  const { title, items } = sidebarConfig[dashboardKey] as {
+    title: string;
+    items: SidebarItem[];
+  };
 
-  // Prevent hydration mismatch by only rendering after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+
 
   const toggleSubmenu = (id: string) => {
     setExpandedMenu(expandedMenu === id ? null : id);
@@ -51,31 +55,41 @@ export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarPr
       <SidebarHeader>
         <div className="flex h-14 items-center border-b px-4">
           <Image
-  src="/MUJ-Logo.png"
-  alt="MUJ Logo"
-  width={100} // Adjust as needed
-  height={80} // Adjust as needed
-  className="h-20 w-auto object-contain"
-/>
+            src="/MUJ-Logo.png"
+            alt="MUJ Logo"
+            width={100} // Adjust as needed
+            height={80} // Adjust as needed
+            className="h-20 w-auto object-contain"
+          />
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel><div>{title}</div></SidebarGroupLabel>
+          <SidebarGroupLabel>
+            <div>{title}</div>
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <div key={item.id}>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      onClick={() => (item.subItems ? toggleSubmenu(item.id) : handleNavigation(item.id, item.path || '/'))}
+                      onClick={() =>
+                        item.subItems
+                          ? toggleSubmenu(item.id)
+                          : handleNavigation(item.id, item.path || "/")
+                      }
                       isActive={activeSection === item.id}
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.label}</span>
                       {item.subItems && (
                         <span className="ml-auto">
-                          {expandedMenu === item.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          {expandedMenu === item.id ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
                         </span>
                       )}
                     </SidebarMenuButton>
@@ -86,7 +100,9 @@ export function MainAppSidebar({ activeSection, setActiveSection }: AppSidebarPr
                       {item.subItems.map((subItem) => (
                         <SidebarMenuItem key={subItem.id}>
                           <SidebarMenuButton
-                            onClick={() => handleNavigation(subItem.id, subItem.path)}
+                            onClick={() =>
+                              handleNavigation(subItem.id, subItem.path)
+                            }
                             isActive={activeSection === subItem.id}
                           >
                             <span>{subItem.label}</span>

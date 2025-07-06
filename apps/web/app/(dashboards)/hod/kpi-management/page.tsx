@@ -43,7 +43,9 @@ export default function FormsPage() {
   // 🔧 Commented unused delete handlers to fix ESLint warnings
   /*
   const handleDelete = (formId: string) => {
-    const numericId = formId.startsWith("form-") ? formId.split("-")[1]! : formId;
+    const numericId = formId.startsWith("form-")
+      ? formId.split("-")[1]!
+      : formId;
     setDeletingFormId(formId);
     deleteKpiMutation.mutate(numericId, {
       onSuccess: () => setDeletingFormId(null),
@@ -95,8 +97,7 @@ export default function FormsPage() {
                 <div>
                   <CardTitle>{form.title}</CardTitle>
                   <CardDescription>
-                    Created on{" "}
-                    {new Date(form.createdAt).toLocaleDateString()}
+                    Created on {new Date(form.createdAt).toLocaleDateString()}
                   </CardDescription>
                 </div>
                 <Badge>{form.value}</Badge>

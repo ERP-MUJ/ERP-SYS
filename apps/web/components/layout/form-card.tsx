@@ -1,21 +1,28 @@
-"use client"
+"use client";
 
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Button } from "@workspace/ui/components/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
 
 export interface FormCardProps {
-  title: string
-  description?: string
-  children: ReactNode
-  footer?: ReactNode
-  submitLabel?: string
-  resetLabel?: string
-  onSubmit?: () => void
-  onReset?: () => void
-  showActions?: boolean
-  className?: string
+  title: string;
+  description?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  submitLabel?: string;
+  resetLabel?: string;
+  onSubmit?: () => void;
+  onReset?: () => void;
+  showActions?: boolean;
+  className?: string;
 }
 
 export function FormCard({
@@ -50,6 +57,5 @@ export function FormCard({
             )}
       </CardFooter>
     </Card>
-  )
+  );
 }
-

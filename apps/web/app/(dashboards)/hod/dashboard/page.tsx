@@ -1,6 +1,5 @@
 "use client";
 
-
 // 🔧 Commented unused Avatar components to fix ESLint warnings
 // import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
 

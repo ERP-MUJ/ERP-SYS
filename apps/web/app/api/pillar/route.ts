@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@repo/db';
+import { NextResponse } from "next/server";
+import { prisma } from "@repo/db";
 
 /**
  * GET function to fetch all pillars or pillars for a specific department.
@@ -7,7 +7,7 @@ import { prisma } from '@repo/db';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dept_id = searchParams.get('department_id');
+    const dept_id = searchParams.get("department_id");
 
     let pillars;
     if (dept_id) {
@@ -18,17 +18,17 @@ export async function GET(request: Request) {
           department: {
             select: {
               dept_id: true,
-              dept_name: true
-            }
+              dept_name: true,
+            },
           },
           assigned_kpi: {
             select: {
               assigned_kpi_id: true,
               kpi_name: true,
-              kpi_status: true
-            }
-          }
-        }
+              kpi_status: true,
+            },
+          },
+        },
       });
     } else {
       // Get all pillars
@@ -37,22 +37,22 @@ export async function GET(request: Request) {
           department: {
             select: {
               dept_id: true,
-              dept_name: true
-            }
+              dept_name: true,
+            },
           },
           _count: {
-            select: { assigned_kpi: true }
-          }
-        }
+            select: { assigned_kpi: true },
+          },
+        },
       });
     }
 
     return NextResponse.json({ success: true, pillars });
   } catch (error) {
-    console.error('Error fetching pillars:', error);
+    console.error("Error fetching pillars:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch pillars' },
-      { status: 500 }
+      { success: false, error: "Failed to fetch pillars" },
+      { status: 500 },
     );
   }
 }
@@ -68,27 +68,27 @@ export async function POST(request: Request) {
     // Validate required fields
     if (!pillar_name) {
       return NextResponse.json(
-        { success: false, error: 'Pillar name is required' },
-        { status: 400 }
+        { success: false, error: "Pillar name is required" },
+        { status: 400 },
       );
     }
 
     if (!department_id) {
       return NextResponse.json(
-        { success: false, error: 'Department ID is required' },
-        { status: 400 }
+        { success: false, error: "Department ID is required" },
+        { status: 400 },
       );
     }
 
     // Check if department exists
     const department = await prisma.departments.findUnique({
-      where: { dept_id: Number(department_id) }
+      where: { dept_id: Number(department_id) },
     });
 
     if (!department) {
       return NextResponse.json(
-        { success: false, error: 'Department not found' },
-        { status: 404 }
+        { success: false, error: "Department not found" },
+        { status: 404 },
       );
     }
 
@@ -96,14 +96,17 @@ export async function POST(request: Request) {
     const existingPillar = await prisma.pillars.findFirst({
       where: {
         pillar_name,
-        department_id: Number(department_id)
-      }
+        department_id: Number(department_id),
+      },
     });
 
     if (existingPillar) {
       return NextResponse.json(
-        { success: false, error: 'A pillar with this name already exists in this department' },
-        { status: 400 }
+        {
+          success: false,
+          error: "A pillar with this name already exists in this department",
+        },
+        { status: 400 },
       );
     }
 
@@ -111,20 +114,20 @@ export async function POST(request: Request) {
     const newPillar = await prisma.pillars.create({
       data: {
         pillar_name,
-        department_id: Number(department_id)
-      }
+        department_id: Number(department_id),
+      },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Pillar created successfully', 
-      pillar: newPillar 
+    return NextResponse.json({
+      success: true,
+      message: "Pillar created successfully",
+      pillar: newPillar,
     });
   } catch (error) {
-    console.error('Error creating pillar:', error);
+    console.error("Error creating pillar:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create pillar' },
-      { status: 500 }
+      { success: false, error: "Failed to create pillar" },
+      { status: 500 },
     );
   }
 }

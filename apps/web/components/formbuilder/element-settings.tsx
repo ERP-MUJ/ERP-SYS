@@ -1,32 +1,40 @@
-"use client"
+"use client";
 
-import type { FormElementInstance } from "@/lib/types"
-import { Button } from "@workspace/ui/components/button"
-import { Checkbox } from "@workspace/ui/components/checkbox"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
-import { Separator } from "@workspace/ui/components/separator"
-import { Plus, Trash2 } from "lucide-react"
-import { useState } from "react"
+import type { FormElementInstance } from "@/lib/types";
+import { Button } from "@workspace/ui/components/button";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
+import { Separator } from "@workspace/ui/components/separator";
+import { Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface ElementSettingsProps {
-  element: FormElementInstance
-  updateElement: (id: string, attributes: Record<string, unknown>) => void
-  onClose: () => void
+  element: FormElementInstance;
+  updateElement: (id: string, attributes: Record<string, unknown>) => void;
+  onClose: () => void;
 }
 
-export default function ElementSettings({ element, updateElement, onClose }: ElementSettingsProps) {
-  const { attributes } = element
+export default function ElementSettings({
+  element,
+  updateElement,
+  onClose,
+}: ElementSettingsProps) {
+  const { attributes } = element;
 
   const handleChange = (key: string, value: unknown) => {
-    updateElement(element.id, { [key]: value })
-  }
+    updateElement(element.id, { [key]: value });
+  };
 
   const renderCommonSettings = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="label">Label</Label>
-        <Input id="label" value={attributes.label || ""} onChange={(e) => handleChange("label", e.target.value)} />
+        <Input
+          id="label"
+          value={attributes.label || ""}
+          onChange={(e) => handleChange("label", e.target.value)}
+        />
       </div>
 
       <div className="flex items-center space-x-2">
@@ -38,7 +46,7 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
         <Label htmlFor="required">Required field</Label>
       </div>
     </div>
-  )
+  );
 
   const renderSpecificSettings = () => {
     switch (element.type) {
@@ -53,7 +61,7 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
               onChange={(e) => handleChange("placeholder", e.target.value)}
             />
           </div>
-        )
+        );
       case "textarea":
         return (
           <>
@@ -72,11 +80,13 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
                 type="number"
                 min={1}
                 value={attributes.rows || 3}
-                onChange={(e) => handleChange("rows", Number.parseInt(e.target.value))}
+                onChange={(e) =>
+                  handleChange("rows", Number.parseInt(e.target.value))
+                }
               />
             </div>
           </>
-        )
+        );
       case "number":
         return (
           <>
@@ -95,7 +105,9 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
                   id="min"
                   type="number"
                   value={attributes.min || 0}
-                  onChange={(e) => handleChange("min", Number.parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleChange("min", Number.parseInt(e.target.value))
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -104,15 +116,19 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
                   id="max"
                   type="number"
                   value={attributes.max || 100}
-                  onChange={(e) => handleChange("max", Number.parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleChange("max", Number.parseInt(e.target.value))
+                  }
                 />
               </div>
             </div>
           </>
-        )
+        );
       case "select":
       case "radio":
-        return <OptionsEditor element={element} updateElement={updateElement} />
+        return (
+          <OptionsEditor element={element} updateElement={updateElement} />
+        );
       case "file":
         return (
           <>
@@ -120,11 +136,18 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
               <Label htmlFor="acceptedFileTypes">Accepted File Types</Label>
               <Input
                 id="acceptedFileTypes"
-                value={attributes.acceptedFileTypes || ".pdf,.doc,.docx,.jpg,.jpeg,.png"}
-                onChange={(e) => handleChange("acceptedFileTypes", e.target.value)}
+                value={
+                  attributes.acceptedFileTypes ||
+                  ".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                }
+                onChange={(e) =>
+                  handleChange("acceptedFileTypes", e.target.value)
+                }
                 placeholder=".pdf,.doc,.jpg"
               />
-              <p className="text-xs text-gray-500">Comma-separated file extensions (e.g., .pdf,.jpg)</p>
+              <p className="text-xs text-gray-500">
+                Comma-separated file extensions (e.g., .pdf,.jpg)
+              </p>
             </div>
             <div className="flex items-center space-x-2 mt-4">
               <Checkbox
@@ -135,11 +158,11 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
               <Label htmlFor="multiple">Allow multiple files</Label>
             </div>
           </>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="p-1 space-y-4">
@@ -159,36 +182,40 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
         <Button onClick={onClose}>Done</Button>
       </div>
     </div>
-  )
+  );
 }
 
 interface OptionsEditorProps {
-  element: FormElementInstance
-  updateElement: (id: string, attributes: Record<string, unknown>) => void
+  element: FormElementInstance;
+  updateElement: (id: string, attributes: Record<string, unknown>) => void;
 }
 
 function OptionsEditor({ element, updateElement }: OptionsEditorProps) {
-  const options = element.attributes.options || []
-  const [newOption, setNewOption] = useState({ label: "", value: "" })
+  const options = element.attributes.options || [];
+  const [newOption, setNewOption] = useState({ label: "", value: "" });
 
   const addOption = () => {
-    if (!newOption.label.trim() || !newOption.value.trim()) return
+    if (!newOption.label.trim() || !newOption.value.trim()) return;
 
-    const updatedOptions = [...options, { ...newOption }]
-    updateElement(element.id, { options: updatedOptions })
-    setNewOption({ label: "", value: "" })
-  }
+    const updatedOptions = [...options, { ...newOption }];
+    updateElement(element.id, { options: updatedOptions });
+    setNewOption({ label: "", value: "" });
+  };
 
   const removeOption = (index: number) => {
-    const updatedOptions = options.filter((_, i) => i !== index)
-    updateElement(element.id, { options: updatedOptions })
-  }
+    const updatedOptions = options.filter((_, i) => i !== index);
+    updateElement(element.id, { options: updatedOptions });
+  };
 
-  const updateOption = (index: number, field: "label" | "value", value: string) => {
-    const updatedOptions = [...options]
-    updatedOptions[index] = { ...updatedOptions[index], [field]: value }
-    updateElement(element.id, { options: updatedOptions })
-  }
+  const updateOption = (
+    index: number,
+    field: "label" | "value",
+    value: string,
+  ) => {
+    const updatedOptions = [...options];
+    updatedOptions[index] = { ...updatedOptions[index], [field]: value };
+    updateElement(element.id, { options: updatedOptions });
+  };
 
   return (
     <div className="space-y-4">
@@ -225,13 +252,17 @@ function OptionsEditor({ element, updateElement }: OptionsEditorProps) {
         <Input
           placeholder="Label"
           value={newOption.label}
-          onChange={(e) => setNewOption({ ...newOption, label: e.target.value })}
+          onChange={(e) =>
+            setNewOption({ ...newOption, label: e.target.value })
+          }
           className="flex-1"
         />
         <Input
           placeholder="Value"
           value={newOption.value}
-          onChange={(e) => setNewOption({ ...newOption, value: e.target.value })}
+          onChange={(e) =>
+            setNewOption({ ...newOption, value: e.target.value })
+          }
           className="flex-1"
         />
         <Button
@@ -245,6 +276,5 @@ function OptionsEditor({ element, updateElement }: OptionsEditorProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }
-

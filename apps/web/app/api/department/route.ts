@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@repo/db'; // Make sure this points to your Prisma client
+import { NextResponse } from "next/server";
+import { prisma } from "@repo/db"; // Make sure this points to your Prisma client
 
 /**
  * GET function to fetch all departments.
@@ -13,22 +13,22 @@ export async function GET() {
             pillar_id: true,
             pillar_name: true,
             _count: {
-              select: { assigned_kpi: true }
-            }
-          }
+              select: { assigned_kpi: true },
+            },
+          },
         },
         _count: {
-          select: { members: true }
-        }
-      }
+          select: { members: true },
+        },
+      },
     });
 
     return NextResponse.json({ success: true, departments });
   } catch (error) {
-    console.error('Error fetching departments:', error);
+    console.error("Error fetching departments:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch departments' },
-      { status: 500 }
+      { success: false, error: "Failed to fetch departments" },
+      { status: 500 },
     );
   }
 }
@@ -44,20 +44,20 @@ export async function POST(request: Request) {
     // Validate required fields
     if (!dept_name) {
       return NextResponse.json(
-        { success: false, error: 'Department name is required' },
-        { status: 400 }
+        { success: false, error: "Department name is required" },
+        { status: 400 },
       );
     }
 
     // Check if department with same name already exists
     const existingDepartment = await prisma.departments.findUnique({
-      where: { dept_name }
+      where: { dept_name },
     });
 
     if (existingDepartment) {
       return NextResponse.json(
-        { success: false, error: 'A department with this name already exists' },
-        { status: 400 }
+        { success: false, error: "A department with this name already exists" },
+        { status: 400 },
       );
     }
 
@@ -67,19 +67,19 @@ export async function POST(request: Request) {
         dept_name,
         hod_id: hod_id || null,
         hod_name: hod_name || null,
-      }
+      },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Department created successfully', 
-      department: newDepartment 
+    return NextResponse.json({
+      success: true,
+      message: "Department created successfully",
+      department: newDepartment,
     });
   } catch (error) {
-    console.error('Error creating department:', error);
+    console.error("Error creating department:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create department' },
-      { status: 500 }
+      { success: false, error: "Failed to create department" },
+      { status: 500 },
     );
   }
 }
@@ -94,18 +94,18 @@ export async function PUT(request: Request) {
     try {
       body = await request.json();
     } catch (parseError) {
-      console.error('Error parsing JSON body:', parseError);
+      console.error("Error parsing JSON body:", parseError);
       return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
+        { success: false, error: "Invalid JSON in request body" },
+        { status: 400 },
       );
     }
 
     // Check if body is empty
     if (!body || Object.keys(body).length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Request body is empty' },
-        { status: 400 }
+        { success: false, error: "Request body is empty" },
+        { status: 400 },
       );
     }
 
@@ -114,20 +114,20 @@ export async function PUT(request: Request) {
     // Validate required fields
     if (!dept_id) {
       return NextResponse.json(
-        { success: false, error: 'Department ID is required' },
-        { status: 400 }
+        { success: false, error: "Department ID is required" },
+        { status: 400 },
       );
     }
 
     // Check if department exists
     const existingDepartment = await prisma.departments.findUnique({
-      where: { dept_id: Number(dept_id) }
+      where: { dept_id: Number(dept_id) },
     });
 
     if (!existingDepartment) {
       return NextResponse.json(
-        { success: false, error: 'Department not found' },
-        { status: 404 }
+        { success: false, error: "Department not found" },
+        { status: 404 },
       );
     }
 
@@ -144,28 +144,33 @@ export async function PUT(request: Request) {
     // Update department
     const updatedDepartment = await prisma.departments.update({
       where: { dept_id: Number(dept_id) },
-      data: updateData
+      data: updateData,
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Department updated successfully', 
-      department: updatedDepartment 
+    return NextResponse.json({
+      success: true,
+      message: "Department updated successfully",
+      department: updatedDepartment,
     });
   } catch (error) {
-    console.error('Error updating department:', error);
-    
+    console.error("Error updating department:", error);
+
     // Handle unique constraint violation (duplicate department name)
-    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002') {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code: string }).code === "P2002"
+    ) {
       return NextResponse.json(
-        { success: false, error: 'A department with this name already exists' },
-        { status: 400 }
+        { success: false, error: "A department with this name already exists" },
+        { status: 400 },
       );
     }
-    
+
     return NextResponse.json(
-      { success: false, error: 'Failed to update department' },
-      { status: 500 }
+      { success: false, error: "Failed to update department" },
+      { status: 500 },
     );
   }
 }
@@ -177,41 +182,41 @@ export async function DELETE(request: Request) {
   try {
     // Get department ID from URL query parameters
     const { searchParams } = new URL(request.url);
-    const dept_id = searchParams.get('id');
+    const dept_id = searchParams.get("id");
 
     if (!dept_id) {
       return NextResponse.json(
-        { success: false, error: 'Department ID is required' },
-        { status: 400 }
+        { success: false, error: "Department ID is required" },
+        { status: 400 },
       );
     }
 
     // Check if department exists
     const existingDepartment = await prisma.departments.findUnique({
-      where: { dept_id: Number(dept_id) }
+      where: { dept_id: Number(dept_id) },
     });
 
     if (!existingDepartment) {
       return NextResponse.json(
-        { success: false, error: 'Department not found' },
-        { status: 404 }
+        { success: false, error: "Department not found" },
+        { status: 404 },
       );
     }
 
     // Delete department (cascade will handle related records based on schema)
     await prisma.departments.delete({
-      where: { dept_id: Number(dept_id) }
+      where: { dept_id: Number(dept_id) },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Department deleted successfully' 
+    return NextResponse.json({
+      success: true,
+      message: "Department deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting department:', error);
+    console.error("Error deleting department:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete department' },
-      { status: 500 }
+      { success: false, error: "Failed to delete department" },
+      { status: 500 },
     );
   }
 }

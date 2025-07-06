@@ -1,27 +1,30 @@
-"use client"
+"use client";
 
-import { Search } from "lucide-react"
-import type { ReactNode } from "react"
+import { Search } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
 // import { Button } from "@workspace/ui/components/button"
-import { Input } from "@workspace/ui/components/input"
-import { SidebarTrigger } from "@workspace/ui/components/sidebar"
-import { ThemeToggle } from "@workspace/ui/components/theme-toggle"
-import { usePathname } from "next/navigation"
-
+import { Input } from "@workspace/ui/components/input";
+import { SidebarTrigger } from "@workspace/ui/components/sidebar";
+import { ThemeToggle } from "@workspace/ui/components/theme-toggle";
+import { usePathname } from "next/navigation";
 
 export interface NavbarProps {
-  appTitle?: string
-  showSearch?: boolean
-  showThemeToggle?: boolean
-  showNotifications?: boolean
-  showHelp?: boolean
-  userAvatar?: string
-  userInitials?: string
-  leftContent?: ReactNode
-  rightContent?: ReactNode
-  onSearch?: (query: string) => void
+  appTitle?: string;
+  showSearch?: boolean;
+  showThemeToggle?: boolean;
+  showNotifications?: boolean;
+  showHelp?: boolean;
+  userAvatar?: string;
+  userInitials?: string;
+  leftContent?: ReactNode;
+  rightContent?: ReactNode;
+  onSearch?: (query: string) => void;
 }
 
 export function Navbar({
@@ -35,15 +38,13 @@ export function Navbar({
   rightContent,
   onSearch,
 }: NavbarProps) {
-  const pathname = usePathname()
-  pathname.startsWith("/qoc") // Example condition to hide search in specific paths
+  const pathname = usePathname();
+  pathname.startsWith("/qoc"); // Example condition to hide search in specific paths
   // const hideNotifications = pathname.startsWith("/qoc")
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px]">
-      <div className="flex items-center gap-2">
-        {leftContent}
-      </div>
+      <div className="flex items-center gap-2">{leftContent}</div>
 
       {showSearch && (
         <div className="w-full flex-1 flex items-center">
@@ -51,11 +52,11 @@ export function Navbar({
           <form
             className="hidden md:block flex-1"
             onSubmit={(e) => {
-              e.preventDefault()
-              const form = e.currentTarget
-              const formData = new FormData(form)
-              const query = formData.get("search") as string
-              onSearch?.(query)
+              e.preventDefault();
+              const form = e.currentTarget;
+              const formData = new FormData(form);
+              const query = formData.get("search") as string;
+              onSearch?.(query);
             }}
           >
             <div className="relative">
@@ -75,13 +76,12 @@ export function Navbar({
         {rightContent}
 
         {showThemeToggle && <ThemeToggle />}
-        
+
         <Avatar className="h-8 w-8">
           <AvatarImage src={userAvatar} alt="User" />
           <AvatarFallback>{userInitials}</AvatarFallback>
         </Avatar>
       </div>
     </header>
-  )
+  );
 }
-

@@ -2,7 +2,13 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { UserPlus } from "lucide-react";
 import AssignDialog from "@/components/hod/assign-dialog";
@@ -21,7 +27,11 @@ export default function KPICoordinatorsPage() {
     { value: "kpi3", label: "KPI 3" },
   ];
 
-  const handleAssignSubmit = (data: { facultyId: string; role: string; kpis: string[] }) => {
+  const handleAssignSubmit = (data: {
+    facultyId: string;
+    role: string;
+    kpis: string[];
+  }) => {
     console.log("Assignment Data:", data);
   };
 
@@ -31,19 +41,21 @@ export default function KPICoordinatorsPage() {
         <CardHeader className="flex flex-row items-center">
           <div>
             <CardTitle>KPI Coordinators</CardTitle>
-            <CardDescription>Manage and assign KPI coordinators for your department</CardDescription>
+            <CardDescription>
+              Manage and assign KPI coordinators for your department
+            </CardDescription>
           </div>
           <Button className="ml-auto" onClick={() => setIsDialogOpen(true)}>
             <UserPlus className="mr-2 h-4 w-4" />
             Assign Coordinator
           </Button>
           <AssignDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        faculties={faculties}
-        kpis={kpis}
-        onSubmit={handleAssignSubmit}
-       />
+            isOpen={isDialogOpen}
+            onClose={() => setIsDialogOpen(false)}
+            faculties={faculties}
+            kpis={kpis}
+            onSubmit={handleAssignSubmit}
+          />
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -52,7 +64,9 @@ export default function KPICoordinatorsPage() {
                 <tr className="border-b">
                   <th className="text-left p-2 font-medium">Coordinator</th>
                   <th className="text-left p-2 font-medium">KPI Category</th>
-                  <th className="text-left p-2 font-medium">Assigned Faculty</th>
+                  <th className="text-left p-2 font-medium">
+                    Assigned Faculty
+                  </th>
                   <th className="text-left p-2 font-medium">Status</th>
                   <th className="text-left p-2 font-medium">Actions</th>
                 </tr>
@@ -98,9 +112,14 @@ export default function KPICoordinatorsPage() {
                       </div>
                     </td>
                     <td className="p-2">{coordinator.category}</td>
-                    <td className="p-2">{coordinator.assigned} faculty members</td>
                     <td className="p-2">
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      {coordinator.assigned} faculty members
+                    </td>
+                    <td className="p-2">
+                      <Badge
+                        variant="outline"
+                        className="bg-green-50 text-green-700 border-green-200"
+                      >
                         {coordinator.status}
                       </Badge>
                     </td>
@@ -112,7 +131,11 @@ export default function KPICoordinatorsPage() {
                         <Button variant="outline" size="sm">
                           Edit
                         </Button>
-                        <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-500 hover:text-red-600"
+                        >
                           Remove
                         </Button>
                       </div>

@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import FormBuilder from '@/components/formbuilder/form-builder'
-import { useFormById } from '@/hooks/forms'
+import FormBuilder from "@/components/formbuilder/form-builder";
+import { useFormById } from "@/hooks/forms";
 
 interface EditFormPageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 export default function EditFormPage({ params }: EditFormPageProps) {
-  const formQuery = useFormById(params.id)
+  const formQuery = useFormById(params.id);
 
   if (formQuery.isLoading) {
-    return <p>Loading...</p>
+    return <p>Loading...</p>;
   }
 
   if (formQuery.error || !formQuery.data) {
-    return <p>Error</p>
+    return <p>Error</p>;
   }
 
   return (
@@ -28,5 +28,5 @@ export default function EditFormPage({ params }: EditFormPageProps) {
       </p>
       <FormBuilder initialForm={formQuery.data} />
     </main>
-  )
+  );
 }

@@ -1,24 +1,33 @@
-"use client"
-import { Button } from "@workspace/ui/components/button"
+"use client";
+import { Button } from "@workspace/ui/components/button";
 import {
-  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
-} from "@workspace/ui/components/card"
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import {
-  AlertDialog, AlertDialogContent, AlertDialogFooter,
-  AlertDialogDescription, AlertDialogHeader, AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
-import { useFetchForms } from "@/hooks/forms"
-import {useEffect, useState } from "react"
-import {Badge } from "@workspace/ui/components/badge"
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
+import Link from "next/link";
+import { PlusCircle } from "lucide-react";
+import { useFetchForms } from "@/hooks/forms";
+import { useEffect, useState } from "react";
+import { Badge } from "@workspace/ui/components/badge";
 
 export default function FormsPage() {
-  const { data: forms, isLoading, error } = useFetchForms()
+  const { data: forms, isLoading, error } = useFetchForms();
   // const deleteKpiMutation = useDeleteKpi()
-  const [deletingFormId] = useState<string | null>(null)
+  const [deletingFormId] = useState<string | null>(null);
   // const [ setFormToDelete] = useState<string | null>(null)
-  const [open] = useState(false)
+  const [open] = useState(false);
 
   // const handleDelete = (formId: string) => {
   //   const numericId = formId.startsWith("form-") ? formId.split("-")[1]! : formId
@@ -44,23 +53,22 @@ export default function FormsPage() {
 
   // Dummy usage to prevent unused warnings — safe and non-intrusive
   useEffect(() => {
-  if (
-    // !openDeleteDialog ||
-    // !handleConfirmDelete ||
-    !AlertDialog ||
-    !AlertDialogContent ||
-    !AlertDialogFooter ||
-    !AlertDialogDescription ||
-    !AlertDialogHeader ||
-    !AlertDialogTitle ||
-    !PlusCircle ||
-    !deletingFormId ||
-    !open
-  ) {
-    console.debug("Referenced unused but planned utilities")
-  }
-})
-
+    if (
+      // !openDeleteDialog ||
+      // !handleConfirmDelete ||
+      !AlertDialog ||
+      !AlertDialogContent ||
+      !AlertDialogFooter ||
+      !AlertDialogDescription ||
+      !AlertDialogHeader ||
+      !AlertDialogTitle ||
+      !PlusCircle ||
+      !deletingFormId ||
+      !open
+    ) {
+      console.debug("Referenced unused but planned utilities");
+    }
+  });
 
   return (
     <main className="container mx-auto py-8 px-4">
@@ -74,10 +82,14 @@ export default function FormsPage() {
       </div>
 
       {isLoading && (
-        <p className="text-center text-black dark:text-white">Loading forms...</p>
+        <p className="text-center text-black dark:text-white">
+          Loading forms...
+        </p>
       )}
       {error && (
-        <p className="text-center text-red-600">Error loading forms: {error.message}</p>
+        <p className="text-center text-red-600">
+          Error loading forms: {error.message}
+        </p>
       )}
 
       {!isLoading && !error && (
@@ -103,7 +115,9 @@ export default function FormsPage() {
                 </p>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Link href={`/faculty/kpi-management/${form.id.replace("form-", "")}`}>
+                <Link
+                  href={`/faculty/kpi-management/${form.id.replace("form-", "")}`}
+                >
                   <Button>View</Button>
                 </Link>
               </CardFooter>
@@ -112,5 +126,5 @@ export default function FormsPage() {
         </div>
       )}
     </main>
-  )
+  );
 }

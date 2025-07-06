@@ -1,19 +1,22 @@
-"use client"
-import React, { use } from "react"
-import { Button } from "@workspace/ui/components/button"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import FormPreview from "@/components/formbuilder/form-preview"
-import { useFormById } from "@/hooks/forms"
+"use client";
+import React, { use } from "react";
+import { Button } from "@workspace/ui/components/button";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import FormPreview from "@/components/formbuilder/form-preview";
+import { useFormById } from "@/hooks/forms";
 
-
-export default function KpiViewPage({ params }: { params: Promise<{ id: string }> }) {
+export default function KpiViewPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   // Use React.use to unwrap the Promise params
   const { id } = use(params);
-  const { data, isLoading} = useFormById(id);
+  const { data, isLoading } = useFormById(id);
 
   if (isLoading) {
-    return <div className="text-center">Loading...</div>
+    return <div className="text-center">Loading...</div>;
   }
 
   const kpi = data.kpi;
@@ -34,13 +37,18 @@ export default function KpiViewPage({ params }: { params: Promise<{ id: string }
           </Link>
         </div>
         <h1 className="text-3xl font-bold mt-4">{kpi_name}</h1>
-        <p className="text-gray-500 mt-2">View and submit the form for this KPI</p>
+        <p className="text-gray-500 mt-2">
+          View and submit the form for this KPI
+        </p>
       </div>
 
       <div className="max-w-3xl mx-auto">
-        <FormPreview formTitle={kpi_name} elements={elements} description={kpi_description} />
+        <FormPreview
+          formTitle={kpi_name}
+          elements={elements}
+          description={kpi_description}
+        />
       </div>
     </main>
-  )
+  );
 }
-

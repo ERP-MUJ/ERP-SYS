@@ -1,20 +1,27 @@
-"use client"
+"use client";
 
-import type { FormElementInstance } from "@/lib/types"
-import FormElement from "./form-element"
-import { useDroppable } from "@dnd-kit/core"
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import type { FormElementInstance } from "@/lib/types";
+import FormElement from "./form-element";
+import { useDroppable } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface FormCanvasProps {
-  elements: FormElementInstance[]
-  updateElement: (id: string, attributes: Record<string, unknown>) => void
-  removeElement: (id: string) => void
+  elements: FormElementInstance[];
+  updateElement: (id: string, attributes: Record<string, unknown>) => void;
+  removeElement: (id: string) => void;
 }
 
-export default function FormCanvas({ elements, updateElement, removeElement }: FormCanvasProps) {
+export default function FormCanvas({
+  elements,
+  updateElement,
+  removeElement,
+}: FormCanvasProps) {
   const { setNodeRef } = useDroppable({
     id: "canvas",
-  })
+  });
 
   return (
     <div ref={setNodeRef} className="border rounded-md p-4 min-h-[400px]">
@@ -26,7 +33,10 @@ export default function FormCanvas({ elements, updateElement, removeElement }: F
           </div>
         </div>
       ) : (
-        <SortableContext items={elements.map((e) => e.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          items={elements.map((e) => e.id)}
+          strategy={verticalListSortingStrategy}
+        >
           <div className="flex flex-col gap-4">
             {elements.map((element) => (
               <FormElement
@@ -40,6 +50,5 @@ export default function FormCanvas({ elements, updateElement, removeElement }: F
         </SortableContext>
       )}
     </div>
-  )
+  );
 }
-

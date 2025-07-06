@@ -1,13 +1,13 @@
-"use client"
-import { Button } from "@workspace/ui/components/button"
+"use client";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
-} from "@workspace/ui/components/card"
+  CardTitle,
+} from "@workspace/ui/components/card";
 // Commented unused AlertDialog components
 // import {
 //   AlertDialog,
@@ -18,19 +18,19 @@ import {
 //   AlertDialogTitle
 // } from "@workspace/ui/components/alert-dialog"
 
-import Link from "next/link"
+import Link from "next/link";
 // import { PlusCircle } from "lucide-react" // Unused icon
-import { useFetchForms } from "@/hooks/forms"
+import { useFetchForms } from "@/hooks/forms";
 // import { useState } from "react"
-import { Badge } from "@workspace/ui/components/badge"
+import { Badge } from "@workspace/ui/components/badge";
 
 export default function FormsPage() {
-  const { data: forms, isLoading, error } = useFetchForms()
+  const { data: forms, isLoading, error } = useFetchForms();
   // const deleteKpiMutation = useDeleteKpi()
   // const [deletingFormId, setDeletingFormId] = useState<string | null>(null) // Unused
   // const [formToDelete, setFormToDelete] = useState<string | null>(null)
   // const [open, setOpen] = useState(false) // Unused
-  console.log("Forms:", forms)
+  console.log("Forms:", forms);
 
   // const handleDelete = (formId: string) => {
   //   const numericId = formId.startsWith("form-") ? formId.split("-")[1]! : formId
@@ -59,15 +59,21 @@ export default function FormsPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Your KPI&apos;s</h1>
-          <p className="text-gray-600 mt-2">Manage and edit your created KPI&apos;s</p>
+          <p className="text-gray-600 mt-2">
+            Manage and edit your created KPI&apos;s
+          </p>
         </div>
       </div>
 
       {isLoading && (
-        <p className="text-center text-black dark:text-white">Loading forms...</p>
+        <p className="text-center text-black dark:text-white">
+          Loading forms...
+        </p>
       )}
       {error && (
-        <p className="text-center text-red-600">Error loading forms: {error.message}</p>
+        <p className="text-center text-red-600">
+          Error loading forms: {error.message}
+        </p>
       )}
 
       {!isLoading && !error && (
@@ -93,7 +99,9 @@ export default function FormsPage() {
                 </p>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Link href={`/qoc/builder/form/view/${form.id.replace('form-', '')}`}>
+                <Link
+                  href={`/qoc/builder/form/view/${form.id.replace("form-", "")}`}
+                >
                   <Button>View</Button>
                 </Link>
               </CardFooter>
@@ -102,5 +110,5 @@ export default function FormsPage() {
         </div>
       )}
     </main>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-import { LucideIcon } from "lucide-react"
+import { LucideIcon } from "lucide-react";
 
-type ErrorName = 'PROCESSING_ERROR';
+type ErrorName = "PROCESSING_ERROR";
 
 export class ProcessError extends Error {
   name: ErrorName;
@@ -32,7 +32,7 @@ export type FormElementType =
   | "radio"
   | "date"
   | "email"
-  | "file"
+  | "file";
 
 export interface FormElementAttributes {
   label: string;

@@ -1,34 +1,68 @@
-"use client"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
+"use client";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 
-import { Button } from "@workspace/ui/components/button"
-import { Calendar } from "@workspace/ui/components/calendar"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@workspace/ui/components/form"
-import { Input } from "@workspace/ui/components/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/components/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
-import { Textarea } from "@workspace/ui/components/textarea"
-import { cn } from "@workspace/ui/lib/utils"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { toast } from "sonner"
-import { Checkbox } from "@workspace/ui/components/checkbox"
-import { Label } from "@workspace/ui/components/label"
-import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
+import { Button } from "@workspace/ui/components/button";
+import { Calendar } from "@workspace/ui/components/calendar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@workspace/ui/components/form";
+import { Input } from "@workspace/ui/components/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@workspace/ui/components/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
+import { Textarea } from "@workspace/ui/components/textarea";
+import { cn } from "@workspace/ui/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { toast } from "sonner";
+import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Label } from "@workspace/ui/components/label";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@workspace/ui/components/radio-group";
 
 interface KpiManagementProps {
-  kpiType: number
+  kpiType: number;
 }
 
 export function KpiManagement({ kpiType }: KpiManagementProps) {
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="mb-6 text-2xl font-bold">
-        {kpiType === 3 ? "KPI 3 - Value Added Courses" : "KPI 4 - Target Courses"}
+        {kpiType === 3
+          ? "KPI 3 - Value Added Courses"
+          : "KPI 4 - Target Courses"}
       </h1>
 
       <Tabs defaultValue="add" className="w-full">
@@ -36,32 +70,39 @@ export function KpiManagement({ kpiType }: KpiManagementProps) {
           <TabsTrigger value="add">Add New Entry</TabsTrigger>
           <TabsTrigger value="view">View Entries</TabsTrigger>
         </TabsList>
-        <TabsContent value="add">{kpiType === 3 ? <Kpi3Form /> : <Kpi4Form />}</TabsContent>
+        <TabsContent value="add">
+          {kpiType === 3 ? <Kpi3Form /> : <Kpi4Form />}
+        </TabsContent>
         <TabsContent value="view">
           <Card className="bg-card text-card-foreground">
             <CardHeader>
               <CardTitle>Existing Entries</CardTitle>
               <CardDescription>
-                View and manage your existing {kpiType === 3 ? "value added courses" : "target courses"}.
+                View and manage your existing{" "}
+                {kpiType === 3 ? "value added courses" : "target courses"}.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full rounded-md border border-dashed flex items-center justify-center">
-                <p className="text-muted-foreground">Data table will appear here</p>
+                <p className="text-muted-foreground">
+                  Data table will appear here
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 // KPI 3 Form
 function Kpi3Form() {
   const formSchema = z.object({
     serialNo: z.string().min(1, { message: "Serial number is required" }),
-    departmentName: z.string().min(1, { message: "Department name is required" }),
+    departmentName: z
+      .string()
+      .min(1, { message: "Department name is required" }),
     programName: z.string().min(1, { message: "Program name is required" }),
     programCode: z.string().min(1, { message: "Program code is required" }),
     courseValueAdded: z.string().min(1, { message: "Course name is required" }),
@@ -71,13 +112,17 @@ function Kpi3Form() {
     }),
     duration: z.string().min(1, { message: "Duration is required" }),
     session: z.string().min(1, { message: "Session is required" }),
-    studentsRegistered: z.string().min(1, { message: "Number of students is required" }),
-    studentsCompleted: z.string().min(1, { message: "Number of students is required" }),
+    studentsRegistered: z
+      .string()
+      .min(1, { message: "Number of students is required" }),
+    studentsCompleted: z
+      .string()
+      .min(1, { message: "Number of students is required" }),
     documents: z.any().optional(),
     qcVerification: z.string().optional(),
     qcRemarks: z.string().optional(),
     departmentRemarks: z.string().optional(),
-  })
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -96,21 +141,23 @@ function Kpi3Form() {
       qcRemarks: "",
       departmentRemarks: "",
     },
-  })
+  });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+    console.log(values);
     // Submit to your API
-    toast( "Form submitted",{
+    toast("Form submitted", {
       description: "Your KPI 3 entry has been submitted successfully.",
-    })
+    });
   }
 
   return (
     <Card className="bg-card text-card-foreground">
       <CardHeader>
         <CardTitle>KPI 3 - Value Added Courses</CardTitle>
-        <CardDescription>Add details about value added courses offered by your department.</CardDescription>
+        <CardDescription>
+          Add details about value added courses offered by your department.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -136,18 +183,29 @@ function Kpi3Form() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department Name</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="computer-science">Computer Science</SelectItem>
-                        <SelectItem value="electrical">Electrical Engineering</SelectItem>
-                        <SelectItem value="mechanical">Mechanical Engineering</SelectItem>
+                        <SelectItem value="computer-science">
+                          Computer Science
+                        </SelectItem>
+                        <SelectItem value="electrical">
+                          Electrical Engineering
+                        </SelectItem>
+                        <SelectItem value="mechanical">
+                          Mechanical Engineering
+                        </SelectItem>
                         <SelectItem value="civil">Civil Engineering</SelectItem>
-                        <SelectItem value="electronics">Electronics & Communication</SelectItem>
+                        <SelectItem value="electronics">
+                          Electronics & Communication
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -161,7 +219,10 @@ function Kpi3Form() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Program Name</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select program" />
@@ -233,15 +294,27 @@ function Kpi3Form() {
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
                           >
-                            {field.value ? format(field.value, "dd-MM-yyyy") : <span>DD-MM-YYYY</span>}
+                            {field.value ? (
+                              format(field.value, "dd-MM-yyyy")
+                            ) : (
+                              <span>DD-MM-YYYY</span>
+                            )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -256,7 +329,11 @@ function Kpi3Form() {
                   <FormItem>
                     <FormLabel>Duration of Course (in hours)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter duration" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="Enter duration"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -269,7 +346,10 @@ function Kpi3Form() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Session</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select session" />
@@ -294,7 +374,11 @@ function Kpi3Form() {
                   <FormItem>
                     <FormLabel>Number of Students Registered</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter number of students" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="Enter number of students"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -306,9 +390,15 @@ function Kpi3Form() {
                 name="studentsCompleted"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Students Completing with Certificate</FormLabel>
+                    <FormLabel>
+                      Number of Students Completing with Certificate
+                    </FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter number of students" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="Enter number of students"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -323,8 +413,9 @@ function Kpi3Form() {
                 <FormItem>
                   <FormLabel>Upload Documents (Single PDF)</FormLabel>
                   <FormDescription>
-                    Include: 1. Value added course brochure (in Q&C format), 2. BoS minutes highlighting course/s, 3.
-                    List of students, 4. Certificates of all students
+                    Include: 1. Value added course brochure (in Q&C format), 2.
+                    BoS minutes highlighting course/s, 3. List of students, 4.
+                    Certificates of all students
                   </FormDescription>
                   <FormControl>
                     <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -352,7 +443,7 @@ function Kpi3Form() {
                       <Checkbox
                         checked={field.value === "yes"}
                         onCheckedChange={(checked) => {
-                          field.onChange(checked ? "yes" : "no")
+                          field.onChange(checked ? "yes" : "no");
                         }}
                       />
                     </FormControl>
@@ -395,7 +486,11 @@ function Kpi3Form() {
 
             <div className="flex gap-2">
               <Button type="submit">Submit</Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+              >
                 Reset
               </Button>
             </div>
@@ -403,7 +498,7 @@ function Kpi3Form() {
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // KPI 4 Form
@@ -419,14 +514,20 @@ function Kpi4Form() {
     }),
     programStatus: z.string().min(1, { message: "Program status is required" }),
     courseCode: z.string().min(1, { message: "Course code is required" }),
-    targetCourseName: z.string().min(1, { message: "Target course name is required" }),
-    offeringDepartment: z.string().min(1, { message: "Offering department is required" }),
-    studentsEnrolled: z.string().min(1, { message: "Number of students is required" }),
+    targetCourseName: z
+      .string()
+      .min(1, { message: "Target course name is required" }),
+    offeringDepartment: z
+      .string()
+      .min(1, { message: "Offering department is required" }),
+    studentsEnrolled: z
+      .string()
+      .min(1, { message: "Number of students is required" }),
     documents: z.any().optional(),
     qcVerification: z.string().optional(),
     qcRemarks: z.string().optional(),
     departmentRemarks: z.string().optional(),
-  })
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -445,21 +546,23 @@ function Kpi4Form() {
       qcRemarks: "",
       departmentRemarks: "",
     },
-  })
+  });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
+    console.log(values);
     // Submit to your API
-    toast("Form submitted",{
+    toast("Form submitted", {
       description: "Your KPI 4 entry has been submitted successfully.",
-    })
+    });
   }
 
   return (
     <Card className="bg-card text-card-foreground">
       <CardHeader>
         <CardTitle>KPI 4 - Target Courses</CardTitle>
-        <CardDescription>Add details about target courses for your department.</CardDescription>
+        <CardDescription>
+          Add details about target courses for your department.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -485,18 +588,29 @@ function Kpi4Form() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="computer-science">Computer Science</SelectItem>
-                        <SelectItem value="electrical">Electrical Engineering</SelectItem>
-                        <SelectItem value="mechanical">Mechanical Engineering</SelectItem>
+                        <SelectItem value="computer-science">
+                          Computer Science
+                        </SelectItem>
+                        <SelectItem value="electrical">
+                          Electrical Engineering
+                        </SelectItem>
+                        <SelectItem value="mechanical">
+                          Mechanical Engineering
+                        </SelectItem>
                         <SelectItem value="civil">Civil Engineering</SelectItem>
-                        <SelectItem value="electronics">Electronics & Communication</SelectItem>
+                        <SelectItem value="electronics">
+                          Electronics & Communication
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -510,7 +624,10 @@ function Kpi4Form() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Program Name</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select program" />
@@ -579,15 +696,27 @@ function Kpi4Form() {
                         <FormControl>
                           <Button
                             variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
                           >
-                            {field.value ? format(field.value, "dd-MM-yyyy") : <span>DD-MM-YYYY</span>}
+                            {field.value ? (
+                              format(field.value, "dd-MM-yyyy")
+                            ) : (
+                              <span>DD-MM-YYYY</span>
+                            )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                        />
                       </PopoverContent>
                     </Popover>
                     <FormMessage />
@@ -641,7 +770,10 @@ function Kpi4Form() {
                   <FormItem>
                     <FormLabel>Name of Target Course</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter target course name" {...field} />
+                      <Input
+                        placeholder="Enter target course name"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -653,19 +785,32 @@ function Kpi4Form() {
                 name="offeringDepartment"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name of Department Offered Target Course</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>
+                      Name of Department Offered Target Course
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="computer-science">Computer Science</SelectItem>
-                        <SelectItem value="electrical">Electrical Engineering</SelectItem>
-                        <SelectItem value="mechanical">Mechanical Engineering</SelectItem>
+                        <SelectItem value="computer-science">
+                          Computer Science
+                        </SelectItem>
+                        <SelectItem value="electrical">
+                          Electrical Engineering
+                        </SelectItem>
+                        <SelectItem value="mechanical">
+                          Mechanical Engineering
+                        </SelectItem>
                         <SelectItem value="civil">Civil Engineering</SelectItem>
-                        <SelectItem value="electronics">Electronics & Communication</SelectItem>
+                        <SelectItem value="electronics">
+                          Electronics & Communication
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -678,9 +823,15 @@ function Kpi4Form() {
                 name="studentsEnrolled"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Your Department Students Enrolled</FormLabel>
+                    <FormLabel>
+                      Number of Your Department Students Enrolled
+                    </FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter number of students" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="Enter number of students"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -695,8 +846,9 @@ function Kpi4Form() {
                 <FormItem>
                   <FormLabel>Upload Documents (Single PDF)</FormLabel>
                   <FormDescription>
-                    Include: 1. Approved scheme of program, 2. AC minutes (in case of new program introduced), 3. BOS
-                    Minutes (in case of new program introduced), 4. Course handout
+                    Include: 1. Approved scheme of program, 2. AC minutes (in
+                    case of new program introduced), 3. BOS Minutes (in case of
+                    new program introduced), 4. Course handout
                   </FormDescription>
                   <FormControl>
                     <div className="grid w-full max-w-sm items-center gap-1.5">
@@ -724,7 +876,7 @@ function Kpi4Form() {
                       <Checkbox
                         checked={field.value === "yes"}
                         onCheckedChange={(checked) => {
-                          field.onChange(checked ? "yes" : "no")
+                          field.onChange(checked ? "yes" : "no");
                         }}
                       />
                     </FormControl>
@@ -767,7 +919,11 @@ function Kpi4Form() {
 
             <div className="flex gap-2">
               <Button type="submit">Submit</Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+              >
                 Reset
               </Button>
             </div>
@@ -775,6 +931,5 @@ function Kpi4Form() {
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }
-

@@ -1,9 +1,13 @@
-"use client"
+"use client";
 import React from "react";
 import TableFormRenderer from "@/components/formbuilder/table-rendered";
 import { useFetchAssignedKPIById } from "@/hooks/faculty";
 
-export default function KpiPage({ params }: { params: Promise<{ id: string }> }) {
+export default function KpiPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = React.use(params);
   const { data, isLoading, error } = useFetchAssignedKPIById(id);
   console.log("KPI Data:", data);

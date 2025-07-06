@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@repo/db' // Import Prisma client from the shared package
+import { NextResponse } from "next/server";
+import { prisma } from "@repo/db"; // Import Prisma client from the shared package
 
 // we will not be using this anymore
 
@@ -8,29 +8,34 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     // Parse the JSON body from the request
     const body = await request.json();
-    console.log('Request body:', body);
+    console.log("Request body:", body);
 
     // Extract relevant fields from the JSON
-    const { title, elements, createdAt , value, description  } = body;
+    const { title, elements, createdAt, value, description } = body;
 
     // Save the data to the `kpi` table
     const newKpi = await prisma.kpi.create({
       data: {
-        kpi_name: title || 'Untitled KPI', // Use title as the KPI name
+        kpi_name: title || "Untitled KPI", // Use title as the KPI name
         form_data: elements, // Save the `elements` field as JSON in `form_data`
-        kpi_description: description || 'No description provided', // Use description or default
+        kpi_description: description || "No description provided", // Use description or default
         kpi_value: value || 0, // Use value or default to 0
-        
 
         kpi_created_at: createdAt ? new Date(createdAt) : new Date(), // Use `createdAt` or default to now
       },
     });
 
     // Return a success response
-    return NextResponse.json({ message: 'KPI created successfully', kpi: newKpi });
+    return NextResponse.json({
+      message: "KPI created successfully",
+      kpi: newKpi,
+    });
   } catch (error) {
-    console.error('Error creating KPI:', error);
-    return NextResponse.json({ error: 'Failed to create KPI' }, { status: 500 });
+    console.error("Error creating KPI:", error);
+    return NextResponse.json(
+      { error: "Failed to create KPI" },
+      { status: 500 },
+    );
   }
 }
 
@@ -64,11 +69,17 @@ export async function GET(): Promise<NextResponse> {
     }));
 
     // Return the KPIs as a JSON response
-    console.log('Fetched KPIs:', formattedKpis);
-    return NextResponse.json({ message: 'KPIs fetched successfully', kpis: formattedKpis });
+    console.log("Fetched KPIs:", formattedKpis);
+    return NextResponse.json({
+      message: "KPIs fetched successfully",
+      kpis: formattedKpis,
+    });
   } catch (error) {
-    console.error('Error fetching KPIs:', error);
-    return NextResponse.json({ error: 'Failed to fetch KPIs' }, { status: 500 });
+    console.error("Error fetching KPIs:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch KPIs" },
+      { status: 500 },
+    );
   }
 }
 
@@ -79,10 +90,13 @@ export async function GET_BY_ID(request: Request): Promise<NextResponse> {
   try {
     // Extract the `kpi_id` from the query parameters
     const { searchParams } = new URL(request.url);
-    const kpiId = searchParams.get('id');
+    const kpiId = searchParams.get("id");
 
     if (!kpiId) {
-      return NextResponse.json({ error: 'KPI ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "KPI ID is required" },
+        { status: 400 },
+      );
     }
 
     // Fetch the KPI from the database
@@ -98,7 +112,7 @@ export async function GET_BY_ID(request: Request): Promise<NextResponse> {
     });
 
     if (!kpi) {
-      return NextResponse.json({ error: 'KPI not found' }, { status: 404 });
+      return NextResponse.json({ error: "KPI not found" }, { status: 404 });
     }
 
     // Format the response to match the required structure
@@ -113,7 +127,7 @@ export async function GET_BY_ID(request: Request): Promise<NextResponse> {
     // Return the formatted response
     return NextResponse.json(formattedResponse);
   } catch (error) {
-    console.error('Error fetching KPI:', error);
-    return NextResponse.json({ error: 'Failed to fetch KPI' }, { status: 500 });
+    console.error("Error fetching KPI:", error);
+    return NextResponse.json({ error: "Failed to fetch KPI" }, { status: 500 });
   }
 }

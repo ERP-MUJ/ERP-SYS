@@ -1,24 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Button } from "@workspace/ui/components/button"
-import { Badge } from "@workspace/ui/components/badge"
-import Link from "next/link"
-import { Eye, Filter } from "lucide-react"
+import { useState, useEffect, useRef } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
+import Link from "next/link";
+import { Eye, Filter } from "lucide-react";
 
-function useOutsideClick(ref: React.RefObject<HTMLDivElement>, callback: () => void) {
+function useOutsideClick(
+  ref: React.RefObject<HTMLDivElement>,
+  callback: () => void,
+) {
   useEffect(() => {
     function handleClick(event: MouseEvent) {
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        callback()
+        callback();
       }
     }
-    document.addEventListener("mousedown", handleClick)
+    document.addEventListener("mousedown", handleClick);
     return () => {
-      document.removeEventListener("mousedown", handleClick)
-    }
-  }, [ref, callback])
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [ref, callback]);
 }
 
 // Mock data for submissions
@@ -55,35 +63,46 @@ const mockSubmissions = [
     submittedAt: "2023-10-05",
     status: "pending",
   },
-]
+];
 
 export function QOCReview() {
-  const [filter, setFilter] = useState<"all" | "approved" | "rejected" | "pending">("all")
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [filter, setFilter] = useState<
+    "all" | "approved" | "rejected" | "pending"
+  >("all");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
-  useOutsideClick(dropdownRef, () => setDropdownOpen(false))
+  useOutsideClick(dropdownRef, () => setDropdownOpen(false));
 
   const filteredSubmissions =
     filter === "all"
       ? mockSubmissions
-      : mockSubmissions.filter((submission) => submission.status === filter)
+      : mockSubmissions.filter((submission) => submission.status === filter);
 
-  const handleFilterSelect = (status: "all" | "approved" | "rejected" | "pending") => {
-    setFilter(status)
-    setDropdownOpen(false)
-  }
+  const handleFilterSelect = (
+    status: "all" | "approved" | "rejected" | "pending",
+  ) => {
+    setFilter(status);
+    setDropdownOpen(false);
+  };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Review Submissions</h1>
-        <p className="text-muted-foreground mt-2">Review and analyze KPI submissions from departments</p>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Review Submissions
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Review and analyze KPI submissions from departments
+        </p>
       </div>
 
       <div className="relative flex justify-end">
-        <Button variant="outline" onClick={() => setDropdownOpen(!dropdownOpen)}>
+        <Button
+          variant="outline"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+        >
           <Filter className="mr-2 h-4 w-4" />
           Filter
         </Button>
@@ -143,7 +162,9 @@ export function QOCReview() {
           <Card key={submission.id}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">{submission.department}</CardTitle>
+                <CardTitle className="text-lg">
+                  {submission.department}
+                </CardTitle>
                 <Badge
                   variant={
                     submission.status === "approved"
@@ -153,7 +174,8 @@ export function QOCReview() {
                         : "pending"
                   }
                 >
-                  {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                  {submission.status.charAt(0).toUpperCase() +
+                    submission.status.slice(1)}
                 </Badge>
               </div>
             </CardHeader>
@@ -161,15 +183,21 @@ export function QOCReview() {
               <div className="grid gap-2 md:grid-cols-3">
                 <div>
                   <p className="text-sm font-medium">Template</p>
-                  <p className="text-sm text-muted-foreground">{submission.template}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {submission.template}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Submitted By</p>
-                  <p className="text-sm text-muted-foreground">{submission.submittedBy}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {submission.submittedBy}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Submitted On</p>
-                  <p className="text-sm text-muted-foreground">{submission.submittedAt}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {submission.submittedAt}
+                  </p>
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
@@ -185,5 +213,5 @@ export function QOCReview() {
         ))}
       </div>
     </div>
-  )
+  );
 }

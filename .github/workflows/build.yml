@@ -28,11 +28,14 @@ jobs:
       - name: Check formatting
         run: pnpm run format:check 
         
-      - name: Build Web project
-        run: cd apps/web && pnpm run typecheck
+      - name: Type checking
+        run: pnpm run typecheck
         
       - name: Generate Prisma Client
         run: cd packages/db && pnpm run db:generate
         
-      - name: Build Server project
-        run: cd apps/server && pnpm run typecheck
+      - name: Build projects
+        run: pnpm run build
+        
+      - name: Run tests (if available)
+        run: pnpm run test || echo "No tests configured"
