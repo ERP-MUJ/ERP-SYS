@@ -68,3 +68,35 @@ export const useFetchAssignedKpis = (
     enabled: !!departmentId && !!pillarId,
   });
 };
+
+export function useCreatePillar() {
+  return useMutation({
+    mutationFn: async ({ pillar_name, department_id }: { pillar_name: string; department_id: string }) => {
+      const response = await axios.post("/api/pillar", { pillar_name, department_id });
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Pillar created successfully!");
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || "Unknown error occurred";
+      toast.error("Error creating pillar", { description: errorMessage });
+    },
+  });
+}
+
+export function useFetchPillars() {
+  return useQuery({
+    queryKey: ["pillars"],
+    queryFn: async () => {
+      const response = await axios.get("/api/pillar");
+      return response.data.pillars.map((pillar: any) => ({
+        id: pillar.pillar_id,
+        name: pillar.pillar_name,
+        ...pillar,
+      }));
+    },
+    staleTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
