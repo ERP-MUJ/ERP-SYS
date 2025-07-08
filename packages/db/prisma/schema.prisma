@@ -10,10 +10,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
+
 
 // Enum for user roles
 enum UserRole {
@@ -24,12 +24,12 @@ enum UserRole {
 
 // QOC table - separate entity with full system access
 model qoc {
-  qoc_id       Int    @id @default(autoincrement())
-  qoc_name     String @db.VarChar(255)
-  qoc_email    String @unique
-  qoc_password String @db.Text
-  qoc_role     String @db.VarChar(50)
-  created_at   DateTime @default(now()) @db.Timestamp(0)
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  qoc_name    String
+  qoc_email   String   @unique
+  qoc_password String
+  qoc_role    String
+  created_at  DateTime @default(now())
   
   // QOC creates pillar and KPI templates
   pillar_templates pillar_templates[]
@@ -38,116 +38,103 @@ model qoc {
 
 // Departments table
 model departments {
-  dept_id       Int       @id @default(autoincrement())
-  dept_name     String    @unique(map: "dept_name")
-  hod_id        Int?
-  dept_creation DateTime? @default(now()) @db.Timestamp(0)
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  dept_name     String   @unique
+  hod_id        String?  @db.ObjectId
+  dept_creation DateTime? @default(now())
   hod_name      String?
   
   // Relations
   users                users[]
   department_pillars   department_pillars[]
   department_kpis      department_kpis[]
-
-  @@index([hod_id], map: "fk_departments_hod")
 }
 
 // Users table - belongs to a department
 model users {
-  user_id       Int          @id @default(autoincrement())
-  user_name     String       @db.Char(50)
-  user_email    String       @unique(map: "user_email")
-  user_password String       @db.Text
-  user_role     UserRole     @default(faculty) // hod, kpi_coordinator, faculty
-  dept_id       Int          // Required - every user must belong to a department
-  created_at    DateTime     @default(now()) @db.Timestamp(0)
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  user_name     String
+  user_email    String   @unique
+  user_password String
+  user_role     UserRole @default(faculty) // hod, kpi_coordinator, faculty
+  dept_id       String   @db.ObjectId // Required - every user must belong to a department
+  created_at    DateTime @default(now())
   
-  department    departments  @relation(fields: [dept_id], references: [dept_id], onDelete: Cascade)
-
-  @@index([dept_id], map: "fk_users_dept")
+  department    departments  @relation(fields: [dept_id], references: [id], onDelete: Cascade)
 }
 
 // Pillar templates created by QOC
 model pillar_templates {
-  template_id     Int       @id @default(autoincrement())
-  pillar_name     String    @db.VarChar(255)
-  description     String?   @db.Text
-  created_by_qoc  Int       // Foreign key to QOC
-  created_at      DateTime  @default(now()) @db.Timestamp(0)
-  updated_at      DateTime  @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  pillar_name   String
+  description   String?
+  created_by_qoc String  @db.ObjectId // Foreign key to QOC
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
   
-  qoc             qoc       @relation(fields: [created_by_qoc], references: [qoc_id], onDelete: Cascade)
+  qoc             qoc       @relation(fields: [created_by_qoc], references: [id], onDelete: Cascade)
   
   // When assigned to departments, creates department_pillars
   department_pillars department_pillars[]
-  
-  @@index([created_by_qoc], map: "fk_pillar_templates_qoc")
 }
 
 // KPI templates created by QOC
 model kpi_templates {
-  template_id     Int       @id @default(autoincrement())
-  kpi_name        String    @db.VarChar(255)
-  kpi_description String?   @db.Text
-  form_data       Json      // Template form structure
-  target_value    Float?    // Default target value
-  created_by_qoc  Int       // Foreign key to QOC
-  created_at      DateTime  @default(now()) @db.Timestamp(0)
-  updated_at      DateTime  @updatedAt
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  kpi_name      String
+  kpi_description String?
+  form_data     Json      // Template form structure
+  target_value  Float?    // Default target value
+  created_by_qoc String   @db.ObjectId // Foreign key to QOC
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
   
-  qoc             qoc       @relation(fields: [created_by_qoc], references: [qoc_id], onDelete: Cascade)
+  qoc             qoc       @relation(fields: [created_by_qoc], references: [id], onDelete: Cascade)
   
   // When assigned to departments, creates department_kpis
   department_kpis department_kpis[]
-  
-  @@index([created_by_qoc], map: "fk_kpi_templates_qoc")
 }
 
 // Department-specific pillars (copies of templates)
 model department_pillars {
-  dept_pillar_id    Int       @id @default(autoincrement())
-  dept_id           Int       // Foreign key to departments
-  template_id       Int       // Reference to original template
-  pillar_name       String    @db.VarChar(255) // Copy from template
-  description       String?   @db.Text // Copy from template
-  assigned_date     DateTime  @default(now()) @db.Timestamp(0)
-  status            String    @default("active") @db.VarChar(50) // active, inactive, completed
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  dept_id       String   @db.ObjectId // Foreign key to departments
+  template_id   String   @db.ObjectId // Reference to original template
+  pillar_name   String   // Copy from template
+  description   String?  // Copy from template
+  assigned_date DateTime @default(now())
+  status        String   @default("active") // active, inactive, completed
   
-  department        departments      @relation(fields: [dept_id], references: [dept_id], onDelete: Cascade)
-  pillar_template   pillar_templates @relation(fields: [template_id], references: [template_id], onDelete: Cascade)
+  department        departments      @relation(fields: [dept_id], references: [id], onDelete: Cascade)
+  pillar_template   pillar_templates @relation(fields: [template_id], references: [id], onDelete: Cascade)
   
   // Relations to department KPIs
   department_kpis   department_kpis[]
   
-  @@unique([dept_id, template_id], map: "dept_pillar_template_unique") // One pillar template per department
-  @@index([dept_id], map: "fk_dept_pillars_dept")
-  @@index([template_id], map: "fk_dept_pillars_template")
+  @@unique([dept_id, template_id]) // One pillar template per department
 }
 
 // Department-specific KPIs (copies of templates assigned to pillars)
 model department_kpis {
-  dept_kpi_id       Int       @id @default(autoincrement())
-  dept_id           Int       // Foreign key to departments
-  dept_pillar_id    Int       // Foreign key to department_pillars
-  template_id       Int       // Reference to original template
-  kpi_name          String    @db.VarChar(255) // Copy from template
-  kpi_description   String?   @db.Text // Copy from template
-  form_data         Json      // Copy from template
-  target_value      Float?    // Copy from template, can be modified
-  current_value     Float?    // Actual achieved value
-  kpi_status        String    @default("pending") @db.VarChar(50) // pending, in_progress, completed, overdue
-  assigned_date     DateTime  @default(now()) @db.Timestamp(0)
-  due_date          DateTime? // Optional due date
-  completed_date    DateTime? // Date when KPI was completed
-  comments          String?   @db.Text
-  form_responses    Json?     // User responses to the form
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  dept_id       String   @db.ObjectId // Foreign key to departments
+  dept_pillar_id String  @db.ObjectId // Foreign key to department_pillars
+  template_id   String   @db.ObjectId // Reference to original template
+  kpi_name      String   // Copy from template
+  kpi_description String? // Copy from template
+  form_data     Json      // Copy from template
+  target_value  Float?    // Copy from template, can be modified
+  current_value Float?    // Actual achieved value
+  kpi_status    String    @default("pending") // pending, in_progress, completed, overdue
+  assigned_date DateTime  @default(now())
+  due_date      DateTime? // Optional due date
+  completed_date DateTime? // Date when KPI was completed
+  comments      String?
+  form_responses Json?     // User responses to the form
   
-  department        departments        @relation(fields: [dept_id], references: [dept_id], onDelete: Cascade)
-  department_pillar department_pillars @relation(fields: [dept_pillar_id], references: [dept_pillar_id], onDelete: Cascade)
-  kpi_template      kpi_templates      @relation(fields: [template_id], references: [template_id], onDelete: Cascade)
+  department        departments        @relation(fields: [dept_id], references: [id], onDelete: Cascade)
+  department_pillar department_pillars @relation(fields: [dept_pillar_id], references: [id], onDelete: Cascade)
+  kpi_template      kpi_templates      @relation(fields: [template_id], references: [id], onDelete: Cascade)
   
-  @@unique([dept_pillar_id, template_id], map: "dept_kpi_pillar_template_unique") // One KPI template per pillar per department
-  @@index([dept_id], map: "fk_dept_kpis_dept")
-  @@index([dept_pillar_id], map: "fk_dept_kpis_pillar")
-  @@index([template_id], map: "fk_dept_kpis_template")
+  @@unique([dept_pillar_id, template_id]) // One KPI template per pillar per department
 }
