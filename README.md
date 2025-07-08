@@ -73,16 +73,20 @@ Future portals include (TBD):
 - Pages:
   - KPI Management
     - KPI Metadata with button that leads to a page with the following:
-      - Table to add data and make sure to check and show existing data.
-      - Button to save the data.
-      - Button to download the template in excel/pdf format.
-      - Button to upload the data in excel/pdf format.
-      - Button to generate the report in excel/pdf format.
+      - Table to add data and make sure to check and show existing data. (Front-end done)
+      - Button to save the data. (Front-end done)
+      - Button to download the template in excel/pdf format. (Front-end done)
+      - Button to upload the data in excel/pdf format. (Front-end done)
+      - Button to generate the report in excel/pdf format. (Front-end done)
   - Assign KPI Coordinators:
     - Show Existing Coordinators with button to add new coordinator.
     - Button to edit and delete existing coordinators.
     - Kpi Coordinator metadata to be shown as well in tabular format.
-
+- To Do:
+  - Generate report functionality
+  - Upload excel
+  - Download excel/pdf
+    
 ## Faculty (Check role on login and show correct dashboard can be for coordinator or normal faculty)
 
 **KPI Coordinator Dashboard**
