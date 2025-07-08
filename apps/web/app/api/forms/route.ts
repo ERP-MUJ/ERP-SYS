@@ -60,6 +60,7 @@ export async function GET(): Promise<NextResponse> {
     // Format the response to include the elements field
     const formattedKpis = kpis.map((kpi) => ({
       id: `form-${kpi.kpi_id}`,
+      kpi_id: kpi.kpi_id, // Include the raw numeric kpi_id
       title: kpi.kpi_name,
       value: kpi.kpi_value,
       description: kpi.kpi_description,

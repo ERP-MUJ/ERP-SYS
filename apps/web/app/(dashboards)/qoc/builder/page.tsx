@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import type { FormConfig } from "@/lib/types";
 
 export default function KpiBuilderPage() {
   const { data: departments } = useFetchDepartments();
@@ -40,22 +41,27 @@ export default function KpiBuilderPage() {
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const assignKpiMutation = useAssignKpiToPillar();
+  const [assigningKpiId, setAssigningKpiId] = useState<string | null>(null);
 
   // Get pillars for selected department
   const pillars = departments?.find((d) => d.id.toString() === selectedDepartmentId)?.pillars || [];
 
   // Fetch assigned KPIs for the selected pillar
-  const { data: assignedKpisData, isLoading: isLoadingAssigned } = useFetchAssignedKpis(selectedDepartmentId, selectedPillarId);
-  const assignedKpis = assignedKpisData?.assignedKpis || [];
+  const { data: assignedKpisData, isLoading: isLoadingAssigned } = useFetchAssignedKpis(
+    selectedDepartmentId ?? undefined,
+    selectedPillarId ?? undefined
+  );
+  const assignedKpis: any[] = assignedKpisData?.assignedKpis || [];
 
   // Fetch all KPIs
-  const { data: allKpis, isLoading: isLoadingAllKpis } = useFetchForms();
+  type KpiWithId = FormConfig & { kpi_id?: number };
+  const { data: allKpisRaw, isLoading: isLoadingAllKpis } = useFetchForms();
+  const allKpis: KpiWithId[] = allKpisRaw || [];
 
   // Filter available KPIs (not already assigned)
-  const assignedKpiIds = new Set(assignedKpis.map(kpi => kpi.kpi_id?.toString() || kpi.id?.toString()));
-  const availableKpis = allKpis?.filter(kpi => !assignedKpiIds.has(kpi.id?.toString())) || [];
-
-  const assignKpiMutation = useAssignKpiToPillar();
+  const assignedKpiIds = new Set(assignedKpis.map((kpi: any) => kpi.kpi_id?.toString() || kpi.id?.toString()));
+  const availableKpis = allKpis.filter((kpi: KpiWithId) => !assignedKpiIds.has(kpi.id?.toString()));
 
   const handleCreatePillar = () => {
     if (!newPillarName.trim()) {
@@ -108,11 +114,22 @@ export default function KpiBuilderPage() {
 
   const handleAssignKpi = (kpiId: string) => {
     if (!selectedDepartmentId || !selectedPillarId) return;
-    assignKpiMutation.mutate({
-      departmentId: selectedDepartmentId,
-      pillarId: selectedPillarId,
-      kpiIds: [kpiId],
-    });
+    const kpi = allKpis.find((k: KpiWithId) => k.id === kpiId);
+    if (!kpi || typeof kpi.kpi_id !== "number") {
+      toast.error("KPI ID not found. Cannot assign.");
+      return;
+    }
+    setAssigningKpiId(kpiId);
+    assignKpiMutation.mutate(
+      {
+        departmentId: selectedDepartmentId,
+        pillarId: selectedPillarId,
+        kpiIds: [kpi.kpi_id],
+      },
+      {
+        onSettled: () => setAssigningKpiId(null),
+      }
+    );
   };
 
   return (
@@ -149,11 +166,19 @@ export default function KpiBuilderPage() {
         <>
           {/* Assigned KPIs */}
           <h2 className="text-xl font-semibold mb-2">Assigned KPIs</h2>
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() => router.push(`/qoc/builder/create?departmentId=${selectedDepartmentId}&pillarId=${selectedPillarId}`)}
+              disabled={!selectedDepartmentId || !selectedPillarId}
+            >
+              + Create KPI
+            </Button>
+          </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {isLoadingAssigned ? <p>Loading...</p> :
               assignedKpis.length === 0 ? <p>No KPIs assigned to this pillar.</p> :
-              assignedKpis.map((kpi) => (
-                <Card key={kpi.kpi_id || kpi.id}>
+              assignedKpis.map((kpi: any) => (
+                <Card key={kpi.kpi_id ? kpi.kpi_id.toString() : kpi.id}>
                   <CardHeader>
                     <CardTitle>{kpi.kpi_name || kpi.title}</CardTitle>
                     <CardDescription>
@@ -186,8 +211,8 @@ export default function KpiBuilderPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {isLoadingAllKpis ? <p>Loading...</p> :
               availableKpis.length === 0 ? <p>No available KPIs to assign.</p> :
-              availableKpis.map((kpi) => (
-                <Card key={kpi.id}>
+              availableKpis.map((kpi: KpiWithId) => (
+                <Card key={typeof kpi.id === 'string' ? kpi.id : (kpi.kpi_id ? kpi.kpi_id.toString() : '')}>
                   <CardHeader>
                     <CardTitle>{kpi.title}</CardTitle>
                     <CardDescription>
@@ -209,8 +234,8 @@ export default function KpiBuilderPage() {
                     <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(kpi.id)}>
                       Delete
                     </Button>
-                    <Button size="sm" variant="default" onClick={() => handleAssignKpi(kpi.id)} disabled={assignKpiMutation.isPending}>
-                      {assignKpiMutation.isPending ? "Assigning..." : "Assign"}
+                    <Button size="sm" variant="default" onClick={() => handleAssignKpi(kpi.id)} disabled={assigningKpiId === kpi.id}>
+                      {assigningKpiId === kpi.id ? "Assigning..." : "Assign"}
                     </Button>
                   </CardFooter>
                 </Card>
