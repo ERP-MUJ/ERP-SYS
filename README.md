@@ -202,10 +202,50 @@ To add new components from `shadcn/ui` to the frontend:
 pnpm dlx shadcn@latest add [component-name] -c apps/web
 ```
 
-## Database
+## Database Architecture
 
+### Technology Stack
 - **ORM**: Prisma
 - **Database**: PostgreSQL
+- **Schema**: Multi-tenant architecture with role-based access control
+
+### Schema Overview
+
+The ERP-SYS database is built around a **template-based KPI management system** with the following key components:
+
+#### Core Entities
+
+1. **QOC (Quality of Academic and Career)** - System administrators who create and manage templates
+2. **Departments** - Organizational units within the institution  
+3. **Users** - Department members with role-based access (HOD, KPI Coordinator, Faculty)
+4. **Pillar Templates** - Organizational framework templates created by QOC
+5. **KPI Templates** - Performance indicator templates with form structures
+6. **Department Pillars** - Department-specific instances of pillar templates
+7. **Department KPIs** - Operational KPI tracking with performance data
+
+#### Key Features
+
+- **Template System**: QOC creates reusable pillar and KPI templates
+- **Department Assignment**: Templates are assigned to departments as working copies
+- **Role-Based Access**: Three user roles with different permissions
+- **Performance Tracking**: Comprehensive KPI status management and progress monitoring
+- **Form Builder Integration**: JSON-based dynamic forms for data collection
+- **Data Isolation**: Department-level data access controls
+
+#### Data Flow
+
+```
+QOC Creates Templates → Assigns to Departments → Department Copies Created → Users Fill KPIs
+```
+
+#### User Roles & Permissions
+
+- **QOC**: Full system access, template creation and management
+- **HOD**: Department management, KPI assignment, user coordination  
+- **KPI Coordinator**: KPI fulfillment coordination within department
+- **Faculty**: KPI data entry and completion
+
+For detailed schema documentation, see [SCHEMA_DOCUMENTATION.md](./SCHEMA_DOCUMENTATION.md).
 
 ---
 
