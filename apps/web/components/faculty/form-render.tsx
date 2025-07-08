@@ -12,21 +12,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@workspace/ui/components/textarea"
 import { toast } from "sonner"
 import { Loader2, CheckCircle2 } from "lucide-react"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
 
 interface FormRendererProps {
   name: string
   elements: FormElementInstance[]
 }
 
+type FormValue = string | number | boolean | Date | null
+type FormOption = { label: string; value: string }
+
 export default function FormRenderer({ name, elements }: FormRendererProps) {
-  // Define all hooks at the top level - never conditionally
-  const [formData, setFormData] = useState<Record<string, any>>({})
+  const [formData, setFormData] = useState<Record<string, FormValue>>({})
   const [files, setFiles] = useState<Record<string, FileList | null>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  const handleChange = (elementId: string, value: any) => {
+  const handleChange = (elementId: string, value: FormValue) => {
     setFormData((prev) => ({ ...prev, [elementId]: value }))
   }
 
@@ -44,9 +46,9 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
     e.preventDefault()
     setIsSubmitting(true)
 
-  console.log("Form Data:", formData);
-  console.log("Uploaded Files:", files);
-    
+    console.log("Form Data:", formData)
+    console.log("Uploaded Files:", files)
+
     setTimeout(() => {
       setIsSubmitting(false)
       setIsSubmitted(true)
@@ -68,13 +70,20 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
             <Input
               id={elementId}
               placeholder={attributes.placeholder}
-              value={formData[elementId] || ""}
+              value={
+                typeof formData[elementId] === "string" || typeof formData[elementId] === "number"
+                  ? formData[elementId]
+                  : formData[elementId] instanceof Date
+                  ? formData[elementId].toISOString().slice(0, 10)
+                  : ""
+              }
               onChange={(e) => handleChange(elementId, e.target.value)}
               required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             />
           </div>
         )
+
       case "textarea":
         return (
           <div className="space-y-2">
@@ -86,13 +95,20 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
               id={elementId}
               placeholder={attributes.placeholder}
               rows={attributes.rows}
-              value={formData[elementId] || ""}
+              value={
+                typeof formData[elementId] === "string" || typeof formData[elementId] === "number"
+                  ? formData[elementId]
+                  : formData[elementId] instanceof Date
+                  ? formData[elementId].toISOString().slice(0, 10)
+                  : ""
+              }
               onChange={(e) => handleChange(elementId, e.target.value)}
               required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             />
           </div>
         )
+
       case "number":
         return (
           <div className="space-y-2">
@@ -106,13 +122,21 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
               placeholder={attributes.placeholder}
               min={attributes.min}
               max={attributes.max}
-              value={formData[elementId] || ""}
-              onChange={(e) => handleChange(elementId, Number.parseInt(e.target.value))}
+              value={
+                typeof formData[elementId] === "string" || typeof formData[elementId] === "number"
+                  ? formData[elementId]
+                  : formData[elementId] instanceof Date
+                  ? formData[elementId].toISOString().slice(0, 10)
+                  : ""
+              }
+
+              onChange={(e) => handleChange(elementId, Number.parseFloat(e.target.value))}
               required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             />
           </div>
         )
+
       case "select":
         return (
           <div className="space-y-2">
@@ -121,16 +145,15 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
               {attributes.required && " *"}
             </Label>
             <Select
-              value={formData[elementId] || ""}
+              value={(formData[elementId] as string) || ""}
               onValueChange={(value) => handleChange(elementId, value)}
-              required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             >
               <SelectTrigger id={elementId}>
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map((option: any, index: number) => (
+                {(attributes.options as FormOption[])?.map((option, index) => (
                   <SelectItem key={index} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -139,13 +162,14 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
             </Select>
           </div>
         )
+
       case "checkbox":
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
               id={elementId}
-              checked={formData[elementId] || false}
-              onCheckedChange={(checked) => handleChange(elementId, checked)}
+              checked={Boolean(formData[elementId])}
+              onCheckedChange={(checked) => handleChange(elementId, Boolean(checked))}
               required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             />
@@ -155,6 +179,7 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
             </Label>
           </div>
         )
+
       case "radio":
         return (
           <div className="space-y-2">
@@ -163,12 +188,11 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
               {attributes.required && " *"}
             </Label>
             <RadioGroup
-              value={formData[elementId] || ""}
+              value={(formData[elementId] as string) || ""}
               onValueChange={(value) => handleChange(elementId, value)}
-              required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             >
-              {attributes.options?.map((option: any, index: number) => (
+              {(attributes.options as FormOption[])?.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} id={`${elementId}-${index}`} />
                   <Label htmlFor={`${elementId}-${index}`}>{option.label}</Label>
@@ -177,6 +201,7 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
             </RadioGroup>
           </div>
         )
+
       case "date":
         return (
           <div className="space-y-2">
@@ -187,13 +212,14 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
             <Input
               id={elementId}
               type="date"
-              value={formData[elementId] || ""}
+              value={(formData[elementId] as string) || ""}
               onChange={(e) => handleChange(elementId, e.target.value)}
               required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             />
           </div>
         )
+
       case "email":
         return (
           <div className="space-y-2">
@@ -205,14 +231,22 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
               id={elementId}
               type="email"
               placeholder={attributes.placeholder}
-              value={formData[elementId] || ""}
+              value={
+                typeof formData[elementId] === "string" || typeof formData[elementId] === "number"
+                  ? formData[elementId]
+                  : formData[elementId] instanceof Date
+                  ? formData[elementId].toISOString().slice(0, 10)
+                  : ""
+              }
+
               onChange={(e) => handleChange(elementId, e.target.value)}
               required={attributes.required}
               disabled={isSubmitting || isSubmitted}
             />
           </div>
         )
-      case "file":
+
+           case "file":
         return (
           <div className="space-y-2">
             <Label htmlFor={elementId}>
@@ -244,11 +278,10 @@ export default function FormRenderer({ name, elements }: FormRendererProps) {
           </div>
         )
       default:
-        return <div>Unknown element type</div>
+        return null
     }
   }
 
-  // Instead of early return, use conditional rendering inside the main return
   return (
     <Card>
       <CardHeader>

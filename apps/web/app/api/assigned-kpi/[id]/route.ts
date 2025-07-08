@@ -150,7 +150,18 @@ export async function PUT(
     }
     
     // Update data preparation
-    const updateData: any = {};
+   const updateData: AssignedKpiUpdateInput = {};
+    type AssignedKpiUpdateInput = {
+  pillar_id?: number;
+  kpi_status?: string;
+  comments?: string;
+  form_data?: object[]; // or your exact FormElement[] type
+  resolved_date?: Date;
+  kpi_value?: number;
+  kpi_description?: string;
+  form_input?: object; // adjust to actual expected type
+};
+
     
     if (body.pillar_id) updateData.pillar_id = Number(body.pillar_id);
     if (kpi_status !== undefined) updateData.kpi_status = kpi_status;

@@ -1,7 +1,7 @@
-import { useFetchForms } from "@/hooks/forms";
-import { Home, Hammer, Check, Settings, LayoutDashboard, LineChart, User2, Eye, DownloadCloudIcon } from "lucide-react"; // Icons
+// import { useFetchForms } from "@/hooks/forms";
+import { Home, Hammer, Check, Settings, LayoutDashboard, LineChart, User2, DownloadCloudIcon } from "lucide-react"; // Icons
 import { SidebarItem } from "@/lib/types";
-import { useFetchAssignedKPI } from "@/hooks/faculty";
+// import { useFetchAssignedKPI } from "@/hooks/faculty";
 
 type SidebarConfig = Record<string, { title: string; items: SidebarItem[] }
 >;

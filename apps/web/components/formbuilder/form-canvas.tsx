@@ -7,7 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 
 interface FormCanvasProps {
   elements: FormElementInstance[]
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (id: string, attributes: Record<string, unknown>) => void
   removeElement: (id: string) => void
 }
 

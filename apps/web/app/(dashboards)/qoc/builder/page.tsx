@@ -42,8 +42,8 @@ export default function FormsPage() {
     <main className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Your KPI's</h1>
-          <p className="text-gray-600 mt-2">Manage and edit your created KPI's</p>
+          <h1 className="text-3xl font-bold">Your KPI&apos;s</h1>
+          <p className="text-gray-600 mt-2">Manage and edit your created KPI&apos;s</p>
         </div>
         <Link href="/qoc/builder/create">
           <Button>

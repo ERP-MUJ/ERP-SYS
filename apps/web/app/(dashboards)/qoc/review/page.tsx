@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/al
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,  } from "@workspace/ui/components/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import { Textarea } from "@workspace/ui/components/textarea"
-import { DialogClose } from "@workspace/ui/components/dialog"
+// import { DialogClose } from "@workspace/ui/components/dialog"
 import { Check, Eye, X , AlertCircle } from "lucide-react"
 import { Badge } from "@workspace/ui/components/badge"
 

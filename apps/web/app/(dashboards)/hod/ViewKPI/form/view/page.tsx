@@ -3,6 +3,7 @@ import { Button } from "@workspace/ui/components/button"
 import Link from "next/link"
 import { ArrowLeft, Edit } from "lucide-react"
 import FormPreview from "@/components/formbuilder/form-preview"
+import { getKpiById } from "@/lib/kpi" // Adjust the import path as needed
 
 interface KpiViewPageProps {
   params: {
@@ -32,7 +33,7 @@ export default async function KpiViewPage({ params }: KpiViewPageProps) {
 
         <div className="text-center py-12 border rounded-lg bg-gray-50">
           <h3 className="text-lg font-medium mb-2">No form created yet</h3>
-          <p className="text-gray-500 mb-6">This KPI doesn't have an associated form</p>
+          <p className="text-gray-500 mb-6">This KPI doesnt have an associated form</p>
           <Link href={`/kpi/${kpi.id}/form`}>
             <Button>
               <Edit className="mr-2 h-4 w-4" />
@@ -66,7 +67,7 @@ export default async function KpiViewPage({ params }: KpiViewPageProps) {
       </div>
 
       <div className="max-w-3xl mx-auto">
-        <FormPreview formTitle={kpi.name} elements={kpi.form.elements} kpiId={kpi.id} />
+        <FormPreview formTitle={kpi.name} elements={kpi.form.elements} />
       </div>
     </main>
   )

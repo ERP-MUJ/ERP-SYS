@@ -4,7 +4,7 @@ import { prisma } from '@repo/db'; // Make sure this points to your Prisma clien
 /**
  * GET function to fetch all departments.
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const departments = await prisma.departments.findMany({
       include: {
@@ -132,7 +132,11 @@ export async function PUT(request: Request) {
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: {
+      dept_name?: string;
+      hod_id?: number | null;
+      hod_name?: string | null;
+    } = {};
     if (dept_name) updateData.dept_name = dept_name;
     if (hod_id !== undefined) updateData.hod_id = hod_id || null;
     if (hod_name !== undefined) updateData.hod_name = hod_name || null;
@@ -152,7 +156,7 @@ export async function PUT(request: Request) {
     console.error('Error updating department:', error);
     
     // Handle unique constraint violation (duplicate department name)
-    if ((error as any).code === 'P2002') {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json(
         { success: false, error: 'A department with this name already exists' },
         { status: 400 }

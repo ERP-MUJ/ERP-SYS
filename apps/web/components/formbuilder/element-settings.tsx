@@ -11,14 +11,14 @@ import { useState } from "react"
 
 interface ElementSettingsProps {
   element: FormElementInstance
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (id: string, attributes: Record<string, unknown>) => void
   onClose: () => void
 }
 
 export default function ElementSettings({ element, updateElement, onClose }: ElementSettingsProps) {
   const { attributes } = element
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (key: string, value: unknown) => {
     updateElement(element.id, { [key]: value })
   }
 
@@ -164,7 +164,7 @@ export default function ElementSettings({ element, updateElement, onClose }: Ele
 
 interface OptionsEditorProps {
   element: FormElementInstance
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (id: string, attributes: Record<string, unknown>) => void
 }
 
 function OptionsEditor({ element, updateElement }: OptionsEditorProps) {

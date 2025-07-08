@@ -32,7 +32,7 @@ import ElementSettings from "./element-settings"
 interface FormElementProps {
   element: FormElementInstance
   isOverlay?: boolean
-  updateElement: (id: string, attributes: Record<string, any>) => void
+  updateElement: (id: string, attributes: Record<string, unknown>) => void
   removeElement: (id: string) => void
 }
 
@@ -109,7 +109,7 @@ export default function FormElement({ element, isOverlay = false, updateElement,
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map((option: any, index: number) => (
+                {attributes.options?.map((option: { label: string; value: string }, index: number) => (
                   <SelectItem key={index} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -130,7 +130,7 @@ export default function FormElement({ element, isOverlay = false, updateElement,
           <div className="space-y-2">
             <Label>{attributes.label}</Label>
             <RadioGroup>
-              {attributes.options?.map((option: any, index: number) => (
+              {attributes.options?.map((option: { label: string; value: string }, index: number) => (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} id={`radio-${element.id}-${index}`} />
                   <Label htmlFor={`radio-${element.id}-${index}`}>{option.label}</Label>

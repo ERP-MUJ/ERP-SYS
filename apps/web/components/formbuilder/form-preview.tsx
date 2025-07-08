@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@workspace/ui/components/textarea"
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
-import { Button } from "@workspace/ui/components/button"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
+// import { Button } from "@workspace/ui/components/button"
+// import { Loader2 } from "lucide-react"
+// import { toast } from "sonner"
 
 
 
@@ -24,12 +24,12 @@ interface FormPreviewProps {
   isPreview?: boolean
 }
 
-export default function FormPreview({ formTitle, elements, description, isPreview = false }: FormPreviewProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({})
+export default function FormPreview({ formTitle, elements, description }: FormPreviewProps) {
+  const [formData, setFormData] = useState<Record<string, unknown>>({})
   const [files, setFiles] = useState<Record<string, FileList | null>>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  // const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleChange = (id: string, value: any) => {
+  const handleChange = (id: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [id]: value }))
   }
 
@@ -52,7 +52,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
             <Input
               id={id}
               placeholder={attributes.placeholder}
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
@@ -69,7 +69,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
               id={id}
               placeholder={attributes.placeholder}
               rows={attributes.rows}
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
@@ -88,7 +88,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
               placeholder={attributes.placeholder}
               min={attributes.min}
               max={attributes.max}
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onChange={(e) => handleChange(id, Number.parseInt(e.target.value))}
               required={attributes.required}
             />
@@ -102,7 +102,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
               {attributes.required && " *"}
             </Label>
             <Select
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onValueChange={(value) => handleChange(id, value)}
               required={attributes.required}
             >
@@ -110,7 +110,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map((option: any, index: number) => (
+                {attributes.options?.map((option: { label: string; value: string }, index: number) => (
                   <SelectItem key={index} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -124,7 +124,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
           <div className="flex items-center space-x-2">
             <Checkbox
               id={id}
-              checked={formData[id] || false}
+              checked={Boolean(formData[id])}
               onCheckedChange={(checked) => handleChange(id, checked)}
               required={attributes.required}
             />
@@ -142,11 +142,11 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
               {attributes.required && " *"}
             </Label>
             <RadioGroup
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onValueChange={(value) => handleChange(id, value)}
               required={attributes.required}
             >
-              {attributes.options?.map((option: any, index: number) => (
+              {attributes.options?.map((option: { label: string; value: string }, index: number) => (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} id={`${id}-${index}`} />
                   <Label htmlFor={`${id}-${index}`}>{option.label}</Label>
@@ -165,7 +165,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
             <Input
               id={id}
               type="date"
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
@@ -182,7 +182,7 @@ export default function FormPreview({ formTitle, elements, description, isPrevie
               id={id}
               type="email"
               placeholder={attributes.placeholder}
-              value={formData[id] || ""}
+              value={typeof formData[id] === "string" ? formData[id] as string : ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
