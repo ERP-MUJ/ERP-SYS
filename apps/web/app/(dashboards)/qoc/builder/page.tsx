@@ -39,6 +39,8 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormConfig } from "@/lib/types";
+import { PillarCard } from "@/components/qoc/pillar-card";
+import { KpiCard } from "@/components/qoc/kpi-card";
 
 export default function KpiBuilderPage() {
   const { data: departments } = useFetchDepartments();
@@ -147,7 +149,7 @@ export default function KpiBuilderPage() {
       {
         departmentId: selectedDepartmentId,
         pillarId: selectedPillarId,
-        kpiIds: [kpi.kpi_id],
+        kpiIds: [kpi.kpi_id.toString()],
       },
       {
         onSettled: () => setAssigningKpiId(null),
@@ -169,7 +171,7 @@ export default function KpiBuilderPage() {
             <PlusCircle className="mr-2 h-4 w-4" />
             Create KPI
           </Button>
-        )}
+        </Link>
         {creatingPillar && (
           <div className="flex items-center gap-2">
             <input

@@ -23,6 +23,9 @@ import { toast } from "sonner";
 import type { AssignKpiPayload } from "@/lib/types";
 import { useFetchAssignedKpis } from "@/hooks/dept";
 import { Badge } from "@workspace/ui/components/badge";
+import { Eye } from "lucide-react";
+import { PillarCard } from "@/components/qoc/pillar-card";
+import { KpiCard } from "@/components/qoc/kpi-card";
 
 export default function AssignPage() {
   const { data: departments } = useFetchDepartments();
@@ -345,7 +348,7 @@ export default function AssignPage() {
                 </div>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {assignedKpis.assignedKpis?.map((kpi) => (
+                  {assignedKpis.assignedKpis?.map((kpi: any) => (
                     <Card key={kpi.id}>
                       <CardHeader className="flex justify-between items-center">
                         <div>
