@@ -1,10 +1,13 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import type { FormElementInstance } from "@/lib/types";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Checkbox } from "@workspace/ui/components/checkbox";
+import { useState, useEffect } from "react"
+import type { FormElementInstance } from "@/lib/types"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { Checkbox } from "@workspace/ui/components/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select"
+import { toast } from "sonner"
+import { Loader2, Plus, Trash2, Save, FileUp, FileDown, FileText, BarChart3 } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -21,36 +24,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
-import { Label } from "@workspace/ui/components/label";
-import { Textarea } from "@workspace/ui/components/textarea";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@workspace/ui/components/radio-group";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
-import { ChartLine } from "lucide-react";
-import { useSaveKpiData } from "@/hooks/faculty";
+} from "@workspace/ui/components/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@workspace/ui/components/dialog"
+import { Label } from "@workspace/ui/components/label"
+import { Textarea } from "@workspace/ui/components/textarea"
+import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { LineChartIcon as ChartLine } from "lucide-react"
+import { useSaveKpiData } from "@/hooks/faculty"
 
 interface TableFormRendererProps {
-  name: string;
-  elements: FormElementInstance[];
-  description?: string;
-  onSuccess?: () => void;
-  className?: string;
-  id: string;
+  name: string
+  elements: FormElementInstance[]
+  description?: string
+  onSuccess?: () => void
+  className?: string
+  id: string
+  existingData?: Record<string, any>[]
 }
 
 type FormEntry = Record<string, string | number | boolean | null>;
@@ -61,6 +51,7 @@ export default function TableFormRenderer({
   id,
   description,
   className = "",
+  existingData = [],
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
   const { mutate: saveKpiData } = useSaveKpiData();
@@ -74,10 +65,8 @@ export default function TableFormRenderer({
   >(null);
 
   const tableElements = elements.filter((element) =>
-    ["text", "number", "email", "date", "select", "checkbox"].includes(
-      element.type,
-    ),
-  );
+    ["text", "number", "email", "date", "select", "checkbox"].includes(element.type),
+  )
 
   const complexElements = elements.filter((element) =>
     ["textarea", "radio", "file"].includes(element.type),
@@ -101,22 +90,19 @@ export default function TableFormRenderer({
     setEntries(newEntries);
   };
 
-  const openComplexEditor = (
-    rowIndex: number,
-    element: FormElementInstance,
-  ) => {
-    setActiveRowIndex(rowIndex);
-    setActiveElement(element);
-    setComplexValue(entries[rowIndex]?.[element.id] || null);
-    setDialogOpen(true);
-  };
+  const openComplexEditor = (rowIndex: number, element: FormElementInstance) => {
+    setActiveRowIndex(rowIndex)
+    setActiveElement(element)
+    setComplexValue(entries[rowIndex]?.[element.id] || null)
+    setDialogOpen(true)
+  }
 
   const saveComplexValue = () => {
     if (activeRowIndex !== null && activeElement) {
-      updateEntry(activeRowIndex, activeElement.id, complexValue);
+      updateEntry(activeRowIndex, activeElement.id, complexValue)
     }
-    setDialogOpen(false);
-  };
+    setDialogOpen(false)
+  }
 
   const validateEntries = () => {
     const invalidRows: number[] = [];
@@ -138,22 +124,23 @@ export default function TableFormRenderer({
     if (filledEntries.length === 0) {
       toast.warning("No data to submit", {
         description: "Please add at least one entry to the table",
-      });
-      return;
+      })
+      return
     }
-    const invalidRows = validateEntries();
+
+    const invalidRows = validateEntries()
     if (invalidRows.length > 0) {
       toast.error("Missing required fields", {
         description: `Please complete all required fields in rows: ${invalidRows.join(", ")}`,
-      });
-      return;
+      })
+      return
     }
     const formDataToSubmit = { id, formData: { entries: filledEntries } };
     saveKpiData(formDataToSubmit);
     setEntries([{}]);
   };
 
-  const hasComplexElements = complexElements.length > 0;
+  const hasComplexElements = complexElements.length > 0
 
   return (
     <Card className={className}>
@@ -164,9 +151,7 @@ export default function TableFormRenderer({
               <ChartLine className="mr-2" />
               {name}
             </CardTitle>
-            {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            )}
+            {description && <p className="text-sm text-muted-foreground">{description}</p>}
           </div>
           <Button
             variant="outline"
@@ -179,7 +164,7 @@ export default function TableFormRenderer({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table>
+          <ReactTable>
             <TableHeader>
               <TableRow>
                 {tableElements.map((element) => (
@@ -197,12 +182,7 @@ export default function TableFormRenderer({
                 <TableRow key={rowIndex}>
                   {tableElements.map((element) => (
                     <TableCell key={element.id}>
-                      {renderTableCellInput(
-                        element,
-                        entry,
-                        rowIndex,
-                        updateEntry,
-                      )}
+                      {renderTableCellInput(element, entry, rowIndex, updateEntry)}
                     </TableCell>
                   ))}
                   {hasComplexElements && (
@@ -210,23 +190,19 @@ export default function TableFormRenderer({
                       <div className="flex flex-wrap gap-1">
                         {complexElements.map((element) => {
                           const hasValue =
-                            entry[element.id] !== undefined &&
-                            entry[element.id] !== null &&
-                            entry[element.id] !== "";
+                            entry[element.id] !== undefined && entry[element.id] !== null && entry[element.id] !== ""
                           return (
                             <Button
                               key={element.id}
                               variant={hasValue ? "default" : "outline"}
                               size="sm"
-                              onClick={() =>
-                                openComplexEditor(rowIndex, element)
-                              }
+                              onClick={() => openComplexEditor(rowIndex, element)}
                               className="text-xs h-7"
                             >
                               {element.attributes.label}
                               {hasValue && " ✓"}
                             </Button>
-                          );
+                          )
                         })}
                       </div>
                     </TableCell>
@@ -244,12 +220,10 @@ export default function TableFormRenderer({
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </ReactTable>
         </div>
         {entries.length === 0 && (
-          <div className="text-center py-4 text-gray-500">
-            No entries yet. Add your first entry.
-          </div>
+          <div className="text-center py-4 text-gray-500">No entries yet. Add your first entry.</div>
         )}
       </CardContent>
       <CardFooter className="flex justify-between">
@@ -379,7 +353,7 @@ export default function TableFormRenderer({
         </DialogContent>
       </Dialog>
     </Card>
-  );
+  )
 }
 
 function renderTableCellInput(
@@ -406,7 +380,7 @@ function renderTableCellInput(
           placeholder={attributes.placeholder}
           className="h-8 w-full"
         />
-      );
+      )
     case "number":
       return (
         <Input
@@ -424,7 +398,7 @@ function renderTableCellInput(
           max={attributes.max}
           className="h-8 w-full"
         />
-      );
+      )
     case "date":
       return (
         <Input
@@ -433,7 +407,7 @@ function renderTableCellInput(
           onChange={(e) => updateEntry(rowIndex, id, e.target.value)}
           className="h-8 w-full"
         />
-      );
+      )
     case "select":
       return (
         <Select
@@ -453,7 +427,7 @@ function renderTableCellInput(
             )}
           </SelectContent>
         </Select>
-      );
+      )
     case "checkbox":
       return (
         <div className="flex items-center justify-center">
@@ -464,8 +438,8 @@ function renderTableCellInput(
             }
           />
         </div>
-      );
+      )
     default:
-      return <div>Unsupported in table</div>;
+      return <div>Unsupported in table</div>
   }
 }

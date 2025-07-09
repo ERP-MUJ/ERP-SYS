@@ -78,44 +78,90 @@ export default function FormsPage() {
         </div>
       </div>
 
-      {isLoading && (
-        <p className="text-center text-black dark:text-white">
-          Loading forms...
-        </p>
-      )}
-      {error && (
-        <p className="text-center text-red-600">
-          Error loading forms: {error.message}
-        </p>
-      )}
+      {/* Pillar Selection */}
+      <div className="mb-8">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center space-x-4">
+            <label htmlFor="pillar-select" className="text-sm font-medium">
+              Select Pillar:
+            </label>
+            <Select value={selectedPillar} onValueChange={setSelectedPillar}>
+              <SelectTrigger className="w-[300px]">
+                <SelectValue placeholder="Choose a pillar to view KPIs" />
+              </SelectTrigger>
+              <SelectContent>
+                {PILLARS.map((pillar) => {
+                  const Icon = pillar.icon
+                  return (
+                    <SelectItem key={pillar.id} value={pillar.id}>
+                      <div className="flex items-center space-x-2">
+                        <Icon className="h-4 w-4" />
+                        <span>{pillar.name}</span>
+                      </div>
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
 
-      {!isLoading && !error && (
+      {/* KPI Cards */}
+      {!selectedPillar ? (
+        <div className="text-center py-12">
+          <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">Select a Pillar to Get Started</h3>
+          <p className="text-gray-500">Choose a pillar from the dropdown above to view and manage your KPIs</p>
+        </div>
+      ) : kpisForPillar.length === 0 ? (
+        <div className="text-center py-12">
+          <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No KPIs Found</h3>
+          <p className="text-gray-500">No KPIs are available for the selected pillar</p>
+        </div>
+      ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {forms!.map((form) => (
-            <Card key={form.id}>
-              <CardHeader className="flex justify-between items-center">
-                <div>
-                  <CardTitle>{form.title}</CardTitle>
-                  <CardDescription>
-                    Created on {new Date(form.createdAt).toLocaleDateString()}
-                  </CardDescription>
+          {kpisForPillar.map((kpi) => (
+            <Card key={kpi.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{kpi.title}</CardTitle>
+                    <CardDescription className="mt-1">{kpi.description}</CardDescription>
+                  </div>
+                  <Badge variant={kpi.status === "active" ? "default" : "secondary"} className="ml-2">
+                    {kpi.status}
+                  </Badge>
                 </div>
-                <Badge>{form.value}</Badge>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm">{form.elements.length} Fields</p>
-                <p
-                  className="text-sm text-gray-500 truncate"
-                  title={form.description}
-                >
-                  {form.description}
-                </p>
+
+              <CardContent className="pb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium">Current Value:</span>
+                  </div>
+                  <span className="text-lg font-bold text-blue-600">
+                    {kpi.value}
+                    {kpi.id === "kpi-1" || kpi.id === "kpi-5" ? "%" : ""}
+                    {kpi.id === "kpi-3" || kpi.id === "kpi-2" ? "/5" : ""}
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Calendar className="h-3 w-3" />
+                  <span>Updated: {new Date(kpi.lastUpdated).toLocaleDateString()}</span>
+                </div>
+
+                <div className="mt-2 text-sm text-gray-600">
+                  {kpi.elements.length} data field{kpi.elements.length !== 1 ? "s" : ""}
+                </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Link
-                  href={`/hod/kpi-management/${form.id.replace("form-", "")}`}
-                >
-                  <Button>View</Button>
+
+              <CardFooter>
+                <Link href={`/hod/kpi-management/${kpi.id}`} className="w-full">
+                  <Button className="w-full">Open KPI</Button>
                 </Link>
               </CardFooter>
             </Card>
@@ -123,5 +169,5 @@ export default function FormsPage() {
         </div>
       )}
     </main>
-  );
+  )
 }
