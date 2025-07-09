@@ -21,9 +21,21 @@ import { PlusCircle } from "lucide-react";
 import { useFetchForms, useDeleteKpi } from "@/hooks/forms";
 import { useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
-import { useFetchPillars, useCreatePillar, useFetchDepartments, useAssignKpiToPillar, useFetchAssignedKpis } from "@/hooks/dept";
+import {
+  useFetchPillars,
+  useCreatePillar,
+  useFetchDepartments,
+  useAssignKpiToPillar,
+  useFetchAssignedKpis,
+} from "@/hooks/dept";
 import { useRouter } from "next/navigation";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FormConfig } from "@/lib/types";
@@ -31,7 +43,9 @@ import type { FormConfig } from "@/lib/types";
 export default function KpiBuilderPage() {
   const { data: departments } = useFetchDepartments();
   const { mutate: createPillar } = useCreatePillar();
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+    string | null
+  >(null);
   const [selectedPillarId, setSelectedPillarId] = useState<string | null>(null);
   const [creatingPillar, setCreatingPillar] = useState(false);
   const [newPillarName, setNewPillarName] = useState("");
@@ -45,13 +59,16 @@ export default function KpiBuilderPage() {
   const [assigningKpiId, setAssigningKpiId] = useState<string | null>(null);
 
   // Get pillars for selected department
-  const pillars = departments?.find((d) => d.id.toString() === selectedDepartmentId)?.pillars || [];
+  const pillars =
+    departments?.find((d) => d.id.toString() === selectedDepartmentId)
+      ?.pillars || [];
 
   // Fetch assigned KPIs for the selected pillar
-  const { data: assignedKpisData, isLoading: isLoadingAssigned } = useFetchAssignedKpis(
-    selectedDepartmentId ?? undefined,
-    selectedPillarId ?? undefined
-  );
+  const { data: assignedKpisData, isLoading: isLoadingAssigned } =
+    useFetchAssignedKpis(
+      selectedDepartmentId ?? undefined,
+      selectedPillarId ?? undefined,
+    );
   const assignedKpis: any[] = assignedKpisData?.assignedKpis || [];
 
   // Fetch all KPIs
@@ -60,8 +77,14 @@ export default function KpiBuilderPage() {
   const allKpis: KpiWithId[] = allKpisRaw || [];
 
   // Filter available KPIs (not already assigned)
-  const assignedKpiIds = new Set(assignedKpis.map((kpi: any) => kpi.kpi_id?.toString() || kpi.id?.toString()));
-  const availableKpis = allKpis.filter((kpi: KpiWithId) => !assignedKpiIds.has(kpi.id?.toString()));
+  const assignedKpiIds = new Set(
+    assignedKpis.map(
+      (kpi: any) => kpi.kpi_id?.toString() || kpi.id?.toString(),
+    ),
+  );
+  const availableKpis = allKpis.filter(
+    (kpi: KpiWithId) => !assignedKpiIds.has(kpi.id?.toString()),
+  );
 
   const handleCreatePillar = () => {
     if (!newPillarName.trim()) {
@@ -84,7 +107,7 @@ export default function KpiBuilderPage() {
         onError: () => {
           toast.error("Failed to create pillar");
         },
-      }
+      },
     );
   };
 
@@ -128,7 +151,7 @@ export default function KpiBuilderPage() {
       },
       {
         onSettled: () => setAssigningKpiId(null),
-      }
+      },
     );
   };
 
@@ -153,10 +176,18 @@ export default function KpiBuilderPage() {
               className="border rounded px-2 py-1"
               placeholder="New pillar name"
               value={newPillarName}
-              onChange={e => setNewPillarName(e.target.value)}
+              onChange={(e) => setNewPillarName(e.target.value)}
             />
-            <Button size="sm" onClick={handleCreatePillar}>Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => setCreatingPillar(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleCreatePillar}>
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setCreatingPillar(false)}
+            >
+              Cancel
+            </Button>
           </div>
         )}
       </div>
@@ -168,51 +199,94 @@ export default function KpiBuilderPage() {
           <h2 className="text-xl font-semibold mb-2">Assigned KPIs</h2>
           <div className="flex justify-end mb-4">
             <Button
-              onClick={() => router.push(`/qoc/builder/create?departmentId=${selectedDepartmentId}&pillarId=${selectedPillarId}`)}
+              onClick={() =>
+                router.push(
+                  `/qoc/builder/create?departmentId=${selectedDepartmentId}&pillarId=${selectedPillarId}`,
+                )
+              }
               disabled={!selectedDepartmentId || !selectedPillarId}
             >
               + Create KPI
             </Button>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {isLoadingAssigned ? <p>Loading...</p> :
-              assignedKpis.length === 0 ? <p>No KPIs assigned to this pillar.</p> :
+            {isLoadingAssigned ? (
+              <p>Loading...</p>
+            ) : assignedKpis.length === 0 ? (
+              <p>No KPIs assigned to this pillar.</p>
+            ) : (
               assignedKpis.map((kpi: any) => (
                 <Card key={kpi.kpi_id ? kpi.kpi_id.toString() : kpi.id}>
                   <CardHeader>
                     <CardTitle>{kpi.kpi_name || kpi.title}</CardTitle>
                     <CardDescription>
-                      Created on {kpi.createdAt ? new Date(kpi.createdAt).toLocaleDateString() : "-"}
+                      Created on{" "}
+                      {kpi.createdAt
+                        ? new Date(kpi.createdAt).toLocaleDateString()
+                        : "-"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">{kpi.elements?.length || 0} Fields</p>
-                    <p className="text-sm text-gray-500 truncate">{kpi.description || kpi.kpi_description}</p>
-                    <p className="text-sm">Value: {kpi.value ?? kpi.kpi_value ?? "-"}</p>
+                    <p className="text-sm">
+                      {kpi.elements?.length || 0} Fields
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {kpi.description || kpi.kpi_description}
+                    </p>
+                    <p className="text-sm">
+                      Value: {kpi.value ?? kpi.kpi_value ?? "-"}
+                    </p>
                   </CardContent>
                   <CardFooter className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/qoc/builder/form/${kpi.kpi_id || kpi.id}`)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        router.push(`/qoc/builder/form/${kpi.kpi_id || kpi.id}`)
+                      }
+                    >
                       View
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/qoc/builder/form/${kpi.kpi_id || kpi.id}`)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        router.push(`/qoc/builder/form/${kpi.kpi_id || kpi.id}`)
+                      }
+                    >
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(kpi.kpi_id || kpi.id)}>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => openDeleteDialog(kpi.kpi_id || kpi.id)}
+                    >
                       Delete
                     </Button>
                   </CardFooter>
                 </Card>
               ))
-            }
+            )}
           </div>
 
           {/* Assignable KPIs */}
           <h2 className="text-xl font-semibold mt-8 mb-2">Assign New KPI</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {isLoadingAllKpis ? <p>Loading...</p> :
-              availableKpis.length === 0 ? <p>No available KPIs to assign.</p> :
+            {isLoadingAllKpis ? (
+              <p>Loading...</p>
+            ) : availableKpis.length === 0 ? (
+              <p>No available KPIs to assign.</p>
+            ) : (
               availableKpis.map((kpi: KpiWithId) => (
-                <Card key={typeof kpi.id === 'string' ? kpi.id : (kpi.kpi_id ? kpi.kpi_id.toString() : '')}>
+                <Card
+                  key={
+                    typeof kpi.id === "string"
+                      ? kpi.id
+                      : kpi.kpi_id
+                        ? kpi.kpi_id.toString()
+                        : ""
+                  }
+                >
                   <CardHeader>
                     <CardTitle>{kpi.title}</CardTitle>
                     <CardDescription>
@@ -221,26 +295,45 @@ export default function KpiBuilderPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm">{kpi.elements.length} Fields</p>
-                    <p className="text-sm text-gray-500 truncate">{kpi.description}</p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {kpi.description}
+                    </p>
                     <p className="text-sm">Value: {kpi.value ?? "-"}</p>
                   </CardContent>
                   <CardFooter className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/qoc/builder/form/${kpi.id}`)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/qoc/builder/form/${kpi.id}`)}
+                    >
                       View
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => router.push(`/qoc/builder/form/${kpi.id}`)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`/qoc/builder/form/${kpi.id}`)}
+                    >
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => openDeleteDialog(kpi.id)}>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => openDeleteDialog(kpi.id)}
+                    >
                       Delete
                     </Button>
-                    <Button size="sm" variant="default" onClick={() => handleAssignKpi(kpi.id)} disabled={assigningKpiId === kpi.id}>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleAssignKpi(kpi.id)}
+                      disabled={assigningKpiId === kpi.id}
+                    >
                       {assigningKpiId === kpi.id ? "Assigning..." : "Assign"}
                     </Button>
                   </CardFooter>
                 </Card>
               ))
-            }
+            )}
           </div>
         </>
       )}
