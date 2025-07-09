@@ -86,7 +86,7 @@ Future portals include (TBD):
   - Generate report functionality
   - Upload excel
   - Download excel/pdf
-    
+
 ## Faculty (Check role on login and show correct dashboard can be for coordinator or normal faculty)
 
 **KPI Coordinator Dashboard**
