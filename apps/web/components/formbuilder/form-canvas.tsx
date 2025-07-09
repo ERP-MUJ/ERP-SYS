@@ -10,7 +10,7 @@ import {
 
 interface FormCanvasProps {
   elements: FormElementInstance[];
-  updateElement: (id: string, attributes: Record<string, unknown>) => void;
+  updateElement: (id: string, attributes: Record<string, any>) => void;
   removeElement: (id: string) => void;
 }
 

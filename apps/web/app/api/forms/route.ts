@@ -11,7 +11,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     console.log("Request body:", body);
 
     // Extract relevant fields from the JSON
-    const { title, elements, createdAt, value, description } = body;
+    const { id, title, elements, createdAt, value, description } = body;
 
     // Save the data to the `kpi` table
     const newKpi = await prisma.kpi.create({

@@ -50,7 +50,7 @@ import ElementSettings from "./element-settings";
 interface FormElementProps {
   element: FormElementInstance;
   isOverlay?: boolean;
-  updateElement: (id: string, attributes: Record<string, unknown>) => void;
+  updateElement: (id: string, attributes: Record<string, any>) => void;
   removeElement: (id: string) => void;
 }
 
@@ -147,13 +147,11 @@ export default function FormElement({
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map(
-                  (option: { label: string; value: string }, index: number) => (
-                    <SelectItem key={index} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ),
-                )}
+                {attributes.options?.map((option: any, index: number) => (
+                  <SelectItem key={index} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -170,19 +168,17 @@ export default function FormElement({
           <div className="space-y-2">
             <Label>{attributes.label}</Label>
             <RadioGroup>
-              {attributes.options?.map(
-                (option: { label: string; value: string }, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value={option.value}
-                      id={`radio-${element.id}-${index}`}
-                    />
-                    <Label htmlFor={`radio-${element.id}-${index}`}>
-                      {option.label}
-                    </Label>
-                  </div>
-                ),
-              )}
+              {attributes.options?.map((option: any, index: number) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value={option.value}
+                    id={`radio-${element.id}-${index}`}
+                  />
+                  <Label htmlFor={`radio-${element.id}-${index}`}>
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
             </RadioGroup>
           </div>
         );

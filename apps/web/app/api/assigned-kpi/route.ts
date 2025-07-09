@@ -11,7 +11,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     const pillarId = url.searchParams.get("pillar_id");
 
     // Build query conditions
-    const where: Prisma.assigned_kpiWhereInput = {};
+    let where: any = {};
 
     // If pillar_id is provided, filter by it
     if (pillarId) {

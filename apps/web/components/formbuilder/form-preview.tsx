@@ -26,9 +26,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-// import { Button } from "@workspace/ui/components/button"
-// import { Loader2 } from "lucide-react"
-// import { toast } from "sonner"
+import { Button } from "@workspace/ui/components/button";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface FormPreviewProps {
   formTitle: string;
@@ -41,12 +41,13 @@ export default function FormPreview({
   formTitle,
   elements,
   description,
+  isPreview = false,
 }: FormPreviewProps) {
-  const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [files, setFiles] = useState<Record<string, FileList | null>>({});
-  // const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (id: string, value: string | number | boolean) => {
+  const handleChange = (id: string, value: any) => {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
@@ -68,9 +69,7 @@ export default function FormPreview({
             <Input
               id={id}
               placeholder={attributes.placeholder}
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
@@ -87,9 +86,7 @@ export default function FormPreview({
               id={id}
               placeholder={attributes.placeholder}
               rows={attributes.rows}
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
@@ -108,9 +105,7 @@ export default function FormPreview({
               placeholder={attributes.placeholder}
               min={attributes.min}
               max={attributes.max}
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onChange={(e) =>
                 handleChange(id, Number.parseInt(e.target.value))
               }
@@ -126,9 +121,7 @@ export default function FormPreview({
               {attributes.required && " *"}
             </Label>
             <Select
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onValueChange={(value) => handleChange(id, value)}
               required={attributes.required}
             >
@@ -136,13 +129,11 @@ export default function FormPreview({
                 <SelectValue placeholder={attributes.placeholder} />
               </SelectTrigger>
               <SelectContent>
-                {attributes.options?.map(
-                  (option: { label: string; value: string }, index: number) => (
-                    <SelectItem key={index} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ),
-                )}
+                {attributes.options?.map((option: any, index: number) => (
+                  <SelectItem key={index} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -152,7 +143,7 @@ export default function FormPreview({
           <div className="flex items-center space-x-2">
             <Checkbox
               id={id}
-              checked={Boolean(formData[id])}
+              checked={formData[id] || false}
               onCheckedChange={(checked) => handleChange(id, checked)}
               required={attributes.required}
             />
@@ -170,23 +161,16 @@ export default function FormPreview({
               {attributes.required && " *"}
             </Label>
             <RadioGroup
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onValueChange={(value) => handleChange(id, value)}
               required={attributes.required}
             >
-              {attributes.options?.map(
-                (option: { label: string; value: string }, index: number) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value={option.value}
-                      id={`${id}-${index}`}
-                    />
-                    <Label htmlFor={`${id}-${index}`}>{option.label}</Label>
-                  </div>
-                ),
-              )}
+              {attributes.options?.map((option: any, index: number) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`${id}-${index}`} />
+                  <Label htmlFor={`${id}-${index}`}>{option.label}</Label>
+                </div>
+              ))}
             </RadioGroup>
           </div>
         );
@@ -200,9 +184,7 @@ export default function FormPreview({
             <Input
               id={id}
               type="date"
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />
@@ -219,9 +201,7 @@ export default function FormPreview({
               id={id}
               type="email"
               placeholder={attributes.placeholder}
-              value={
-                typeof formData[id] === "string" ? (formData[id] as string) : ""
-              }
+              value={formData[id] || ""}
               onChange={(e) => handleChange(id, e.target.value)}
               required={attributes.required}
             />

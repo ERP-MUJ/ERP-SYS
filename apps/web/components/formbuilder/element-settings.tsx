@@ -11,7 +11,7 @@ import { useState } from "react";
 
 interface ElementSettingsProps {
   element: FormElementInstance;
-  updateElement: (id: string, attributes: Record<string, unknown>) => void;
+  updateElement: (id: string, attributes: Record<string, any>) => void;
   onClose: () => void;
 }
 
@@ -22,7 +22,7 @@ export default function ElementSettings({
 }: ElementSettingsProps) {
   const { attributes } = element;
 
-  const handleChange = (key: string, value: unknown) => {
+  const handleChange = (key: string, value: any) => {
     updateElement(element.id, { [key]: value });
   };
 
@@ -187,7 +187,7 @@ export default function ElementSettings({
 
 interface OptionsEditorProps {
   element: FormElementInstance;
-  updateElement: (id: string, attributes: Record<string, unknown>) => void;
+  updateElement: (id: string, attributes: Record<string, any>) => void;
 }
 
 function OptionsEditor({ element, updateElement }: OptionsEditorProps) {

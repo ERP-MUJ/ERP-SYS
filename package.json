@@ -3,13 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "turbo  build",
+    "build": "turbo build",
+    "check-types": "turbo check-types",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,md}\"",
-    "type-check": "turbo check-types",
-    "type:check:fix": "turbo check-types"
+    "format:check": "prettier --check \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

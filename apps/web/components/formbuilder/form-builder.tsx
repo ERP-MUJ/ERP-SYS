@@ -56,7 +56,7 @@ export default function FormBuilder({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeElement, setActiveElement] =
     useState<FormElementInstance | null>(null);
-  const [isSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { mutate: saveForm } = useSaveForm();
   const router = useRouter();
 
@@ -174,7 +174,7 @@ export default function FormBuilder({
     }
   }
 
-  function updateElement(id: string, attributes: Record<string, unknown>) {
+  function updateElement(id: string, attributes: Record<string, any>) {
     setElements(
       elements.map((element) => {
         if (element.id === id) {

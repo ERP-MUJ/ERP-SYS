@@ -8,59 +8,59 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-// Commented unused AlertDialog components
-// import {
-//   AlertDialog,
-//   AlertDialogContent,
-//   AlertDialogFooter,
-//   AlertDialogDescription,
-//   AlertDialogHeader,
-//   AlertDialogTitle
-// } from "@workspace/ui/components/alert-dialog"
-
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 import Link from "next/link";
-// import { PlusCircle } from "lucide-react" // Unused icon
-import { useFetchForms } from "@/hooks/forms";
-// import { useState } from "react"
+import { PlusCircle } from "lucide-react";
+import { useFetchForms, useDeleteKpi } from "@/hooks/forms";
+import { useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 
 export default function FormsPage() {
   const { data: forms, isLoading, error } = useFetchForms();
-  // const deleteKpiMutation = useDeleteKpi()
-  // const [deletingFormId, setDeletingFormId] = useState<string | null>(null) // Unused
-  // const [formToDelete, setFormToDelete] = useState<string | null>(null)
-  // const [open, setOpen] = useState(false) // Unused
+  const deleteKpiMutation = useDeleteKpi();
+  const [deletingFormId, setDeletingFormId] = useState<string | null>(null);
+  const [formToDelete, setFormToDelete] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   console.log("Forms:", forms);
 
-  // const handleDelete = (formId: string) => {
-  //   const numericId = formId.startsWith("form-") ? formId.split("-")[1]! : formId
-  //   // setDeletingFormId(formId) // Unused
-  //   deleteKpiMutation.mutate(numericId, {
-  //     // onSuccess: () => setDeletingFormId(null),
-  //     // onError: () => setDeletingFormId(null),
-  //   })
-  // }
+  const handleDelete = (formId: string) => {
+    const numericId = formId.startsWith("form-")
+      ? formId.split("-")[1]!
+      : formId;
+    setDeletingFormId(formId);
+    deleteKpiMutation.mutate(numericId, {
+      onSuccess: () => setDeletingFormId(null),
+      onError: () => setDeletingFormId(null),
+    });
+  };
 
-  // const openDeleteDialog = (formId: string) => {
-  //   setFormToDelete(formId)
-  //   setOpen(true)
-  // }
+  const openDeleteDialog = (formId: string) => {
+    setFormToDelete(formId);
+    setOpen(true);
+  };
 
-  // const handleConfirmDelete = () => {
-  //   if (formToDelete) {
-  //     handleDelete(formToDelete)
-  //     setOpen(false)
-  //     setFormToDelete(null)
-  //   }
-  // }
+  const handleConfirmDelete = () => {
+    if (formToDelete) {
+      handleDelete(formToDelete);
+      setOpen(false);
+      setFormToDelete(null);
+    }
+  };
 
   return (
     <main className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Your KPI&apos;s</h1>
+          <h1 className="text-3xl font-bold">Your KPI's</h1>
           <p className="text-gray-600 mt-2">
-            Manage and edit your created KPI&apos;s
+            Manage and edit your created KPI's
           </p>
         </div>
       </div>

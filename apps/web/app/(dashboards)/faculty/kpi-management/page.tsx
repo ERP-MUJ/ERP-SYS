@@ -18,65 +18,49 @@ import {
 } from "@workspace/ui/components/alert-dialog";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
-import { useFetchForms } from "@/hooks/forms";
-import { useEffect, useState } from "react";
+import { useFetchForms, useDeleteKpi } from "@/hooks/forms";
+import { useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 
 export default function FormsPage() {
   const { data: forms, isLoading, error } = useFetchForms();
-  // const deleteKpiMutation = useDeleteKpi()
-  const [deletingFormId] = useState<string | null>(null);
-  // const [ setFormToDelete] = useState<string | null>(null)
-  const [open] = useState(false);
+  const deleteKpiMutation = useDeleteKpi();
+  const [deletingFormId, setDeletingFormId] = useState<string | null>(null);
+  const [formToDelete, setFormToDelete] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  console.log("Forms:", forms);
 
-  // const handleDelete = (formId: string) => {
-  //   const numericId = formId.startsWith("form-") ? formId.split("-")[1]! : formId
-  //   setDeletingFormId(formId)
-  //   deleteKpiMutation.mutate(numericId, {
-  //     onSuccess: () => setDeletingFormId(null),
-  //     onError: () => setDeletingFormId(null),
-  //   })
-  // }
+  const handleDelete = (formId: string) => {
+    const numericId = formId.startsWith("form-")
+      ? formId.split("-")[1]!
+      : formId;
+    setDeletingFormId(formId);
+    deleteKpiMutation.mutate(numericId, {
+      onSuccess: () => setDeletingFormId(null),
+      onError: () => setDeletingFormId(null),
+    });
+  };
 
-  // const openDeleteDialog = useCallback((formId: string) => {
-  //   setFormToDelete(formId)
-  //   setOpen(true)
-  // }, [])
+  const openDeleteDialog = (formId: string) => {
+    setFormToDelete(formId);
+    setOpen(true);
+  };
 
-  // const handleConfirmDelete = useCallback(() => {
-  //   if (formToDelete) {
-  //     handleDelete(formToDelete)
-  //     setOpen(false)
-  //     setFormToDelete(null)
-  //   }
-  // }, [formToDelete])
-
-  // Dummy usage to prevent unused warnings — safe and non-intrusive
-  useEffect(() => {
-    if (
-      // !openDeleteDialog ||
-      // !handleConfirmDelete ||
-      !AlertDialog ||
-      !AlertDialogContent ||
-      !AlertDialogFooter ||
-      !AlertDialogDescription ||
-      !AlertDialogHeader ||
-      !AlertDialogTitle ||
-      !PlusCircle ||
-      !deletingFormId ||
-      !open
-    ) {
-      console.debug("Referenced unused but planned utilities");
+  const handleConfirmDelete = () => {
+    if (formToDelete) {
+      handleDelete(formToDelete);
+      setOpen(false);
+      setFormToDelete(null);
     }
-  });
+  };
 
   return (
     <main className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Your KPI&rsquo;s</h1>
+          <h1 className="text-3xl font-bold">Your KPI's</h1>
           <p className="text-gray-600 mt-2">
-            Manage and edit your created KPI&rsquo;s
+            Manage and edit your created KPI's
           </p>
         </div>
       </div>

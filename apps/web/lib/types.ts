@@ -14,7 +14,7 @@ export class ProcessError extends Error {
   }: {
     name: ErrorName;
     message: string;
-    cause: Error | null;
+    cause: any;
   }) {
     super(message);
     this.name = name;
@@ -34,22 +34,10 @@ export type FormElementType =
   | "email"
   | "file";
 
-export interface FormElementAttributes {
-  label: string;
-  required?: boolean;
-  placeholder?: string;
-  rows?: number;
-  min?: number;
-  max?: number;
-  options?: { label: string; value: string }[];
-  multiple?: boolean;
-  acceptedFileTypes?: string;
-}
-
 export interface FormElementInstance {
   id: string;
   type: FormElementType;
-  attributes: FormElementAttributes;
+  attributes: Record<string, any>;
 }
 
 export interface PillarInstance {
@@ -69,7 +57,7 @@ export interface AssignKpiPayload {
 export interface KpiFormData {
   id: string;
   formData: {
-    entries: Record<string, string | number | boolean | null>[];
+    entries: Record<string, any>[];
   };
 }
 
@@ -85,8 +73,8 @@ export interface FormConfig {
 
 export interface FormSubmission {
   formTitle: string;
-  formData: Record<string, string | number | boolean | null>;
-  fileInfo?: Record<string, unknown>;
+  formData: Record<string, any>;
+  fileInfo?: Record<string, any>;
 }
 
 export interface AppSidebarProps {

@@ -31,7 +31,7 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
 import { Textarea } from "@workspace/ui/components/textarea";
-// import { DialogClose } from "@workspace/ui/components/dialog"
+import { DialogClose } from "@workspace/ui/components/dialog";
 import { Check, Eye, X, AlertCircle } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 

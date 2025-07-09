@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Bell, HelpCircle, Search } from "lucide-react";
 import type { ReactNode } from "react";
 
 import {
@@ -8,7 +8,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
-// import { Button } from "@workspace/ui/components/button"
+import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { ThemeToggle } from "@workspace/ui/components/theme-toggle";
@@ -28,10 +28,11 @@ export interface NavbarProps {
 }
 
 export function Navbar({
+  appTitle,
   showSearch = true,
   showThemeToggle = true,
-  // showNotifications = true,
-  // showHelp = true,
+  showNotifications = true,
+  showHelp = true,
   userAvatar = "/placeholder.svg",
   userInitials = "JD",
   leftContent,
@@ -39,8 +40,7 @@ export function Navbar({
   onSearch,
 }: NavbarProps) {
   const pathname = usePathname();
-  pathname.startsWith("/qoc"); // Example condition to hide search in specific paths
-  // const hideNotifications = pathname.startsWith("/qoc")
+  const hideNotifications = pathname.startsWith("/qoc");
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px]">
