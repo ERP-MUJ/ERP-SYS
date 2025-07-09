@@ -203,6 +203,8 @@ export default function AssignPage() {
               </Select>
             )}
           </div>
+        </>
+      )}
 
           {!selectedDepartment && (
             <p className="text-center text-gray-500">
