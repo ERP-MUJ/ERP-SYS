@@ -33,33 +33,33 @@ function useOutsideClick(
 const mockSubmissions = [
   {
     id: "1",
-    department: "Cardiology",
+    department: "Acceptance Rate",
     template: "Monthly Performance KPI",
-    submittedBy: "Dr. Smith",
+    submittedBy: "Dr. Rajesh",
     submittedAt: "2023-10-15",
     status: "pending",
   },
   {
     id: "2",
-    department: "Oncology",
+    department: "New Initiatives",
     template: "Quarterly Quality Metrics",
-    submittedBy: "Dr. Johnson",
+    submittedBy: "Mr. Arjun",
     submittedAt: "2023-10-12",
     status: "approved",
   },
   {
     id: "3",
-    department: "Pediatrics",
+    department: "Academic Standards",
     template: "Monthly Performance KPI",
-    submittedBy: "Dr. Williams",
+    submittedBy: "Dr. Suman",
     submittedAt: "2023-10-10",
     status: "rejected",
   },
   {
     id: "4",
-    department: "Neurology",
+    department: "Winners and Achievements",
     template: "Annual Department Review",
-    submittedBy: "Dr. Brown",
+    submittedBy: "Dr. Amit",
     submittedAt: "2023-10-05",
     status: "pending",
   },
@@ -202,7 +202,7 @@ export function QOCReview() {
               </div>
               <div className="mt-4 flex justify-end">
                 <Button asChild>
-                  <Link href={`/qoc/review/${submission.id}`}>
+                  <Link href={`/qoc/review/`}>
                     <Eye className="mr-2 h-4 w-4" />
                     View Submission
                   </Link>

@@ -1,27 +1,28 @@
+"use client";
+
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import type { ReactNode } from "react";
+import { Badge } from "@workspace/ui/components/badge";
+import { Eye, Edit, Trash2, Plus, Minus } from "lucide-react";
 
-export interface KpiCardProps {
+interface KpiCardProps {
   kpiName: string;
-  description?: string;
-  fieldsCount?: number;
-  value?: number | string;
+  description: string;
+  fieldsCount: number;
+  value: number;
+  assigned?: boolean;
   onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   onAssign?: () => void;
   onUnassign?: () => void;
-  assigned?: boolean;
-  actions?: ReactNode;
-  className?: string;
 }
 
 export function KpiCard({
@@ -29,60 +30,93 @@ export function KpiCard({
   description,
   fieldsCount,
   value,
+  assigned = false,
   onView,
   onEdit,
   onDelete,
   onAssign,
   onUnassign,
-  assigned,
-  actions,
-  className,
 }: KpiCardProps) {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{kpiName}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <Card className="hover:shadow-lg transition-shadow relative">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div className="flex-1 pr-2">
+            <CardTitle className="text-lg">{kpiName}</CardTitle>
+            <CardDescription className="mt-1">{description}</CardDescription>
+          </div>
+          <Badge
+            variant={assigned ? "default" : "secondary"}
+            className="ml-2 flex-shrink-0"
+          >
+            {assigned ? "Assigned" : "Available"}
+          </Badge>
+        </div>
       </CardHeader>
-      <CardContent>
-        {typeof fieldsCount === "number" && (
-          <p className="text-sm text-muted-foreground">{fieldsCount} Fields</p>
-        )}
-        {typeof value !== "undefined" && (
-          <p className="text-sm text-muted-foreground">Value: {value}</p>
-        )}
+
+      <CardContent className="pb-3">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Fields:</span>
+            <span className="text-sm text-gray-600">{fieldsCount}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Value:</span>
+            <span className="text-lg font-bold text-blue-600">{value}</span>
+          </div>
+        </div>
       </CardContent>
-      {actions ? (
-        <CardFooter className="flex gap-2">{actions}</CardFooter>
-      ) : (
-        <CardFooter className="flex gap-2">
-          {onView && (
-            <Button size="sm" variant="outline" onClick={onView}>
-              View
-            </Button>
-          )}
-          {onEdit && (
-            <Button size="sm" variant="outline" onClick={onEdit}>
-              Edit
-            </Button>
-          )}
-          {onDelete && (
-            <Button size="sm" variant="destructive" onClick={onDelete}>
-              Delete
-            </Button>
-          )}
-          {onAssign && !assigned && (
-            <Button size="sm" variant="default" onClick={onAssign}>
-              Assign
-            </Button>
-          )}
-          {onUnassign && assigned && (
-            <Button size="sm" variant="secondary" onClick={onUnassign}>
-              Unassign
-            </Button>
-          )}
-        </CardFooter>
-      )}
+
+      <CardFooter className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onView}
+          className="flex-1 bg-transparent"
+        >
+          <Eye className="w-4 h-4 mr-1" />
+          View
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onEdit}
+          className="flex-1 bg-transparent"
+        >
+          <Edit className="w-4 h-4 mr-1" />
+          Edit
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onDelete}
+          className="flex-1 bg-transparent"
+        >
+          <Trash2 className="w-4 h-4 mr-1" />
+          Delete
+        </Button>
+        {assigned ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onUnassign}
+            className="flex-1"
+          >
+            <Minus className="w-4 h-4 mr-1" />
+            Unassign
+          </Button>
+        ) : (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onAssign}
+            className="flex-1"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Assign
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 }

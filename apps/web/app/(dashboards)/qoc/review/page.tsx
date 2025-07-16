@@ -446,35 +446,11 @@ export default function QOCSubmissionReview() {
             Filter KPI Submissions
           </CardTitle>
           <CardDescription>
-            Filter submissions by pillar and department to focus your review
+            Filter submissions by department and pillar to focus your review
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Pillar Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" />
-                Pillar
-              </label>
-              <Select value={selectedPillar} onValueChange={setSelectedPillar}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select pillar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    All Pillars ({filterCounts.total})
-                  </SelectItem>
-                  {PILLARS.map((pillar) => (
-                    <SelectItem key={pillar.value} value={pillar.value}>
-                      {pillar.label} ({filterCounts.byPillar[pillar.value] || 0}
-                      )
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Department Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
@@ -495,6 +471,29 @@ export default function QOCSubmissionReview() {
                   {DEPARTMENTS.map((dept) => (
                     <SelectItem key={dept.value} value={dept.value}>
                       {dept.label} ({filterCounts.byDepartment[dept.value] || 0}
+                      )
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Pillar Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Pillar
+              </label>
+              <Select value={selectedPillar} onValueChange={setSelectedPillar}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select pillar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    All Pillars ({filterCounts.total})
+                  </SelectItem>
+                  {PILLARS.map((pillar) => (
+                    <SelectItem key={pillar.value} value={pillar.value}>
+                      {pillar.label} ({filterCounts.byPillar[pillar.value] || 0}
                       )
                     </SelectItem>
                   ))}

@@ -1,29 +1,8 @@
 "use client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
-import { useAssignKpiToPillar, useFetchDepartments } from "@/hooks/dept";
-import { useFetchForms } from "@/hooks/forms";
 import { Checkbox } from "@workspace/ui/components/checkbox";
 import { useState, useRef } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { toast } from "sonner";
-import type { AssignKpiPayload } from "@/lib/types";
-import { useFetchAssignedKpis } from "@/hooks/dept";
-import { Badge } from "@workspace/ui/components/badge";
-import { Eye } from "lucide-react";
 import { PillarCard } from "@/components/qoc/pillar-card";
 import { KpiCard } from "@/components/qoc/kpi-card";
 
@@ -55,6 +34,14 @@ export default function AssignKpiToDepartmentPage() {
   const [unassignedKpis, setUnassignedKpis] = useState<any[]>([]); // TODO: Filter all KPI templates - assignedKpis
   const kpiSectionRef = useRef<HTMLDivElement>(null);
 
+  // Selection states for bulk operations
+  const [selectedAssignedKpis, setSelectedAssignedKpis] = useState<Set<string>>(
+    new Set(),
+  );
+  const [selectedUnassignedKpis, setSelectedUnassignedKpis] = useState<
+    Set<string>
+  >(new Set());
+
   // Simulate fetching pillars when department changes
   const handleDepartmentChange = (deptId: string) => {
     setSelectedDepartmentId(deptId);
@@ -65,6 +52,9 @@ export default function AssignKpiToDepartmentPage() {
     setUnassignedPillars(allPillars.slice(2));
     setAssignedKpis([]);
     setUnassignedKpis([]);
+    // Clear selections when department changes
+    setSelectedAssignedKpis(new Set());
+    setSelectedUnassignedKpis(new Set());
   };
 
   // Simulate fetching KPIs when pillar changes
@@ -97,6 +87,9 @@ export default function AssignKpiToDepartmentPage() {
         value: 2,
       },
     ]);
+    // Clear selections when pillar changes
+    setSelectedAssignedKpis(new Set());
+    setSelectedUnassignedKpis(new Set());
     // Scroll to KPIs section
     setTimeout(() => {
       kpiSectionRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -115,6 +108,11 @@ export default function AssignKpiToDepartmentPage() {
   const handleAssignKpi = (kpi: any) => {
     setAssignedKpis((prev) => [...prev, kpi]);
     setUnassignedKpis((prev) => prev.filter((k) => k.id !== kpi.id));
+    setSelectedUnassignedKpis((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(kpi.id);
+      return newSet;
+    });
     toast.success("KPI assigned to pillar (dummy)");
     // TODO: POST /api/department-kpis
   };
@@ -123,9 +121,92 @@ export default function AssignKpiToDepartmentPage() {
   const handleUnassignKpi = (kpi: any) => {
     setUnassignedKpis((prev) => [...prev, kpi]);
     setAssignedKpis((prev) => prev.filter((k) => k.id !== kpi.id));
+    setSelectedAssignedKpis((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(kpi.id);
+      return newSet;
+    });
     toast.success("KPI unassigned from pillar (dummy)");
     // TODO: DELETE /api/department-kpis/:id
   };
+
+  // Handle select all for assigned KPIs
+  const handleSelectAllAssigned = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssignedKpis(new Set(assignedKpis.map((kpi) => kpi.id)));
+    } else {
+      setSelectedAssignedKpis(new Set());
+    }
+  };
+
+  // Handle select all for unassigned KPIs
+  const handleSelectAllUnassigned = (checked: boolean) => {
+    if (checked) {
+      setSelectedUnassignedKpis(new Set(unassignedKpis.map((kpi) => kpi.id)));
+    } else {
+      setSelectedUnassignedKpis(new Set());
+    }
+  };
+
+  // Handle individual KPI selection for assigned KPIs
+  const handleAssignedKpiSelect = (kpiId: string, checked: boolean) => {
+    setSelectedAssignedKpis((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(kpiId);
+      } else {
+        newSet.delete(kpiId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle individual KPI selection for unassigned KPIs
+  const handleUnassignedKpiSelect = (kpiId: string, checked: boolean) => {
+    setSelectedUnassignedKpis((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(kpiId);
+      } else {
+        newSet.delete(kpiId);
+      }
+      return newSet;
+    });
+  };
+
+  // Bulk assign selected unassigned KPIs
+  const handleBulkAssign = () => {
+    const kpisToAssign = unassignedKpis.filter((kpi) =>
+      selectedUnassignedKpis.has(kpi.id),
+    );
+    kpisToAssign.forEach((kpi) => handleAssignKpi(kpi));
+    toast.success(`${kpisToAssign.length} KPIs assigned to pillar`);
+  };
+
+  // Bulk unassign selected assigned KPIs
+  const handleBulkUnassign = () => {
+    const kpisToUnassign = assignedKpis.filter((kpi) =>
+      selectedAssignedKpis.has(kpi.id),
+    );
+    kpisToUnassign.forEach((kpi) => handleUnassignKpi(kpi));
+    toast.success(`${kpisToUnassign.length} KPIs unassigned from pillar`);
+  };
+
+  // Check if all assigned KPIs are selected
+  const isAllAssignedSelected =
+    assignedKpis.length > 0 &&
+    selectedAssignedKpis.size === assignedKpis.length;
+  const isIndeterminateAssigned =
+    selectedAssignedKpis.size > 0 &&
+    selectedAssignedKpis.size < assignedKpis.length;
+
+  // Check if all unassigned KPIs are selected
+  const isAllUnassignedSelected =
+    unassignedKpis.length > 0 &&
+    selectedUnassignedKpis.size === unassignedKpis.length;
+  const isIndeterminateUnassigned =
+    selectedUnassignedKpis.size > 0 &&
+    selectedUnassignedKpis.size < unassignedKpis.length;
 
   return (
     <main className="container mx-auto py-8 px-4">
@@ -227,58 +308,175 @@ export default function AssignKpiToDepartmentPage() {
           {/* KPIs for Selected Pillar */}
           {selectedPillarId && (
             <div ref={kpiSectionRef}>
-              <h2 className="text-xl font-semibold mb-2">Assigned KPIs</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-                {assignedKpis.length === 0 ? (
-                  <p>No KPIs assigned to this pillar.</p>
-                ) : (
-                  assignedKpis.map((kpi) => (
-                    <KpiCard
-                      key={kpi.id}
-                      kpiName={kpi.title}
-                      description={kpi.description}
-                      fieldsCount={kpi.elements.length}
-                      value={kpi.value}
-                      assigned
-                      onView={() => {
-                        /* TODO: View KPI */
-                      }}
-                      onEdit={() => {
-                        /* TODO: Edit KPI */
-                      }}
-                      onDelete={() => {
-                        /* TODO: Delete KPI */
-                      }}
-                      onUnassign={() => handleUnassignKpi(kpi)}
-                    />
-                  ))
-                )}
+              {/* Assigned KPIs Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Assigned KPIs</h2>
+                  {assignedKpis.length > 0 && (
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="select-all-assigned"
+                          checked={isAllAssignedSelected}
+                          onCheckedChange={handleSelectAllAssigned}
+                          className={
+                            isIndeterminateAssigned
+                              ? "data-[state=checked]:bg-blue-600"
+                              : ""
+                          }
+                          style={
+                            isIndeterminateAssigned
+                              ? {
+                                  backgroundColor: "#2563eb",
+                                  borderColor: "#2563eb",
+                                  opacity: 0.5,
+                                }
+                              : {}
+                          }
+                        />
+                        <label
+                          htmlFor="select-all-assigned"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Select All ({selectedAssignedKpis.size}/
+                          {assignedKpis.length})
+                        </label>
+                      </div>
+                      {selectedAssignedKpis.size > 0 && (
+                        <Button
+                          onClick={handleBulkUnassign}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          Unassign Selected ({selectedAssignedKpis.size})
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {assignedKpis.length === 0 ? (
+                    <p>No KPIs assigned to this pillar.</p>
+                  ) : (
+                    assignedKpis.map((kpi) => (
+                      <div key={kpi.id} className="relative">
+                        <div className="absolute top-2 left-2 z-10">
+                          <Checkbox
+                            checked={selectedAssignedKpis.has(kpi.id)}
+                            onCheckedChange={(checked) =>
+                              handleAssignedKpiSelect(
+                                kpi.id,
+                                checked as boolean,
+                              )
+                            }
+                          />
+                        </div>
+                        <KpiCard
+                          kpiName={kpi.title}
+                          description={kpi.description}
+                          fieldsCount={kpi.elements.length}
+                          value={kpi.value}
+                          assigned
+                          onView={() => {
+                            /* TODO: View KPI */
+                          }}
+                          onEdit={() => {
+                            /* TODO: Edit KPI */
+                          }}
+                          onDelete={() => {
+                            /* TODO: Delete KPI */
+                          }}
+                          onUnassign={() => handleUnassignKpi(kpi)}
+                        />
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-              <h2 className="text-xl font-semibold mb-2">Assign KPI</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {unassignedKpis.length === 0 ? (
-                  <p>All KPIs assigned to this pillar.</p>
-                ) : (
-                  unassignedKpis.map((kpi) => (
-                    <KpiCard
-                      key={kpi.id}
-                      kpiName={kpi.title}
-                      description={kpi.description}
-                      fieldsCount={kpi.elements.length}
-                      value={kpi.value}
-                      onView={() => {
-                        /* TODO: View KPI */
-                      }}
-                      onEdit={() => {
-                        /* TODO: Edit KPI */
-                      }}
-                      onDelete={() => {
-                        /* TODO: Delete KPI */
-                      }}
-                      onAssign={() => handleAssignKpi(kpi)}
-                    />
-                  ))
-                )}
+
+              {/* Unassigned KPIs Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Assign KPI</h2>
+                  {unassignedKpis.length > 0 && (
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="select-all-unassigned"
+                          checked={isAllUnassignedSelected}
+                          onCheckedChange={handleSelectAllUnassigned}
+                          className={
+                            isIndeterminateUnassigned
+                              ? "data-[state=checked]:bg-blue-600"
+                              : ""
+                          }
+                          style={
+                            isIndeterminateUnassigned
+                              ? {
+                                  backgroundColor: "#2563eb",
+                                  borderColor: "#2563eb",
+                                  opacity: 0.5,
+                                }
+                              : {}
+                          }
+                        />
+                        <label
+                          htmlFor="select-all-unassigned"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Select All ({selectedUnassignedKpis.size}/
+                          {unassignedKpis.length})
+                        </label>
+                      </div>
+                      {selectedUnassignedKpis.size > 0 && (
+                        <Button
+                          onClick={handleBulkAssign}
+                          variant="default"
+                          size="sm"
+                        >
+                          Assign Selected ({selectedUnassignedKpis.size})
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {unassignedKpis.length === 0 ? (
+                    <p>All KPIs assigned to this pillar.</p>
+                  ) : (
+                    unassignedKpis.map((kpi) => (
+                      <div key={kpi.id} className="relative">
+                        <div className="absolute top-2 left-2 z-10">
+                          <Checkbox
+                            checked={selectedUnassignedKpis.has(kpi.id)}
+                            onCheckedChange={(checked) =>
+                              handleUnassignedKpiSelect(
+                                kpi.id,
+                                checked as boolean,
+                              )
+                            }
+                          />
+                        </div>
+                        <KpiCard
+                          kpiName={kpi.title}
+                          description={kpi.description}
+                          fieldsCount={kpi.elements.length}
+                          value={kpi.value}
+                          onView={() => {
+                            /* TODO: View KPI */
+                          }}
+                          onEdit={() => {
+                            /* TODO: Edit KPI */
+                          }}
+                          onDelete={() => {
+                            /* TODO: Delete KPI */
+                          }}
+                          onAssign={() => handleAssignKpi(kpi)}
+                        />
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}

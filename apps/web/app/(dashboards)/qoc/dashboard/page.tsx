@@ -48,8 +48,8 @@ const QOC_ANALYTICS_DATA = {
   },
   departmentPerformance: [
     {
-      id: "cardiology",
-      name: "Cardiology",
+      id: "Research",
+      name: "Research Papers",
       submissionRate: 92.5,
       totalSubmissions: 24,
       approved: 22,
@@ -60,19 +60,19 @@ const QOC_ANALYTICS_DATA = {
       lastSubmission: "2024-01-15",
       recentActivity: [
         {
-          kpi: "Patient Satisfaction",
+          kpi: "Acceptance Rate",
           status: "approved",
           date: "2024-01-15",
           score: 4.8,
         },
         {
-          kpi: "Treatment Outcomes",
+          kpi: "Research Outcomes",
           status: "approved",
           date: "2024-01-14",
           score: 4.5,
         },
         {
-          kpi: "Staff Performance",
+          kpi: "Student Performance",
           status: "pending",
           date: "2024-01-13",
           score: null,
@@ -85,8 +85,8 @@ const QOC_ANALYTICS_DATA = {
       },
     },
     {
-      id: "oncology",
-      name: "Oncology",
+      id: "sports",
+      name: "Sports and Extracurriculars",
       submissionRate: 87.3,
       totalSubmissions: 18,
       approved: 15,
@@ -97,19 +97,19 @@ const QOC_ANALYTICS_DATA = {
       lastSubmission: "2024-01-12",
       recentActivity: [
         {
-          kpi: "Cancer Care Quality",
+          kpi: "New Initiatives",
           status: "approved",
           date: "2024-01-12",
           score: 4.3,
         },
         {
-          kpi: "Research Outcomes",
+          kpi: "Participation Rates",
           status: "rejected",
           date: "2024-01-10",
           score: 2.8,
         },
         {
-          kpi: "Patient Recovery",
+          kpi: "Winners and Achievements",
           status: "approved",
           date: "2024-01-09",
           score: 4.7,
@@ -122,8 +122,8 @@ const QOC_ANALYTICS_DATA = {
       },
     },
     {
-      id: "pediatrics",
-      name: "Pediatrics",
+      id: "academics",
+      name: "Academic Standards",
       submissionRate: 79.2,
       totalSubmissions: 15,
       approved: 11,
@@ -134,19 +134,19 @@ const QOC_ANALYTICS_DATA = {
       lastSubmission: "2024-01-10",
       recentActivity: [
         {
-          kpi: "Child Care Standards",
+          kpi: "Passing Rates",
           status: "approved",
           date: "2024-01-10",
           score: 4.1,
         },
         {
-          kpi: "Vaccination Programs",
+          kpi: "Average Grades",
           status: "rejected",
           date: "2024-01-08",
           score: 3.2,
         },
         {
-          kpi: "Family Satisfaction",
+          kpi: "Backlogs and Failures",
           status: "approved",
           date: "2024-01-07",
           score: 4.4,
@@ -158,51 +158,14 @@ const QOC_ANALYTICS_DATA = {
         timeliness: 76.5,
       },
     },
-    {
-      id: "neurology",
-      name: "Neurology",
-      submissionRate: 94.1,
-      totalSubmissions: 21,
-      approved: 19,
-      rejected: 1,
-      pending: 1,
-      averageScore: 4.4,
-      onTimeRate: 90.5,
-      lastSubmission: "2024-01-14",
-      recentActivity: [
-        {
-          kpi: "Neurological Assessments",
-          status: "approved",
-          date: "2024-01-14",
-          score: 4.6,
-        },
-        {
-          kpi: "Treatment Protocols",
-          status: "approved",
-          date: "2024-01-13",
-          score: 4.3,
-        },
-        {
-          kpi: "Patient Outcomes",
-          status: "pending",
-          date: "2024-01-12",
-          score: null,
-        },
-      ],
-      qualityMetrics: {
-        dataAccuracy: 94.8,
-        completeness: 96.3,
-        timeliness: 91.7,
-      },
-    },
   ],
   reviewMetrics: {
     averageReviewTime: 2.3,
     reviewBacklog: 23,
     reviewerWorkload: [
-      { reviewer: "Dr. Anderson", pending: 8, completed: 45 },
-      { reviewer: "Dr. Martinez", pending: 6, completed: 38 },
-      { reviewer: "Dr. Thompson", pending: 9, completed: 42 },
+      { reviewer: "Dr. Rajesh", pending: 8, completed: 45 },
+      { reviewer: "Dr. Suman", pending: 6, completed: 38 },
+      { reviewer: "Dr. Amit", pending: 9, completed: 42 },
     ],
   },
   qualityTrends: {
@@ -252,8 +215,8 @@ export function QOCDashboard() {
 
       <Tabs defaultValue="analytics" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="submissions">Review Submissions</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="submissions">Review Submissions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4">
@@ -336,7 +299,7 @@ export function QOCDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Building className="h-5 w-5 text-blue-500" />
-                  Department Performance
+                  Pillar Performance
                 </CardTitle>
                 <CardDescription>
                   Click on a department to view detailed metrics

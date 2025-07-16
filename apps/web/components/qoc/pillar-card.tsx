@@ -13,6 +13,8 @@ export interface PillarCardProps {
   description?: string;
   assigned?: boolean;
   onView?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onAssign?: () => void;
   actions?: ReactNode;
   selected?: boolean;
@@ -24,6 +26,8 @@ export function PillarCard({
   description,
   assigned,
   onView,
+  onEdit,
+  onDelete,
   onAssign,
   actions,
   selected,
@@ -44,6 +48,16 @@ export function PillarCard({
           {onView && (
             <Button size="sm" variant="outline" onClick={onView}>
               View Pillar
+            </Button>
+          )}
+          {onEdit && (
+            <Button size="sm" variant="outline" onClick={onView}>
+              Edit Pillar
+            </Button>
+          )}
+          {onDelete && (
+            <Button size="sm" variant="outline" onClick={onView}>
+              Delete
             </Button>
           )}
           {onAssign && !assigned && (

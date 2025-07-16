@@ -144,6 +144,8 @@ export default function KpiBuilderPage() {
                 description={pillar.description}
                 selected={selectedPillarTemplate?.id === pillar.id}
                 onView={() => setSelectedPillarTemplate(pillar)}
+                onEdit={() => setSelectedPillarTemplate(pillar)}
+                onDelete={() => setSelectedPillarTemplate(pillar)}
               />
             ))
           )}

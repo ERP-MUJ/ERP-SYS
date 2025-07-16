@@ -567,7 +567,10 @@ export default function KpiManagementPage() {
               </CardContent>
 
               <CardFooter>
-                <Link href={`/faculty/kpi-management/${kpi.id}`} className="w-full">
+                <Link
+                  href={`/faculty/kpi-management/${kpi.id}`}
+                  className="w-full"
+                >
                   <Button className="w-full">Open KPI</Button>
                 </Link>
               </CardFooter>
