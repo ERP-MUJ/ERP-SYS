@@ -81,7 +81,7 @@ const ENHANCED_DUMMY_DATA = {
           total_students: 45,
           passed_students: 38,
           pass_rate: 84.4,
-          instructor_name: "Dr. Smith",
+          instructor_name: "Dr. Sandeep Chaurasia",
           comments:
             "Good performance overall, need to focus on advanced topics",
         },
@@ -91,7 +91,7 @@ const ENHANCED_DUMMY_DATA = {
           total_students: 32,
           passed_students: 29,
           pass_rate: 90.6,
-          instructor_name: "Prof. Johnson",
+          instructor_name: "Prof. Pradeep Krishnan",
           comments: "Excellent results, students well prepared",
         },
       ],
@@ -107,7 +107,7 @@ const ENHANCED_DUMMY_DATA = {
       department: "Computer and Communication Engineering",
       form_input: [
         {
-          faculty_name: "Dr. Smith",
+          faculty_name: "Dr. Sunil Kumar",
           department: "Computer Science",
           student_rating: 4.2,
           peer_review_score: 4.5,
@@ -116,7 +116,7 @@ const ENHANCED_DUMMY_DATA = {
           teaching_load: "12 hours/week",
         },
         {
-          faculty_name: "Prof. Johnson",
+          faculty_name: "Prof. Kalpana Sharma",
           department: "Mathematics",
           student_rating: 4.8,
           peer_review_score: 4.6,
@@ -168,7 +168,7 @@ const ENHANCED_DUMMY_DATA = {
       department: "Computer Science Engineering",
       form_input: [
         {
-          faculty_name: "Dr. Smith",
+          faculty_name: "Dr. Amit Verma",
           publication_title:
             "Advanced Machine Learning Techniques in Educational Data Mining",
           journal_name: "IEEE Transactions on Learning Technologies",
@@ -178,7 +178,7 @@ const ENHANCED_DUMMY_DATA = {
           research_area: "Artificial Intelligence",
         },
         {
-          faculty_name: "Prof. Johnson",
+          faculty_name: "Prof. Rita Singh",
           publication_title: "Statistical Methods for Educational Assessment",
           journal_name: "Journal of Educational Measurement",
           publication_date: "2023-12-10",
@@ -200,7 +200,7 @@ const ENHANCED_DUMMY_DATA = {
       department: "Computer and Communication Engineering",
       form_input: [
         {
-          student_name: "John Doe",
+          student_name: "Sidharth Nigam",
           student_id: "CS2021001",
           company_name: "Microsoft India",
           internship_duration: "3 months",
@@ -209,7 +209,7 @@ const ENHANCED_DUMMY_DATA = {
           offer_received: "Yes",
         },
         {
-          student_name: "Jane Smith",
+          student_name: "Meghneel Gogoi",
           student_id: "CS2021002",
           company_name: "Google India",
           internship_duration: "6 months",
@@ -231,7 +231,7 @@ const ENHANCED_DUMMY_DATA = {
       department: "IT",
       form_input: [
         {
-          faculty_name: "Dr. Sharma",
+          faculty_name: "Mr. Vasu Verma",
           grant_agency: "DST",
           project_title: "Blockchain for Secure Healthcare Data",
           amount_requested: 1500000,
@@ -240,7 +240,7 @@ const ENHANCED_DUMMY_DATA = {
           co_investigators: 2,
         },
         {
-          faculty_name: "Prof. Gupta",
+          faculty_name: "Prof. Rakesh Kumar Goel",
           grant_agency: "SERB",
           project_title: "Machine Learning for Climate Prediction",
           amount_requested: 2000000,

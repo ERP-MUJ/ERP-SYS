@@ -48,6 +48,7 @@ const QOC_ANALYTICS_DATA = {
   },
   departmentPerformance: [
     {
+
       id: "Research",
       name: "Research Papers",
       submissionRate: 92.5,
@@ -60,13 +61,16 @@ const QOC_ANALYTICS_DATA = {
       lastSubmission: "2024-01-15",
       recentActivity: [
         {
+
           kpi: "Acceptance Rate",
           status: "approved",
           date: "2024-01-15",
           score: 4.8,
         },
         {
+
           kpi: "Research Outcomes",
+
           status: "approved",
           date: "2024-01-14",
           score: 4.5,
@@ -87,6 +91,7 @@ const QOC_ANALYTICS_DATA = {
     {
       id: "sports",
       name: "Sports and Extracurriculars",
+
       submissionRate: 87.3,
       totalSubmissions: 18,
       approved: 15,
@@ -98,6 +103,7 @@ const QOC_ANALYTICS_DATA = {
       recentActivity: [
         {
           kpi: "New Initiatives",
+
           status: "approved",
           date: "2024-01-12",
           score: 4.3,
@@ -122,6 +128,7 @@ const QOC_ANALYTICS_DATA = {
       },
     },
     {
+
       id: "academics",
       name: "Academic Standards",
       submissionRate: 79.2,
@@ -140,13 +147,14 @@ const QOC_ANALYTICS_DATA = {
           score: 4.1,
         },
         {
-          kpi: "Average Grades",
+
+          kpi: "Outreach Programs",
           status: "rejected",
           date: "2024-01-08",
           score: 3.2,
         },
         {
-          kpi: "Backlogs and Failures",
+          kpi: "Student Satisfaction",
           status: "approved",
           date: "2024-01-07",
           score: 4.4,
@@ -158,14 +166,55 @@ const QOC_ANALYTICS_DATA = {
         timeliness: 76.5,
       },
     },
+
+    {
+      id: "Dept. of IT",
+      name: "Dept. of IT",
+      submissionRate: 94.1,
+      totalSubmissions: 21,
+      approved: 19,
+      rejected: 1,
+      pending: 1,
+      averageScore: 4.4,
+      onTimeRate: 90.5,
+      lastSubmission: "2024-01-14",
+      recentActivity: [
+        {
+          kpi: "Quaterly Assessments",
+          status: "approved",
+          date: "2024-01-14",
+          score: 4.6,
+        },
+        {
+          kpi: "Student Satisfaction",
+          status: "approved",
+          date: "2024-01-13",
+          score: 4.3,
+        },
+        {
+          kpi: "Course Outcomes",
+          status: "pending",
+          date: "2024-01-12",
+          score: null,
+        },
+      ],
+      qualityMetrics: {
+        dataAccuracy: 94.8,
+        completeness: 96.3,
+        timeliness: 91.7,
+      },
+    },
+
   ],
   reviewMetrics: {
     averageReviewTime: 2.3,
     reviewBacklog: 23,
     reviewerWorkload: [
-      { reviewer: "Dr. Rajesh", pending: 8, completed: 45 },
-      { reviewer: "Dr. Suman", pending: 6, completed: 38 },
-      { reviewer: "Dr. Amit", pending: 9, completed: 42 },
+
+      { reviewer: "Dr. Arjun Singh", pending: 1, completed: 45 },
+      { reviewer: "Dr. Arpit Singh", pending: 6, completed: 38 },
+      { reviewer: "Dr. Somya Goyal", pending: 9, completed: 42 },
+
     ],
   },
   qualityTrends: {

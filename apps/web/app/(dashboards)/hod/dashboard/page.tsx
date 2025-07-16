@@ -659,7 +659,7 @@ export function DashboardContent() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <div className="relative w-6 h-6">
-                    <svg
+                    {/* <svg
                       className="w-6 h-6 transform -rotate-90"
                       viewBox="0 0 36 36"
                     >
@@ -681,7 +681,7 @@ export function DashboardContent() {
                         strokeDasharray={`${selectedPillar.completion}, 100`}
                         strokeLinecap="round"
                       />
-                    </svg>
+                    </svg> */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-xs font-bold">
                         {selectedPillar.completion}%
