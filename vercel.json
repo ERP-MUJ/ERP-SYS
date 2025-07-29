@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "buildCommand": "pnpm install && pnpm --filter=@repo/db db:generate && pnpm --filter=web build && pnpm --filter=server build",
+  "installCommand": "pnpm install",
+  "outputDirectory": "apps/web/.next",
+  "functions": {
+    "api/server.js": {
+      "runtime": "nodejs18.x",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/server"
+    }
+  ]
+}
+

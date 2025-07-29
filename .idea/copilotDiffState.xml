@@ -3,6 +3,14 @@
   <component name="CopilotDiffPersistence">
     <option name="pendingDiffs">
       <map>
+        <entry key="$PROJECT_DIR$/api/server.js">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/api/server.js" />
+              <option name="updatedContent" value="import { NestFactory } from '@nestjs/core';&#10;import { AppModule } from '../apps/server/src/app.module';&#10;import { ValidationPipe } from '@nestjs/common';&#10;import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';&#10;&#10;let app: any;&#10;&#10;async function createNestApp() {&#10;  if (!app) {&#10;    app = await NestFactory.create(AppModule, {&#10;      logger: ['error', 'warn'],&#10;    });&#10;&#10;    app.useGlobalPipes(&#10;      new ValidationPipe({&#10;        whitelist: true,&#10;        forbidNonWhitelisted: true,&#10;        transform: true,&#10;      }),&#10;    );&#10;&#10;    app.enableCors({&#10;      origin: [&#10;        'http://localhost:3000',&#10;        'https://erp-sys-web.vercel.app',&#10;        process.env.NEXT_PUBLIC_APP_URL&#10;      ].filter(Boolean),&#10;      credentials: true,&#10;    });&#10;&#10;    await app.init();&#10;  }&#10;  return app;&#10;}&#10;&#10;export default async function handler(req: any, res: any) {&#10;  try {&#10;    const app = await createNestApp();&#10;    const expressApp = app.getHttpAdapter().getInstance();&#10;    &#10;    // Handle the request through NestJS&#10;    return expressApp(req, res);&#10;  } catch (error) {&#10;    console.error('Error in serverless function:', error);&#10;    res.status(500).json({ error: 'Internal server error' });&#10;  }&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$/api/serverless-function.ts">
           <value>
             <PendingDiffInfo>
@@ -16,7 +24,7 @@
             <PendingDiffInfo>
               <option name="filePath" value="$PROJECT_DIR$/apps/web/config/index.ts" />
               <option name="originalContent" value="export const envConfig = {&#10;  appUrl: process.env.NEXT_PUBLIC_APP_URL || &quot;http://localhost:3000&quot;,&#10;  apiUrl: process.env.NEXT_PUBLIC_API_URL || &quot;http://localhost:3001&quot;,&#10;  nextAuthSecret: process.env.NEXTAUTH_SECRET || &quot;my-secret&quot;,&#10;  nextAuthUrl: process.env.NEXTAUTH_URL || &quot;http://localhost:3000&quot;,&#10;};&#10;" />
-              <option name="updatedContent" value="export const envConfig = {&#10;  appUrl: process.env.NEXT_PUBLIC_APP_URL || &quot;http://localhost:3000&quot;,&#10;  apiUrl:&#10;    process.env.NODE_ENV === &quot;production&quot;&#10;      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/server`&#10;      : process.env.NEXT_PUBLIC_API_URL || &quot;http://localhost:3001&quot;,&#10;  nextAuthSecret: process.env.NEXTAUTH_SECRET || &quot;my-secret&quot;,&#10;  nextAuthUrl: process.env.NEXTAUTH_URL || &quot;http://localhost:3000&quot;,&#10;};" />
+              <option name="updatedContent" value="export const envConfig = {&#10;  appUrl: process.env.NEXT_PUBLIC_APP_URL || &quot;http://localhost:3000&quot;,&#10;  apiUrl:&#10;    process.env.NODE_ENV === &quot;production&quot;&#10;      ? `${process.env.NEXT_PUBLIC_APP_URL}/api`&#10;      : process.env.NEXT_PUBLIC_API_URL || &quot;http://localhost:3001&quot;,&#10;  nextAuthSecret: process.env.NEXTAUTH_SECRET || &quot;my-secret&quot;,&#10;  nextAuthUrl: process.env.NEXTAUTH_URL || &quot;http://localhost:3000&quot;,&#10;};" />
             </PendingDiffInfo>
           </value>
         </entry>
@@ -51,8 +59,7 @@
           <value>
             <PendingDiffInfo>
               <option name="filePath" value="$PROJECT_DIR$/vercel.json" />
-              <option name="originalContent" value="{&#10;  &quot;buildCommand&quot;: &quot;cd apps/web &amp;&amp; pnpm build&quot;,&#10;  &quot;installCommand&quot;: &quot;pnpm install&quot;,&#10;  &quot;outputDirectory&quot;: &quot;.next&quot;&#10;}&#10;" />
-              <option name="updatedContent" value="{&#10;  &quot;version&quot;: 2,&#10;  &quot;buildCommand&quot;: &quot;pnpm --filter=@repo/db db:generate &amp;&amp; pnpm --filter=web build &amp;&amp; pnpm --filter=server build&quot;,&#10;  &quot;installCommand&quot;: &quot;pnpm install&quot;,&#10;  &quot;outputDirectory&quot;: &quot;apps/web/.next&quot;,&#10;  &quot;functions&quot;: {&#10;    &quot;api/serverless-function.ts&quot;: {&#10;      &quot;runtime&quot;: &quot;nodejs18.x&quot;,&#10;      &quot;memory&quot;: 1024,&#10;      &quot;maxDuration&quot;: 30&#10;    }&#10;  },&#10;  &quot;rewrites&quot;: [&#10;    {&#10;      &quot;source&quot;: &quot;/api/server/(.*)&quot;,&#10;      &quot;destination&quot;: &quot;/api/serverless-function&quot;&#10;    }&#10;  ]&#10;}" />
+              <option name="updatedContent" value="{&#10;  &quot;version&quot;: 2,&#10;  &quot;buildCommand&quot;: &quot;pnpm install &amp;&amp; pnpm --filter=@repo/db db:generate &amp;&amp; pnpm --filter=web build &amp;&amp; pnpm --filter=server build&quot;,&#10;  &quot;installCommand&quot;: &quot;pnpm install&quot;,&#10;  &quot;outputDirectory&quot;: &quot;apps/web/.next&quot;,&#10;  &quot;functions&quot;: {&#10;    &quot;api/server.js&quot;: {&#10;      &quot;runtime&quot;: &quot;nodejs18.x&quot;,&#10;      &quot;memory&quot;: 1024,&#10;      &quot;maxDuration&quot;: 30&#10;    }&#10;  },&#10;  &quot;rewrites&quot;: [&#10;    {&#10;      &quot;source&quot;: &quot;/api/(.*)&quot;,&#10;      &quot;destination&quot;: &quot;/api/server&quot;&#10;    }&#10;  ]&#10;}" />
             </PendingDiffInfo>
           </value>
         </entry>
