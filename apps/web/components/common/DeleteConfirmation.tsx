@@ -67,7 +67,7 @@ export function DeleteConfirmationModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-black">
+          <DialogTitle className="flex items-center gap-2 text-black dark:text-white">
             <Trash2 className="h-5 w-5" />
             {title || defaultTitle}
           </DialogTitle>
@@ -76,7 +76,7 @@ export function DeleteConfirmationModal({
         <div className="space-y-4">
           {/* Warning Alert */}
           <Alert className="border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-600" />
             <AlertDescription className="text-black">
               {description || defaultDescription}
             </AlertDescription>
@@ -94,7 +94,7 @@ export function DeleteConfirmationModal({
           <div className="space-y-2">
             <Label htmlFor="confirmation-input" className="text-sm font-medium">
               Type{" "}
-              <span className="font-mono bg-gray-100 px-1 rounded font-bold">
+              <span className="font-mono bg-gray-100 dark:bg-gray-50 text-gray-900 px-1 rounded font-bold">
                 {itemName}
               </span>{" "}
               to confirm:
