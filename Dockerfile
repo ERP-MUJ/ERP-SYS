@@ -10,13 +10,13 @@ RUN apk add --no-cache libc6-compat && npm install -g pnpm
 COPY . .
 
 # Install workspace deps
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Generate Prisma client
 RUN pnpm --filter=@repo/db db:generate
 
 # Build apps
-RUN pnpm --filter=server build && pnpm --filter=web build
+RUN pnpm build
 
 # Expose both ports (web 3000, server 3001)
 EXPOSE 3000 3001

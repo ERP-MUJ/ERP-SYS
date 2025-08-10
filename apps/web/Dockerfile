@@ -9,7 +9,7 @@ RUN npm install -g pnpm && apk add --no-cache libc6-compat
 COPY . .
 
 # Install dependencies for the monorepo
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Generate Prisma client for DB package (needed during build or runtime)
 RUN pnpm --filter=@repo/db db:generate
