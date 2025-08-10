@@ -54,3 +54,6 @@ npm-debug.log*
 /packages/db/generated/client/wasm.d.ts
 /packages/db/generated/client/runtime/wasm.js
 /packages/db/generated/client/wasm.js
+packages/db/prisma/migrations/migration_lock.toml
+packages/db/prisma/migrations/20250806054443_new/migration.sql
+packages/db/prisma/migrations/migration_lock.toml

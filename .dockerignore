@@ -1,0 +1,22 @@
+# General
+.git
+.gitignore
+Dockerfile
+Dockerfile.*
+**/.env
+**/.env.*
+
+# Node
+**/node_modules
+**/.pnpm-store
+**/dist
+**/build
+**/.next
+**/.turbo
+**/.cache
+**/coverage
+
+# OS/editor
+.DS_Store
+**/*.log
+.vscode
