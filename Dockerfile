@@ -22,4 +22,4 @@ RUN pnpm --filter=server build && pnpm --filter=web build
 EXPOSE 3000 3001
 
 # Start: deploy DB migrations, then run both apps
-CMD sh -lc "pnpm --filter=@repo/db db:deploy && node apps/server/dist/main.js & pnpm --filter=web start"
+CMD sh -lc "pnpm --filter=@repo/db db:deploy && node apps/server/dist/main.js & PORT=3000 pnpm --filter=web start"
