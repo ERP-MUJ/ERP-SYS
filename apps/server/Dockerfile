@@ -1,22 +1,28 @@
-FROM guergeiro/pnpm:22-10
+FROM node:22-alpine
 
-# Generate Prisma client
-RUN pnpm db:generate
-
-RUN cd apps/server
-
+# Install pnpm (via Corepack)
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy only backend files
+# Set workspace root
+WORKDIR /app
+
+# Copy monorepo (needed for pnpm workspace and prisma)
 COPY . .
 
-# Install dependencies
+# Install workspace dependencies
 RUN pnpm install --frozen-lockfile
 
+# Generate Prisma client from packages/db/prisma
+RUN cd packages/db/prisma && npx prisma generate
 
+# Switch to server app for runtime
+WORKDIR /app/apps/server
 
 # Expose API port
 EXPOSE 3001
+
+# Default port env
+ENV PORT=3001
 
 # Start backend
 CMD ["pnpm", "start"]
