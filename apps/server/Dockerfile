@@ -1,32 +1,23 @@
-FROM node:20 AS builder
+FROM node:20
+
+# Set working directory
 WORKDIR /app
 
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy only dependency files for caching
-COPY package.json pnpm-lock.yaml turbo.json ./
-COPY apps/server/package.json ./apps/server/
-COPY packages/db/package.json ./packages/db/
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy full project
+# Copy all files
 COPY . .
 
-# Generate Prisma client & run migrations using Supabase env vars
-# DATABASE_URL and DIRECT_URL must be provided in Coolify
-RUN pnpm turbo run db:generate
-RUN pnpm prisma migrate deploy --schema=packages/db/prisma/schema.prisma
+# Install deps
+RUN pnpm install --frozen-lockfile
 
-# Build Server
-RUN pnpm --filter=apps/server build
+# Generate Prisma client (if needed)
+RUN pnpm prisma generate
 
-FROM node:20 AS runner
-WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Expose your backend port (change if different)
+EXPOSE 3001
 
-COPY --from=builder /app ./
+# Start app
+CMD ["pnpm", "start"]
 
-CMD ["pnpm", "--filter=apps/server", "start:prod"]
