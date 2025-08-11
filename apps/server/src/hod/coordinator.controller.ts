@@ -14,10 +14,7 @@ export class CoordinatorController {
   constructor(private readonly coordinatorService: CoordinatorService) {}
 
   @Post('assign')
-  async assignCoordinator(
-    @CurrentUser() user: RequestUser,
-    @Body() payload: AssignCoordinatorDto,
-  ) {
+  async assignCoordinator(@CurrentUser() user: RequestUser, @Body() payload: AssignCoordinatorDto) {
     console.log('Assign Coordinator Request:', { userId: user.id, payload });
     return this.coordinatorService.assignCoordinator(user.id, user.role, payload);
   }
@@ -26,4 +23,4 @@ export class CoordinatorController {
   async getDepartmentFaculty(@CurrentUser() user: RequestUser) {
     return this.coordinatorService.getDepartmentFaculty(user.id, user.role);
   }
-} 
+}

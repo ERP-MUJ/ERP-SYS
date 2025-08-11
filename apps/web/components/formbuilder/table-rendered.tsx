@@ -52,6 +52,7 @@ import {
 } from "@workspace/ui/components/card";
 import { LineChartIcon as ChartLine } from "lucide-react";
 import { useSaveKpiData } from "@/hooks/faculty";
+import type { UseMutationResult } from "@tanstack/react-query";
 
 interface TableFormRendererProps {
   name: string;
@@ -61,6 +62,7 @@ interface TableFormRendererProps {
   className?: string;
   id: string;
   existingData?: Record<string, any>[];
+  customSaveHook?: () => UseMutationResult<any, Error, { id: string; formData: { entries: Record<string, any>[] } }, unknown>;
 }
 
 type FormEntry = Record<string, any>;
@@ -73,9 +75,11 @@ export default function TableFormRenderer({
   onSuccess,
   className = "",
   existingData = [],
+  customSaveHook,
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
-  const { mutate: saveKpiData } = useSaveKpiData();
+  const defaultSaveHook = useSaveKpiData();
+  const { mutate: saveKpiData } = customSaveHook ? customSaveHook() : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
   const [activeElement, setActiveElement] =
