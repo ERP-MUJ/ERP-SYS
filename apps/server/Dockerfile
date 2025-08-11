@@ -6,7 +6,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy only dependency files for caching
 COPY package.json pnpm-lock.yaml turbo.json ./
-COPY apps/nestjs/package.json ./apps/nestjs/
+COPY apps/server/package.json ./apps/server/
 COPY packages/db/package.json ./packages/db/
 
 # Install dependencies
@@ -20,8 +20,8 @@ COPY . .
 RUN pnpm turbo run db:generate
 RUN pnpm prisma migrate deploy --schema=packages/db/prisma/schema.prisma
 
-# Build NestJS
-RUN pnpm --filter=apps/nestjs build
+# Build Server
+RUN pnpm --filter=apps/server build
 
 FROM node:20 AS runner
 WORKDIR /app
@@ -29,4 +29,4 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY --from=builder /app ./
 
-CMD ["pnpm", "--filter=apps/nestjs", "start:prod"]
+CMD ["pnpm", "--filter=apps/server", "start:prod"]

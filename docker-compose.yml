@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: ./apps/nestjs/Dockerfile
+      dockerfile: ./apps/server/Dockerfile
     environment:
       NODE_ENV: production
       # Coolify will set these:
@@ -24,7 +24,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: ./apps/nextjs/Dockerfile
+      dockerfile: ./apps/web/Dockerfile
     depends_on:
       backend:
         condition: service_healthy
