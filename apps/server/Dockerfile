@@ -9,8 +9,8 @@ WORKDIR /app
 # Copy monorepo (needed for pnpm workspace and prisma)
 COPY . .
 
-# Install workspace dependencies (allow lockfile update inside image)
-RUN pnpm install --no-frozen-lockfile
+# Install all workspace dependencies (allow lockfile update inside image)
+RUN pnpm -r install --no-frozen-lockfile
 
 # Generate Prisma client from packages/db/prisma
 RUN cd packages/db/prisma && npx prisma generate
