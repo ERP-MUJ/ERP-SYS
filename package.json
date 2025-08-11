@@ -6,6 +6,7 @@
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev": "turbo dev",
+    "start": "turbo start",
     "lint": "turbo lint",
     "generate": "pnpm --filter @repo/db run db:generate",
     "db:migrate": "pnpm --filter @repo/db run db:migrate",
