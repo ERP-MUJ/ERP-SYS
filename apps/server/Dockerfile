@@ -1,56 +1,32 @@
-# Use Node.js LTS version
-FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat
+FROM node:20 AS builder
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy workspace files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+# Copy only dependency files for caching
+COPY package.json pnpm-lock.yaml turbo.json ./
+COPY apps/nestjs/package.json ./apps/nestjs/
+COPY packages/db/package.json ./packages/db/
 
-# Copy all package.json files first for better caching
-COPY packages/db/package.json ./packages/db/package.json
-COPY packages/eslint-config/package.json ./packages/eslint-config/package.json
-COPY packages/types/package.json ./packages/types/package.json
-COPY packages/typescript-config/package.json ./packages/typescript-config/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-COPY apps/server/package.json ./apps/server/package.json
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Install all dependencies
-RUN pnpm install
-
-# Copy source code
+# Copy full project
 COPY . .
 
-# Generate Prisma client
-RUN pnpm --filter=@repo/db db:generate
+# Generate Prisma client & run migrations using Supabase env vars
+# DATABASE_URL and DIRECT_URL must be provided in Coolify
+RUN pnpm turbo run db:generate
+RUN pnpm prisma migrate deploy --schema=packages/db/prisma/schema.prisma
 
-# Build the server
-RUN pnpm --filter=server build
+# Build NestJS
+RUN pnpm --filter=apps/nestjs build
 
-# Production stage - simplified approach
-FROM node:20-alpine AS production
-RUN apk add --no-cache libc6-compat
+FROM node:20 AS runner
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install pnpm
-RUN npm install -g pnpm
+COPY --from=builder /app ./
 
-# Copy everything from build stage first
-COPY --from=base /app ./
-
-# Remove non-production files to reduce size
-RUN rm -rf apps/web apps/server/src packages/*/src
-
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
-
-# Set working directory to server
-WORKDIR /app/apps/server
-
-# Expose port
-EXPOSE 3001
-
-# Start the application
-CMD ["node", "dist/main.js"]
+CMD ["pnpm", "--filter=apps/nestjs", "start:prod"]
