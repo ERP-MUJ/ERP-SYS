@@ -22,18 +22,15 @@ export class DepartmentAssignmentController {
     return this.departmentAssignmentService.getPillarTemplates(user.id, user.role);
   }
 
-                @Get('departments/:departmentId/pillars')
-              async getDepartmentPillars(
-                @CurrentUser() user: RequestUser,
-                @Param('departmentId') departmentId: string,
-              ) {
-                return this.departmentAssignmentService.getDepartmentPillars(user.id, user.role, departmentId);
-              }
+  @Get('departments/:departmentId/pillars')
+  async getDepartmentPillars(@CurrentUser() user: RequestUser, @Param('departmentId') departmentId: string) {
+    return this.departmentAssignmentService.getDepartmentPillars(user.id, user.role, departmentId);
+  }
 
-              @Get('all-department-pillars')
-              async getAllDepartmentPillars(@CurrentUser() user: RequestUser) {
-                return this.departmentAssignmentService.getAllDepartmentPillars(user.id, user.role);
-              }
+  @Get('all-department-pillars')
+  async getAllDepartmentPillars(@CurrentUser() user: RequestUser) {
+    return this.departmentAssignmentService.getAllDepartmentPillars(user.id, user.role);
+  }
 
   @Post('departments/:departmentId/pillars')
   async assignPillarToDepartment(
@@ -55,11 +52,7 @@ export class DepartmentAssignmentController {
     @CurrentUser() user: RequestUser,
     @Param('departmentPillarId') departmentPillarId: string,
   ) {
-    return this.departmentAssignmentService.unassignPillarFromDepartment(
-      user.id,
-      user.role,
-      departmentPillarId,
-    );
+    return this.departmentAssignmentService.unassignPillarFromDepartment(user.id, user.role, departmentPillarId);
   }
 
   @Get('department-pillars/:departmentPillarId/kpis')
@@ -67,10 +60,6 @@ export class DepartmentAssignmentController {
     @CurrentUser() user: RequestUser,
     @Param('departmentPillarId') departmentPillarId: string,
   ) {
-    return this.departmentAssignmentService.getDepartmentPillarKPIs(
-      user.id,
-      user.role,
-      departmentPillarId,
-    );
+    return this.departmentAssignmentService.getDepartmentPillarKPIs(user.id, user.role, departmentPillarId);
   }
 }

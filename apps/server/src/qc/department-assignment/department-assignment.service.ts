@@ -215,23 +215,23 @@ export class DepartmentAssignmentService {
       orderBy: { kpi_number: 'asc' },
     });
 
-                    for (const kpiTemplate of kpiTemplates) {
-                  await this.prisma.departmentKpi.create({
-                    data: {
-                      dept_id: departmentId,
-                      dept_pillar_id: departmentPillar.id,
-                      template_id: kpiTemplate.id,
-                      kpi_number: kpiTemplate.kpi_number,
-                      kpi_metric_name: kpiTemplate.kpi_metric_name,
-                      kpi_description: kpiTemplate.kpi_description,
-                      kpi_value: kpiTemplate.kpi_value,
-                      data_provided_by: kpiTemplate.data_provided_by,
-                      kpi_data: kpiTemplate.kpi_data as any,
-                      kpi_calculated_metrics: kpiTemplate.kpi_calculated_metrics as any,
-                      academic_year: new Date().getFullYear(),
-                    },
-                  });
-                }
+    for (const kpiTemplate of kpiTemplates) {
+      await this.prisma.departmentKpi.create({
+        data: {
+          dept_id: departmentId,
+          dept_pillar_id: departmentPillar.id,
+          template_id: kpiTemplate.id,
+          kpi_number: kpiTemplate.kpi_number,
+          kpi_metric_name: kpiTemplate.kpi_metric_name,
+          kpi_description: kpiTemplate.kpi_description,
+          kpi_value: kpiTemplate.kpi_value,
+          data_provided_by: kpiTemplate.data_provided_by,
+          kpi_data: kpiTemplate.kpi_data as any,
+          kpi_calculated_metrics: kpiTemplate.kpi_calculated_metrics as any,
+          academic_year: new Date().getFullYear(),
+        },
+      });
+    }
 
     return {
       message: 'Pillar assigned to department successfully',
@@ -246,11 +246,7 @@ export class DepartmentAssignmentService {
    * @param departmentPillarId - The department pillar ID
    * @returns Success message
    */
-  async unassignPillarFromDepartment(
-    userId: string,
-    userRole: UserRole,
-    departmentPillarId: string,
-  ) {
+  async unassignPillarFromDepartment(userId: string, userRole: UserRole, departmentPillarId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
 
@@ -286,11 +282,7 @@ export class DepartmentAssignmentService {
    * @param departmentPillarId - The department pillar ID
    * @returns Array of department KPIs with assigned users
    */
-  async getDepartmentPillarKPIs(
-    userId: string,
-    userRole: UserRole,
-    departmentPillarId: string,
-  ) {
+  async getDepartmentPillarKPIs(userId: string, userRole: UserRole, departmentPillarId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
 
