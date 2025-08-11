@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine
 
 # Install pnpm via Corepack
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -9,24 +9,10 @@ RUN apk add --no-cache curl wget
 # Set working directory
 WORKDIR /app
 
-# Copy package files for better caching
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps/server/package.json ./apps/server/
-COPY apps/web/package.json ./apps/web/
-COPY packages/*/package.json ./packages/*/
-
-# Install dependencies
-RUN pnpm install
-
-# Copy source code
+# Copy everything
 COPY . .
 
-# Copy environment files if they exist, or create placeholders
-RUN if [ -f apps/server/.env ]; then cp apps/server/.env apps/server/.env.backup; fi
-RUN if [ -f apps/web/.env ]; then cp apps/web/.env apps/web/.env.backup; fi
-RUN if [ -f packages/db/.env ]; then cp packages/db/.env packages/db/.env.backup; fi
-
-# Create default environment files with placeholders
+# Create environment files with placeholders from environment variables
 RUN echo "# Backend Environment - Set these in Coolify\n\
 PORT=${PORT:-3001}\n\
 NODE_ENV=${NODE_ENV:-production}\n\
@@ -59,6 +45,9 @@ RUN echo "# Database Environment - Set these in Coolify\n\
 DATABASE_URL=${DATABASE_URL}\n\
 DIRECT_URL=${DIRECT_URL}" > packages/db/.env
 
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
 # Generate Prisma client and build everything
 RUN pnpm db:generate && pnpm build
 
@@ -67,7 +56,7 @@ EXPOSE 3000 3001
 
 # Health check for both services
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:3000/api/health || curl -f http://localhost:3001/health || exit 1
+  CMD curl -f http://localhost:3000/ || curl -f http://localhost:3001/ || exit 1
 
 # Start both services using Turbo
 CMD ["pnpm", "start"]
