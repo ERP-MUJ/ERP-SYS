@@ -1,10 +1,9 @@
 FROM guergeiro/pnpm:22-10
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN pnpm db:generate
 
-
-WORKDIR /app/server
+RUN cd apps/server
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
