@@ -8,7 +8,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY . .
 
 ## Install workspace deps and build the web app
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 WORKDIR /app/apps/web
 RUN pnpm build
 
