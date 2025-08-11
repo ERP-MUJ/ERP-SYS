@@ -1,5 +1,5 @@
 FROM guergeiro/pnpm:22-10
-WORKDIR /app
+WORKDIR /app/web
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 

@@ -1,5 +1,10 @@
 FROM guergeiro/pnpm:22-10
-WORKDIR /app
+
+# Generate Prisma client
+RUN pnpm prisma generate
+
+
+WORKDIR /app/server
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -9,8 +14,7 @@ COPY . .
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Generate Prisma client
-RUN pnpm prisma generate
+
 
 # Expose API port
 EXPOSE 3001
