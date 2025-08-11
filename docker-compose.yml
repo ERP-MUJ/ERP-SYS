@@ -27,9 +27,3 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - MAIL_FROM=${MAIL_FROM}
       - SMTP_FROM_NAME=${SMTP_FROM_NAME}
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
