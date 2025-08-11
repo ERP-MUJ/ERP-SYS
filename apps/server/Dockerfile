@@ -1,7 +1,7 @@
 FROM guergeiro/pnpm:22-10
 
 # Generate Prisma client
-RUN pnpm prisma generate
+RUN npx prisma generate
 
 
 WORKDIR /app/server
