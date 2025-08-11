@@ -1,23 +1,32 @@
-FROM node:20-alpine
-
+FROM node:20 AS builder
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm && apk add --no-cache libc6-compat
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy the entire workspace (simplified for Coolify)
+# Copy only dependency files for caching
+COPY package.json pnpm-lock.yaml turbo.json ./
+COPY apps/nestjs/package.json ./apps/nestjs/
+COPY packages/db/package.json ./packages/db/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy full project
 COPY . .
 
-# Install dependencies for the monorepo
-RUN pnpm install 
+# Generate Prisma client & run migrations using Supabase env vars
+# DATABASE_URL and DIRECT_URL must be provided in Coolify
+RUN pnpm turbo run db:generate
+RUN pnpm prisma migrate deploy --schema=packages/db/prisma/schema.prisma
 
-# Generate Prisma client for DB package
-RUN pnpm --filter=@repo/db db:generate
+# Build NestJS
+RUN pnpm --filter=apps/nestjs build
 
-# Build the server app
-RUN pnpm --filter=server build
+FROM node:20 AS runner
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Run the server
-WORKDIR /app/apps/server
-EXPOSE 3001
-CMD ["node", "dist/main.js"]
+COPY --from=builder /app ./
+
+CMD ["pnpm", "--filter=apps/nestjs", "start:prod"]

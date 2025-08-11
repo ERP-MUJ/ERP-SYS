@@ -1,23 +1,26 @@
-FROM node:20-alpine
-
+FROM node:20 AS builder
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm && apk add --no-cache libc6-compat
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy the entire workspace (simplified for Coolify)
+# Copy only dependency files for caching
+COPY package.json pnpm-lock.yaml turbo.json ./
+COPY apps/nextjs/package.json ./apps/nextjs/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy the rest of the repo
 COPY . .
 
-# Install dependencies for the monorepo
-RUN pnpm install
+# Build Next.js
+RUN pnpm --filter=apps/nextjs build
 
-# Generate Prisma client for DB package (needed during build or runtime)
-RUN pnpm --filter=@repo/db db:generate
+FROM node:20 AS runner
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Build the web app
-RUN pnpm --filter=web build
+COPY --from=builder /app ./
 
-# Run the web app
-WORKDIR /app/apps/web
-EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["pnpm", "--filter=apps/nextjs", "start"]
