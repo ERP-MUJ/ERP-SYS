@@ -1,26 +1,60 @@
 version: "3.9"
 
 services:
+  # Backend API Service (NestJS)
   backend:
     build:
       context: .
       dockerfile: ./apps/server/Dockerfile
     environment:
-      NODE_ENV: production
-      # Coolify will set these:
-      # DATABASE_URL=...
-      # DIRECT_URL=...
-    ports:
-      - "3001:3001"
+      # Node Environment
+      - NODE_ENV=production
+      - PORT=3001
+      
+      # Database Configuration (Coolify Magic Variables)
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      
+      # Authentication & Security
+      - JWT_SECRET=${SERVICE_PASSWORD_JWT}
+      - JWT_EXPIRES_IN=30d
+      
+      # Google OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${SERVICE_FQDN_FRONTEND}/api/auth/callback/google
+      
+      # SMTP Configuration
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - MAIL_FROM=${MAIL_FROM}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME:-ERP System}
+      
+      # AI Integration
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_BASE_URL=${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com}
+      
+      # Service URLs for internal communication
+      - FRONTEND_URL=${SERVICE_FQDN_FRONTEND}
+    
+    # Coolify Magic Environment Variables for FQDN
+    labels:
+      - "SERVICE_FQDN_BACKEND_3001=/api"
+    
     restart: unless-stopped
     networks:
       - app-network
+    
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Frontend Web Service (Next.js)
   frontend:
     build:
       context: .
@@ -29,14 +63,51 @@ services:
       backend:
         condition: service_healthy
     environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-      NEXT_PUBLIC_API_URL: http://backend:3001
-    ports:
-      - "3000:3000"
+      # Node Environment
+      - NODE_ENV=production
+      
+      # App URLs (Coolify Magic Variables)
+      - NEXT_PUBLIC_APP_URL=${SERVICE_FQDN_FRONTEND}
+      - NEXT_PUBLIC_API_URL=${SERVICE_FQDN_BACKEND}
+      
+      # NextAuth Configuration
+      - NEXTAUTH_SECRET=${SERVICE_PASSWORD_NEXTAUTH}
+      - NEXTAUTH_URL=${SERVICE_FQDN_FRONTEND}
+      
+      # Google OAuth (shared with backend)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    
+    # Coolify Magic Environment Variables for FQDN
+    labels:
+      - "SERVICE_FQDN_FRONTEND_3000"
+    
     restart: unless-stopped
     networks:
       - app-network
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Database Migration Service (runs once)
+  migration:
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    command: ["sh", "-c", "cd /app/packages/db && npx prisma migrate deploy"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+    networks:
+      - app-network
+    exclude_from_hc: true
+    restart: "no"
+    depends_on:
+      - backend
 
 networks:
   app-network:
