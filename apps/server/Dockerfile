@@ -1,23 +1,20 @@
-FROM node:20
-
-# Set working directory
+FROM guergeiro/pnpm:22-10
 WORKDIR /app
 
-# Enable pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy all files
+# Copy only backend files
 COPY . .
 
-# Install deps
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Generate Prisma client (if needed)
+# Generate Prisma client
 RUN pnpm prisma generate
 
-# Expose your backend port (change if different)
+# Expose API port
 EXPOSE 3001
 
-# Start app
+# Start backend
 CMD ["pnpm", "start"]
 
