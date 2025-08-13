@@ -1,229 +1,188 @@
 "use client";
 
-import { useState } from "react";
-import { SubmissionStatsCard } from "@/components/qc/analytics/SubmissionStatsCard";
-import { DepartmentList } from "@/components/qc/analytics/DepartmentList";
-import { DepartmentDetails } from "@/components/qc/analytics/DepartmentDetails";
-import { QualityTrends } from "@/components/qc/analytics/QualityTrends";
-import { ReviewWorkloadTable } from "@/components/qc/analytics/ReviewWorkloadTable";
+import { Badge } from "@workspace/ui/components/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@workspace/ui/components/table";
+import {
+  CheckCircle2,
+  XCircle,
+  Building,
+  Target,
+  Columns,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
+import {
+  QacDashboardData,
+  DepartmentStatus,
+} from "@workspace/types/types/qc-dashboard.type";
+import { ElementType } from "react";
+import { useGetDashboardData } from "@/queries/qc/dashboard";
 
-const QAC_ANALYTICS_DATA = {
-  submissionStats: {
-    totalSubmissions: 156,
-    pendingReview: 23,
-    approvedThisMonth: 89,
-    rejectedThisMonth: 12,
-    averageReviewTime: "2.3 days",
-  },
-  departmentPerformance: [
-    {
-      id: "Dept. of CCE",
-      name: "Dept. of CCE",
-      submissionRate: 92.5,
-      totalSubmissions: 24,
-      approved: 22,
-      rejected: 1,
-      pending: 1,
-      averageScore: 4.6,
-      onTimeRate: 95.8,
-      lastSubmission: "2024-01-15",
-      recentActivity: [
-        {
-          kpi: "Student Satisfaction",
-          status: "approved",
-          date: "2024-01-15",
-          score: 4.8,
-        },
-        {
-          kpi: "Course Outcomes",
-          status: "approved",
-          date: "2024-01-14",
-          score: 4.5,
-        },
-        {
-          kpi: "Staff Performance",
-          status: "pending",
-          date: "2024-01-13",
-          score: null,
-        },
-      ],
-      qualityMetrics: {
-        dataAccuracy: 96.2,
-        completeness: 98.5,
-        timeliness: 94.1,
-      },
-    },
-    {
-      id: "Dept. of IT",
-      name: "Dept. of IT",
-      submissionRate: 94.1,
-      totalSubmissions: 30,
-      approved: 28,
-      rejected: 2,
-      pending: 0,
-      averageScore: 4.7,
-      onTimeRate: 97.2,
-      lastSubmission: "2024-01-10",
-      recentActivity: [
-        {
-          kpi: "System Uptime",
-          status: "approved",
-          date: "2024-01-10",
-          score: 99.9,
-        },
-        {
-          kpi: "Incident Response",
-          status: "approved",
-          date: "2024-01-09",
-          score: 4.6,
-        },
-        {
-          kpi: "User Satisfaction",
-          status: "pending",
-          date: "2024-01-08",
-          score: null,
-        },
-      ],
-      qualityMetrics: {
-        dataAccuracy: 95.5,
-        completeness: 97.8,
-        timeliness: 93.2,
-      },
-    },
-    {
-      id: "Dept. of HR",
-      name: "Dept. of HR",
-      submissionRate: 90.3,
-      totalSubmissions: 20,
-      approved: 18,
-      rejected: 1,
-      pending: 1,
-      averageScore: 4.5,
-      onTimeRate: 92.5,
-      lastSubmission: "2024-01-12",
-      recentActivity: [
-        {
-          kpi: "Employee Satisfaction",
-          status: "approved",
-          date: "2024-01-12",
-          score: 4.7,
-        },
-        {
-          kpi: "Attrition Rate",
-          status: "approved",
-          date: "2024-01-11",
-          score: 4.3,
-        },
-        {
-          kpi: "Training Effectiveness",
-          status: "pending",
-          date: "2024-01-10",
-          score: null,
-        },
-      ],
-      qualityMetrics: {
-        dataAccuracy: 94.1,
-        completeness: 96.2,
-        timeliness: 92.3,
-      },
-    },
-    {
-      id: "Dept. of Fin",
-      name: "Dept. of Fin",
-      submissionRate: 88.7,
-      totalSubmissions: 22,
-      approved: 19,
-      rejected: 2,
-      pending: 1,
-      averageScore: 4.4,
-      onTimeRate: 90.1,
-      lastSubmission: "2024-01-11",
-      recentActivity: [
-        {
-          kpi: "Budget Variance",
-          status: "approved",
-          date: "2024-01-11",
-          score: 4.6,
-        },
-        {
-          kpi: "Expense Management",
-          status: "approved",
-          date: "2024-01-10",
-          score: 4.2,
-        },
-        {
-          kpi: "Revenue Growth",
-          status: "pending",
-          date: "2024-01-09",
-          score: null,
-        },
-      ],
-      qualityMetrics: {
-        dataAccuracy: 93.7,
-        completeness: 95.8,
-        timeliness: 91.4,
-      },
-    },
-  ],
-  reviewMetrics: {
-    averageReviewTime: 2.3,
-    reviewBacklog: 23,
-    reviewerWorkload: [
-      { reviewer: "Dr. Arjun Singh", pending: 1, completed: 45 },
-      { reviewer: "Dr. Arpit Singh", pending: 6, completed: 38 },
-      { reviewer: "Dr. Somya Goyal", pending: 9, completed: 42 },
-    ],
-  },
-  qualityTrends: {
-    monthlyApprovalRate: [
-      { month: "Sep", rate: 82 },
-      { month: "Oct", rate: 85 },
-      { month: "Nov", rate: 88 },
-      { month: "Dec", rate: 91 },
-      { month: "Jan", rate: 89 },
-    ],
-    qualityScores: [
-      { month: "Sep", score: 4.1 },
-      { month: "Oct", score: 4.2 },
-      { month: "Nov", score: 4.3 },
-      { month: "Dec", score: 4.5 },
-      { month: "Jan", score: 4.4 },
-    ],
-  },
-};
+// Local type for the StatCard props, as it's a UI-specific component
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: ElementType;
+  description: string;
+}
+
+// Loading spinner component for loading state
+const LoadingSpinner = () => (
+  <div className="flex h-[50vh] items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  </div>
+);
+
+// A reusable component for the overview cards
+const StatCard = ({ title, value, icon: Icon, description }: StatCardProps) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{value}</div>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </CardContent>
+  </Card>
+);
 
 export default function QACDashboard() {
-  const [selectedDepartment, setSelectedDepartment] = useState(
-    QAC_ANALYTICS_DATA.departmentPerformance[0],
-  );
+  // Fetch real data using React Query
+  const { data, isLoading, error } = useGetDashboardData();
+
+  if (isLoading) return <LoadingSpinner />;
+  
+  if (error) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <p className="text-destructive">Failed to load dashboard data</p>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { submissionStats, departmentStatus } = data;
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">QC Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor department submissions and quality metrics across the
-            organization
-          </p>
-        </div>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">QC Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Monitor department configuration and submission status across the
+          organization.
+        </p>
       </div>
+
+      {/* Overview Cards Section - now using submissionStats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SubmissionStatsCard stats={QAC_ANALYTICS_DATA.submissionStats} />
+        <StatCard
+          title="Total Submissions"
+          value={submissionStats.totalSubmissions}
+          icon={Target}
+          description="Total KPIs submitted across all departments."
+        />
+        <StatCard
+          title="Pending Review"
+          value={submissionStats.pendingReview}
+          icon={AlertTriangle}
+          description="KPIs currently awaiting review and approval."
+        />
+        <StatCard
+          title="Departments Configured"
+          value={submissionStats.departmentsConfigured}
+          icon={CheckCircle2}
+          description="Departments with both Pillars and KPIs assigned."
+        />
+        <StatCard
+          title="Departments Pending"
+          value={submissionStats.departmentsPending}
+          icon={Building}
+          description="Departments missing Pillar or KPI assignments."
+        />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col h-full">
-          <DepartmentList
-            departments={QAC_ANALYTICS_DATA.departmentPerformance}
-            selectedId={selectedDepartment?.id ?? ""}
-            onSelect={setSelectedDepartment}
-          />
-        </div>
-        <div className="flex flex-col h-full">
-          <DepartmentDetails department={selectedDepartment} />
-        </div>
-      </div>
-      <QualityTrends trends={QAC_ANALYTICS_DATA.qualityTrends} />
-      <ReviewWorkloadTable reviewMetrics={QAC_ANALYTICS_DATA.reviewMetrics} />
+
+      {/* Enhanced Table Section - now using departmentStatus */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Department Status Details</CardTitle>
+          <CardDescription>
+            Detailed overview of each department's configuration and submission
+            activity.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[250px]">Department</TableHead>
+                <TableHead>HOD</TableHead>
+                <TableHead className="text-center">Pillars Set</TableHead>
+                <TableHead className="text-center">KPIs Set</TableHead>
+                <TableHead className="text-center">Submissions</TableHead>
+                <TableHead>Last Submission</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {departmentStatus.map((dept: DepartmentStatus) => (
+                <TableRow key={dept.id}>
+                  <TableCell className="font-medium">{dept.name}</TableCell>
+                  <TableCell>{dept.hod ?? "N/A"}</TableCell>
+                  <TableCell className="text-center">
+                    {dept.pillarsSet ? (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200">
+                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                        Set
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive">
+                        <XCircle className="mr-1 h-3 w-3" />
+                        Not Set
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {dept.kpisSet ? (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200">
+                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                        Set
+                      </Badge>
+                    ) : (
+                      <Badge variant="destructive">
+                        <XCircle className="mr-1 h-3 w-3" />
+                        Not Set
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center font-mono">
+                    {dept.totalSubmissions}
+                  </TableCell>
+                  <TableCell>
+                    {dept.lastSubmission
+                      ? new Date(dept.lastSubmission).toLocaleDateString()
+                      : "N/A"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
