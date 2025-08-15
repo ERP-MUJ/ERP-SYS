@@ -10,7 +10,11 @@ type StatusType =
   | "inactive"
   | "pending" 
   | "approved" 
-  | "rejected";
+  | "rejected"
+  | "revision"
+  | "overdue"
+  | "waiting"
+  | "draft";
 
 /**
  * StatusBadge properties
@@ -36,7 +40,7 @@ export function StatusBadge({ status, label, className = "" }: StatusBadgeProps)
   const statusConfig: Record<
     StatusType, 
     { 
-      baseVariant: "default" | "secondary" | "destructive" | "outline" | "pending" | "rejected" | "approved"; 
+  baseVariant: "default" | "secondary" | "destructive" | "outline" | "pending" | "rejected" | "approved"; 
       icon: ReactNode; 
       text: string;
       className: string;
@@ -70,6 +74,30 @@ export function StatusBadge({ status, label, className = "" }: StatusBadgeProps)
       baseVariant: "rejected",
       icon: <X className="w-3 h-3 mr-1" />,
       text: "Rejected",
+      className: ""
+    },
+    revision: {
+      baseVariant: "pending", // mapped
+      icon: <AlertCircle className="w-3 h-3 mr-1" />,
+      text: "Revision",
+      className: ""
+    },
+    overdue: {
+      baseVariant: "destructive", // mapped
+      icon: <AlertCircle className="w-3 h-3 mr-1" />,
+      text: "Overdue",
+      className: ""
+    },
+    waiting: {
+      baseVariant: "pending", // reuse existing pending palette for consistency
+      icon: <Clock className="w-3 h-3 mr-1" />,
+      text: "Awaiting Approval",
+      className: "" // rely on variant styling
+    },
+    draft: {
+      baseVariant: "secondary",
+      icon: <Clock className="w-3 h-3 mr-1" />,
+      text: "Draft",
       className: ""
     }
   };

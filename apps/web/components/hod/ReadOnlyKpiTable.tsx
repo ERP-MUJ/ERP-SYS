@@ -37,17 +37,19 @@ export interface ReadOnlyKpiTableProps {
 }
 
 // Helper function to map KPI status to StatusBadge status type
-const mapKpiStatusToStatusBadgeType = (kpiStatus?: string): "pending" | "approved" | "rejected" | "active" | "inactive" => {
+const mapKpiStatusToStatusBadgeType = (kpiStatus?: string): 
+  "pending" | "approved" | "rejected" | "active" | "inactive" | "revision" | "overdue" | "waiting" | "draft" => {
   if (!kpiStatus) return "inactive";
-  
   const normalized = kpiStatus.toLowerCase();
   if (normalized === "approved") return "approved";
-  if (normalized === "pending review" || normalized === "pending") return "pending";
-  if (normalized === "needs revision" || normalized === "redo") return "rejected";
+  if (normalized === "revision requested" || normalized === "needs revision" || normalized === "redo") return "revision";
+  if (normalized === "rejected") return "rejected";
+  if (normalized === "overdue") return "overdue";
+  if (normalized === "awaiting approval" || normalized === "waiting for qc" || normalized === "waiting" || normalized === "pending review") return "waiting";
+  if (normalized === "draft" || normalized === "draft (not submitted)" || normalized === "to be submitted") return "draft";
   if (normalized === "active") return "active";
-  if (normalized === "to be submitted") return "inactive";
-  
-  return "pending"; // default fallback
+  if (normalized === "pending") return "pending";
+  return "pending";
 };
 
 export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({ 
@@ -141,7 +143,7 @@ export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
                       {row.status ? (
                         <StatusBadge 
                           status={mapKpiStatusToStatusBadgeType(row.status)}
-                          label={row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+                          label={row.status.replace(/\b\w/g, c => c.toUpperCase())}
                         />
                       ) : (
                         <StatusBadge 
