@@ -169,7 +169,12 @@ export class HodKpiService {
    * @param formResponses - The form response data
    * @returns Success message
    */
-  async updateKpiResponses(userId: string, userRole: UserRole, kpiId: string, formResponses: Record<string, any>) {
+  async updateKpiResponses(
+    userId: string,
+    userRole: UserRole,
+    kpiId: string,
+    formResponses: { entries: Record<string, unknown>[] },
+  ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(userRole);
 
@@ -190,7 +195,7 @@ export class HodKpiService {
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: formResponses as any,
+        form_responses: JSON.parse(JSON.stringify(formResponses)),
         kpi_status: 'PENDING', // Set to pending for review
         completed_date: new Date(),
       },

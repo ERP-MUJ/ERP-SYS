@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { DepartmentAssignmentService } from './department-assignment.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
@@ -13,27 +13,27 @@ export class DepartmentAssignmentController {
   constructor(private readonly departmentAssignmentService: DepartmentAssignmentService) {}
 
   @Get('departments')
-  async getDepartments(@CurrentUser() user: RequestUser) {
+  getDepartments(@CurrentUser() user: RequestUser) {
     return this.departmentAssignmentService.getDepartments(user.id, user.role);
   }
 
   @Get('pillar-templates')
-  async getPillarTemplates(@CurrentUser() user: RequestUser) {
+  getPillarTemplates(@CurrentUser() user: RequestUser) {
     return this.departmentAssignmentService.getPillarTemplates(user.id, user.role);
   }
 
   @Get('departments/:departmentId/pillars')
-  async getDepartmentPillars(@CurrentUser() user: RequestUser, @Param('departmentId') departmentId: string) {
+  getDepartmentPillars(@CurrentUser() user: RequestUser, @Param('departmentId') departmentId: string) {
     return this.departmentAssignmentService.getDepartmentPillars(user.id, user.role, departmentId);
   }
 
   @Get('all-department-pillars')
-  async getAllDepartmentPillars(@CurrentUser() user: RequestUser) {
+  getAllDepartmentPillars(@CurrentUser() user: RequestUser) {
     return this.departmentAssignmentService.getAllDepartmentPillars(user.id, user.role);
   }
 
   @Post('departments/:departmentId/pillars')
-  async assignPillarToDepartment(
+  assignPillarToDepartment(
     @CurrentUser() user: RequestUser,
     @Param('departmentId') departmentId: string,
     @Body() body: { pillarTemplateId: string; pillarWeight?: number },
@@ -48,7 +48,7 @@ export class DepartmentAssignmentController {
   }
 
   @Delete('department-pillars/:departmentPillarId')
-  async unassignPillarFromDepartment(
+  unassignPillarFromDepartment(
     @CurrentUser() user: RequestUser,
     @Param('departmentPillarId') departmentPillarId: string,
   ) {
@@ -56,10 +56,7 @@ export class DepartmentAssignmentController {
   }
 
   @Get('department-pillars/:departmentPillarId/kpis')
-  async getDepartmentPillarKPIs(
-    @CurrentUser() user: RequestUser,
-    @Param('departmentPillarId') departmentPillarId: string,
-  ) {
+  getDepartmentPillarKPIs(@CurrentUser() user: RequestUser, @Param('departmentPillarId') departmentPillarId: string) {
     return this.departmentAssignmentService.getDepartmentPillarKPIs(user.id, user.role, departmentPillarId);
   }
 }

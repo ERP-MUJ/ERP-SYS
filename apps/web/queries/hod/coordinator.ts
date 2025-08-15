@@ -17,7 +17,9 @@ export function useGetDepartmentFaculty() {
     queryFn: async () => {
       const res = await getDepartmentFaculty();
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to fetch department faculty");
+      throw new Error(
+        res.error?.message || "Failed to fetch department faculty",
+      );
     },
   });
 }

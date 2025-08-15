@@ -25,7 +25,13 @@ export class HodKpiService {
   /**
    * Update KPI form responses
    */
-  static async updateKpiResponses(kpiId: string, formResponses: Record<string, any>) {
-    return await ApiClient.put(`/hod/kpi-management/kpi/${kpiId}/responses`, formResponses);
+  static async updateKpiResponses(
+    kpiId: string,
+    formResponses: Record<string, any>,
+  ) {
+    return await ApiClient.put(
+      `/hod/kpi-management/kpi/${kpiId}/responses`,
+      formResponses,
+    );
   }
 }

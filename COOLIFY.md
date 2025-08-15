@@ -1,7 +1,9 @@
 # Coolify Deployment Guide for ERP System
 
 ## Project Overview
+
 This is a Turborepo monorepo with:
+
 - **Frontend**: Next.js app (`apps/web`) - Port 3000
 - **Backend**: NestJS API (`apps/server`) - Port 3001
 - **Database**: Prisma with PostgreSQL (`packages/db`)
@@ -13,12 +15,13 @@ This is a Turborepo monorepo with:
 Deploy as a single Docker Compose stack with multiple services:
 
 1. **Backend Service** - NestJS API server
-2. **Frontend Service** - Next.js web application  
+2. **Frontend Service** - Next.js web application
 3. **Migration Service** - Database migration runner (runs once)
 
 ### Prerequisites
 
 1. **PostgreSQL Database**
+
    - Create a PostgreSQL database in Coolify first
    - Note the connection string for environment variables
 
@@ -45,18 +48,21 @@ Deploy as a single Docker Compose stack with multiple services:
 Configure these required environment variables in Coolify's UI:
 
 #### Database Configuration
+
 ```bash
 DATABASE_URL=postgresql://username:password@host:5432/database_name
 DIRECT_URL=postgresql://username:password@host:5432/database_name
 ```
 
 #### Google OAuth
+
 ```bash
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 #### SMTP Configuration (for email notifications)
+
 ```bash
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
@@ -67,6 +73,7 @@ SMTP_FROM_NAME=ERP System
 ```
 
 #### AI Integration (Optional)
+
 ```bash
 GEMINI_API_KEY=your-gemini-api-key
 GEMINI_BASE_URL=https://generativelanguage.googleapis.com
@@ -89,22 +96,26 @@ GEMINI_BASE_URL=https://generativelanguage.googleapis.com
 ## Important Notes
 
 ### Build Process
+
 - Uses Turborepo for efficient building
 - Installs all dependencies in the container
 - Generates Prisma client automatically
 - Builds optimized production bundles
 
 ### Environment Variables
+
 - Coolify automatically generates secure passwords for JWT and NextAuth
 - Service FQDNs are automatically configured for internal communication
 - Use Coolify's magic variables for dynamic configuration
 
 ### Health Checks
+
 - Both services have health checks configured
 - Frontend waits for backend to be healthy before starting
 - Migration service is excluded from health checks (runs once)
 
 ### Networking
+
 - All services communicate through internal Docker network
 - Only frontend and backend API endpoints are exposed publicly
 
@@ -113,11 +124,13 @@ GEMINI_BASE_URL=https://generativelanguage.googleapis.com
 ### Common Issues
 
 1. **Build Failures**
+
    - Check if all required environment variables are set
    - Verify database connection string format
    - Ensure Google OAuth credentials are correct
 
 2. **Database Connection Issues**
+
    - Verify DATABASE_URL and DIRECT_URL are identical for MongoDB
    - Check database server is running and accessible
 
@@ -126,7 +139,9 @@ GEMINI_BASE_URL=https://generativelanguage.googleapis.com
    - Check NEXTAUTH_SECRET is properly generated
 
 ### Logs
+
 Monitor these logs in Coolify:
+
 - Build logs for compilation issues
 - Runtime logs for application errors
 - Migration logs for database issues
@@ -136,13 +151,15 @@ Monitor these logs in Coolify:
 If you prefer to deploy each service separately:
 
 ### Service 1: Backend API
+
 - **Build Context**: Root directory
 - **Dockerfile**: `apps/server/Dockerfile`
 - **Port**: 3001
 - **Health Check**: `/health`
 
 ### Service 2: Frontend Web
-- **Build Context**: Root directory  
+
+- **Build Context**: Root directory
 - **Dockerfile**: `apps/web/Dockerfile`
 - **Port**: 3000
 - **Dependencies**: Backend API service

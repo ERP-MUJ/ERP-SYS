@@ -8,10 +8,18 @@ import { DepartmentAssignmentService } from './department-assignment/department-
 import { QcDashboardController } from './dashboard/qc-dashboard.controller';
 import { QcDashboardService } from './dashboard/qc-dashboard.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { QcReviewController } from './review/qc-review.controller';
+import { QcReviewService } from './review/qc-review.service';
 
 @Module({
-  controllers: [PillarController, KpiController, DepartmentAssignmentController, QcDashboardController],
-  providers: [PillarService, KpiService, DepartmentAssignmentService, QcDashboardService],
+  controllers: [
+    PillarController,
+    KpiController,
+    DepartmentAssignmentController,
+    QcDashboardController,
+    QcReviewController,
+  ],
+  providers: [PillarService, KpiService, DepartmentAssignmentService, QcDashboardService, QcReviewService],
   imports: [PrismaModule],
 })
 export class QcModule {}

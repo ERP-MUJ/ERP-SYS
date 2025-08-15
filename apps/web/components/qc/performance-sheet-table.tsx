@@ -7,6 +7,8 @@ import {
   CardDescription,
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { deriveDisplayStatus } from "@/lib/qc-status";
 import {
   Table,
   TableHeader,
@@ -153,73 +155,55 @@ export const PillarKpiTable: React.FC<
                 </TableCell>
                 {showStatusColumn && (
                   <TableCell className="text-center">
-                    {row.status
-                      ? (() => {
-                          const normalized = row.status?.toLowerCase();
-                          if (normalized === "approved")
-                            return (
-                              <Badge
-                                className="bg-green-100 text-green-800 border-green-200 px-2 py-0.5 text-xs font-medium"
-                                variant="outline"
-                              >
-                                Approved
-                              </Badge>
-                            );
-                          if (
-                            normalized === "pending review" ||
-                            normalized === "pending"
-                          )
-                            return (
-                              <Badge
-                                className="bg-yellow-100 text-yellow-800 border-yellow-200 px-2 py-0.5 text-xs font-medium"
-                                variant="outline"
-                              >
-                                Pending Review
-                              </Badge>
-                            );
-                          if (
-                            normalized === "needs revision" ||
-                            normalized === "redo"
-                          )
-                            return (
-                              <Badge
-                                className="bg-red-100 text-red-800 border-red-200 px-2 py-0.5 text-xs font-medium"
-                                variant="outline"
-                              >
-                                Needs Revision
-                              </Badge>
-                            );
-                          if (normalized === "to be submitted")
-                            return (
-                              <Badge
-                                className="bg-gray-200 text-gray-700 border-gray-300 px-2 py-0.5 text-xs font-medium"
-                                variant="outline"
-                              >
-                                To Be Submitted
-                              </Badge>
-                            );
-                          return (
-                            <Badge
-                              className="px-2 py-0.5 text-xs font-medium"
-                              variant="secondary"
-                            >
-                              {row.status.charAt(0).toUpperCase() +
-                                row.status.slice(1)}
-                            </Badge>
-                          );
-                        })()
-                      : null}
+                    {row.status &&
+                      (() => {
+                        const raw = row.status.toLowerCase();
+                        // Normalize to backend enum
+                        let backendStatus: any = "PENDING";
+                        if (raw === "approved") backendStatus = "APPROVED";
+                        else if (raw === "rejected") backendStatus = "REJECTED";
+                        else if (
+                          [
+                            "revision",
+                            "revision requested",
+                            "needs revision",
+                            "redo",
+                          ].includes(raw)
+                        )
+                          backendStatus = "REVISION";
+                        else if (raw === "overdue") backendStatus = "OVERDUE";
+                        else if (raw === "draft" || raw === "to be submitted")
+                          backendStatus = "PENDING";
+                        const display = deriveDisplayStatus({
+                          status: backendStatus,
+                          hasFormResponses:
+                            raw !== "draft" && raw !== "to be submitted",
+                        });
+                        const variantMap: Record<string, any> = {
+                          Approved: "approved",
+                          Rejected: "rejected",
+                          "Revision Requested": "revision",
+                          "Awaiting Approval": "waiting",
+                          "Draft (Not Submitted)": "draft",
+                          Overdue: "overdue",
+                        };
+                        const mappedVariant = (variantMap[display] ||
+                          "pending") as any;
+                        return (
+                          <StatusBadge status={mappedVariant} label={display} />
+                        );
+                      })()}
                   </TableCell>
                 )}
                 <TableCell className="text-center">
-                  {onReviewKpi && row.kpiId ? (
+                  {onReviewKpi && row.kpiId && (
                     <button
-                      className="px-2 py-0.5 rounded bg-muted-foreground/10 hover:bg-muted-foreground/20 text-xs font-medium border border-muted-foreground/20"
+                      className="px-2 py-0.5 rounded text-xs font-medium transition-colors text-amber-300 border border-amber-400/40 hover:bg-amber-500/10 bg-transparent"
                       onClick={() => onReviewKpi(row.kpiId!)}
                     >
                       Review
                     </button>
-                  ) : null}
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -306,7 +290,8 @@ export const dummyPerformanceData: PerformanceParameter[] = [
 
 export const PerformanceSheetTable: React.FC<{
   data: PerformanceParameter[];
-}> = ({ data }) => (
+  totalKpis?: number;
+}> = ({ data, totalKpis }) => (
   <Card className="shadow-md px-2 border rounded-lg">
     <CardHeader className="bg-muted/50 rounded-t-lg">
       <CardTitle className="text-lg font-bold tracking-tight">
@@ -325,7 +310,7 @@ export const PerformanceSheetTable: React.FC<{
                 Sl. No.
               </TableHead>
               <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                Parameter (79 KPIs)
+                {`Parameter (${typeof totalKpis === "number" ? totalKpis : 0} KPIs)`}
               </TableHead>
               <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
                 Weight (A)

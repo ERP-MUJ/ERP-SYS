@@ -22,7 +22,9 @@ export const DepartmentFacultyResponseSchema = z.object({
 export const AssignCoordinatorRequestSchema = z.object({
   faculty_id: z.string().uuid("Invalid faculty ID format"),
   new_role: z.enum(["KPI_COORDINATOR", "FACULTY"], {
-    errorMap: () => ({ message: "Role must be either KPI_COORDINATOR or FACULTY" })
+    errorMap: () => ({
+      message: "Role must be either KPI_COORDINATOR or FACULTY",
+    }),
   }),
 });
 
@@ -35,15 +37,25 @@ export const AssignCoordinatorResponseSchema = z.object({
 
 // Export types
 export type User = z.infer<typeof UserSchema>;
-export type DepartmentFacultyResponseDto = z.infer<typeof DepartmentFacultyResponseSchema>;
-export type AssignCoordinatorRequestDto = z.infer<typeof AssignCoordinatorRequestSchema>;
-export type AssignCoordinatorResponseDto = z.infer<typeof AssignCoordinatorResponseSchema>;
+export type DepartmentFacultyResponseDto = z.infer<
+  typeof DepartmentFacultyResponseSchema
+>;
+export type AssignCoordinatorRequestDto = z.infer<
+  typeof AssignCoordinatorRequestSchema
+>;
+export type AssignCoordinatorResponseDto = z.infer<
+  typeof AssignCoordinatorResponseSchema
+>;
 
 // Validation helpers
-export const validateAssignCoordinatorRequest = (data: unknown): AssignCoordinatorRequestDto => {
+export const validateAssignCoordinatorRequest = (
+  data: unknown,
+): AssignCoordinatorRequestDto => {
   return AssignCoordinatorRequestSchema.parse(data);
 };
 
-export const validateDepartmentFacultyResponse = (data: unknown): DepartmentFacultyResponseDto => {
+export const validateDepartmentFacultyResponse = (
+  data: unknown,
+): DepartmentFacultyResponseDto => {
   return DepartmentFacultyResponseSchema.parse(data);
 };
