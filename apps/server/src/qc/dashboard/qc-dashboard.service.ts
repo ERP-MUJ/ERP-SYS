@@ -51,14 +51,12 @@ export class QcDashboardService {
     });
 
     // Calculate department configuration status
-    const departmentsWithPillars = departments.filter(
-      (dept) => dept.department_pillars.length > 0
-    ).length;
+    const departmentsWithPillars = departments.filter((dept) => dept.department_pillars.length > 0).length;
 
-    const departmentsWithKpis = departments.filter(
-      (dept) =>
-        dept.department_pillars.some((pillar) => pillar.department_kpis.length > 0)
+    const departmentsWithKpis = departments.filter((dept) =>
+      dept.department_pillars.some((pillar) => pillar.department_kpis.length > 0),
     ).length;
+    void departmentsWithKpis; // intentionally not returned yet; reserved for future metrics
 
     // Get latest submission date and total submissions per department
     const departmentStatus = await Promise.all(
@@ -92,13 +90,11 @@ export class QcDashboardService {
           name: dept.dept_name,
           hod: dept.hod_name,
           pillarsSet: dept.department_pillars.length > 0,
-          kpisSet: dept.department_pillars.some(
-            (pillar) => pillar.department_kpis.length > 0
-          ),
+          kpisSet: dept.department_pillars.some((pillar) => pillar.department_kpis.length > 0),
           totalSubmissions: totalDeptSubmissions,
           lastSubmission: latestSubmission?.completed_date?.toISOString() || null,
         };
-      })
+      }),
     );
 
     return {

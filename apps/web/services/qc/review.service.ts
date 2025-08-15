@@ -8,7 +8,7 @@ export interface QcReviewedKpi extends DepartmentKpi {
 }
 
 export interface UpdateKpiStatusPayload {
-  action: 'APPROVE' | 'REVISION' | 'REJECT';
+  action: "APPROVE" | "REVISION" | "REJECT";
   remark: string;
 }
 
@@ -17,6 +17,9 @@ export class QcReviewService {
     return ApiClient.get<QcReviewedKpi>(`/qc/review/kpis/${kpiId}`);
   }
   static async updateStatus(kpiId: string, payload: UpdateKpiStatusPayload) {
-    return ApiClient.patch<{ message: string; data: QcReviewedKpi }>(`/qc/review/kpis/${kpiId}/status`, payload);
+    return ApiClient.patch<{ message: string; data: QcReviewedKpi }>(
+      `/qc/review/kpis/${kpiId}/status`,
+      payload,
+    );
   }
 }

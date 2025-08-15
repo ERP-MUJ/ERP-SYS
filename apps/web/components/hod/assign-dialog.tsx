@@ -87,10 +87,7 @@ const AssignDialog: React.FC<AssignDialogProps> = ({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!selectedFaculty}
-          >
+          <Button onClick={handleSubmit} disabled={!selectedFaculty}>
             Assign as KPI Coordinator
           </Button>
         </DialogFooter>

@@ -58,10 +58,11 @@ export default function HodKpiPage({
   const kpiData = data as KpiData;
   const kpi = kpiData.kpi_name || kpiData.kpi_metric_name || "Untitled KPI";
   const description = kpiData.kpi_description || "No description available";
-  
+
   // Extract elements from kpi_data if available, or from elements field
-  const rawElements = kpiData.elements || (kpiData.kpi_data?.elements as any[]) || [];
-  
+  const rawElements =
+    kpiData.elements || (kpiData.kpi_data?.elements as any[]) || [];
+
   // Transform elements to match FormElementInstance interface
   const elements = rawElements.map((el) => {
     // Handle elements that might come in different formats
@@ -69,7 +70,7 @@ export default function HodKpiPage({
       // Already in the correct format
       return {
         ...el,
-        type: el.type as FormElementType
+        type: el.type as FormElementType,
       } as FormElementInstance;
     } else {
       // Need to extract attributes
@@ -77,14 +78,14 @@ export default function HodKpiPage({
       return {
         id,
         type: type as FormElementType,
-        attributes: { ...otherProps }
+        attributes: { ...otherProps },
       } as FormElementInstance;
     }
   });
-  
+
   // Load existing form responses if available
-  const existingData = kpiData.existingData || 
-                      (kpiData.form_responses?.entries || []);
+  const existingData =
+    kpiData.existingData || kpiData.form_responses?.entries || [];
 
   return (
     <TableFormRenderer

@@ -15,11 +15,11 @@ export class HodKpiController {
   @Get('/debug')
   @ApiOperation({ summary: 'Debug current user info' })
   @ApiResponse({ status: 200, description: 'Returns current user information' })
-  async debugUser(@CurrentUser() user: RequestUser) {
+  debugUser(@CurrentUser() user: RequestUser) {
     console.log('HOD Controller - Debug user:', user);
     return {
       user,
-      message: 'Debug endpoint - check server logs for user info'
+      message: 'Debug endpoint - check server logs for user info',
     };
   }
 
@@ -34,10 +34,7 @@ export class HodKpiController {
   @Get('/pillars/:pillarId/kpis')
   @ApiOperation({ summary: 'Get KPIs for a specific department pillar' })
   @ApiResponse({ status: 200, description: 'Returns KPIs for the pillar' })
-  async getDepartmentPillarKPIs(
-    @CurrentUser() user: RequestUser,
-    @Param('pillarId') pillarId: string,
-  ) {
+  async getDepartmentPillarKPIs(@CurrentUser() user: RequestUser, @Param('pillarId') pillarId: string) {
     return this.hodKpiService.getDepartmentPillarKPIs(user.id, user.role, pillarId);
   }
 
@@ -54,7 +51,7 @@ export class HodKpiController {
   async updateKpiResponses(
     @CurrentUser() user: RequestUser,
     @Param('kpiId') kpiId: string,
-    @Body() formResponses: Record<string, any>,
+    @Body() formResponses: { entries: Record<string, unknown>[] },
   ) {
     return this.hodKpiService.updateKpiResponses(user.id, user.role, kpiId, formResponses);
   }

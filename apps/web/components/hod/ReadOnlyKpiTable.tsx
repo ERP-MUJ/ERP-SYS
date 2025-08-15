@@ -37,26 +37,52 @@ export interface ReadOnlyKpiTableProps {
 }
 
 // Helper function to map KPI status to StatusBadge status type
-const mapKpiStatusToStatusBadgeType = (kpiStatus?: string): 
-  "pending" | "approved" | "rejected" | "active" | "inactive" | "revision" | "overdue" | "waiting" | "draft" => {
+const mapKpiStatusToStatusBadgeType = (
+  kpiStatus?: string,
+):
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "active"
+  | "inactive"
+  | "revision"
+  | "overdue"
+  | "waiting"
+  | "draft" => {
   if (!kpiStatus) return "inactive";
   const normalized = kpiStatus.toLowerCase();
   if (normalized === "approved") return "approved";
-  if (normalized === "revision requested" || normalized === "needs revision" || normalized === "redo") return "revision";
+  if (
+    normalized === "revision requested" ||
+    normalized === "needs revision" ||
+    normalized === "redo"
+  )
+    return "revision";
   if (normalized === "rejected") return "rejected";
   if (normalized === "overdue") return "overdue";
-  if (normalized === "awaiting approval" || normalized === "waiting for qc" || normalized === "waiting" || normalized === "pending review") return "waiting";
-  if (normalized === "draft" || normalized === "draft (not submitted)" || normalized === "to be submitted") return "draft";
+  if (
+    normalized === "awaiting approval" ||
+    normalized === "waiting for qc" ||
+    normalized === "waiting" ||
+    normalized === "pending review"
+  )
+    return "waiting";
+  if (
+    normalized === "draft" ||
+    normalized === "draft (not submitted)" ||
+    normalized === "to be submitted"
+  )
+    return "draft";
   if (normalized === "active") return "active";
   if (normalized === "pending") return "pending";
   return "pending";
 };
 
-export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({ 
-  kpis = [], 
-  onOpenKpi, 
+export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
+  kpis = [],
+  onOpenKpi,
   showStatusColumn = true,
-  title = "KPI Overview"
+  title = "KPI Overview",
 }) => {
   // Helper to sum the value field (read-only display)
   const totalValue = kpis.reduce((sum, row) => sum + Number(row.value ?? 0), 0);
@@ -104,8 +130,8 @@ export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
           <TableBody>
             {kpis.length === 0 ? (
               <TableRow>
-                <TableCell 
-                  colSpan={showStatusColumn ? 9 : 8} 
+                <TableCell
+                  colSpan={showStatusColumn ? 9 : 8}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No KPIs found for this pillar
@@ -120,18 +146,12 @@ export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
                   <TableCell className="text-center font-medium">
                     {row.kpi_no}
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {row.metric}
-                  </TableCell>
+                  <TableCell className="font-medium">{row.metric}</TableCell>
                   <TableCell className="text-center">
                     {row.dataProvidedBy}
                   </TableCell>
-                  <TableCell className="text-center">
-                    {row.target}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {row.actual}
-                  </TableCell>
+                  <TableCell className="text-center">{row.target}</TableCell>
+                  <TableCell className="text-center">{row.actual}</TableCell>
                   <TableCell className="text-center">
                     {row.percentAchieved}
                   </TableCell>
@@ -141,15 +161,14 @@ export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
                   {showStatusColumn && (
                     <TableCell className="text-center">
                       {row.status ? (
-                        <StatusBadge 
+                        <StatusBadge
                           status={mapKpiStatusToStatusBadgeType(row.status)}
-                          label={row.status.replace(/\b\w/g, c => c.toUpperCase())}
+                          label={row.status.replace(/\b\w/g, (c) =>
+                            c.toUpperCase(),
+                          )}
                         />
                       ) : (
-                        <StatusBadge 
-                          status="inactive"
-                          label="Unknown"
-                        />
+                        <StatusBadge status="inactive" label="Unknown" />
                       )}
                     </TableCell>
                   )}
@@ -164,9 +183,7 @@ export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
                         Open KPI
                       </Button>
                     ) : (
-                      <span className="text-muted-foreground text-xs">
-                        N/A
-                      </span>
+                      <span className="text-muted-foreground text-xs">N/A</span>
                     )}
                   </TableCell>
                 </TableRow>

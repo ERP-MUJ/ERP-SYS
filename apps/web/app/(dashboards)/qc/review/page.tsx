@@ -3,19 +3,43 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@workspace/ui/components/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@workspace/ui/components/accordion";
 import { Building, X } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { useRouter } from "next/navigation";
-import { useGetDepartments, useGetDepartmentPillars, useGetAllDepartmentPillars } from "@/queries/qc/department-assignment";
-import type { Department, DepartmentPillar, DepartmentKpi } from "@/services/qc/department-assignment.service";
-import { PillarKpiTable, PerformanceSheetTable } from "@/components/qc/performance-sheet-table";
+import {
+  useGetDepartments,
+  useGetDepartmentPillars,
+  useGetAllDepartmentPillars,
+} from "@/queries/qc/department-assignment";
+import type {
+  Department,
+  DepartmentPillar,
+  DepartmentKpi,
+} from "@/services/qc/department-assignment.service";
+import {
+  PillarKpiTable,
+  PerformanceSheetTable,
+} from "@/components/qc/performance-sheet-table";
 
 export default function QACSubmissionReview() {
   const router = useRouter();
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+    string | null
+  >(null);
 
   // Fetch departments dynamically
   const {
@@ -36,7 +60,8 @@ export default function QACSubmissionReview() {
   }, [selectedDepartment, departments]);
 
   // Fetch pillars (and KPIs) for selected department
-  const { data: departmentPillars = [], isLoading: isLoadingPillars } = useGetDepartmentPillars(selectedDepartmentId);
+  const { data: departmentPillars = [], isLoading: isLoadingPillars } =
+    useGetDepartmentPillars(selectedDepartmentId);
 
   const pillarCountsByDept = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -47,22 +72,28 @@ export default function QACSubmissionReview() {
   }, [allDepartmentPillars]);
 
   // Map department pillars & KPIs to structures required by existing tables
-  const dynamicPillarKpis: Record<string, import("@/components/qc/performance-sheet-table").PillarKpi[]> = React.useMemo(() => {
-    const acc: Record<string, import("@/components/qc/performance-sheet-table").PillarKpi[]> = {};
+  const dynamicPillarKpis: Record<
+    string,
+    import("@/components/qc/performance-sheet-table").PillarKpi[]
+  > = React.useMemo(() => {
+    const acc: Record<
+      string,
+      import("@/components/qc/performance-sheet-table").PillarKpi[]
+    > = {};
     departmentPillars.forEach((pillar: DepartmentPillar) => {
       pillar.department_kpis.forEach((kpi: DepartmentKpi) => {
         const key = pillar.pillar_name;
         if (!acc[key]) acc[key] = [];
         acc[key].push({
           kpi_no: kpi.kpi_number,
-            metric: kpi.kpi_metric_name,
-            dataProvidedBy: "HoD", // placeholder until backend provides
-            target: kpi.kpi_value?.toString() ?? "-",
-            actual: kpi.kpi_data?.actual ?? "-",
-            percentAchieved: kpi.percentage_target_achieved ?? "-",
-            value: kpi.performance ?? "",
-            status: kpi.kpi_status?.toLowerCase() ?? "pending",
-            kpiId: kpi.id,
+          metric: kpi.kpi_metric_name,
+          dataProvidedBy: "HoD", // placeholder until backend provides
+          target: kpi.kpi_value?.toString() ?? "-",
+          actual: kpi.kpi_data?.actual ?? "-",
+          percentAchieved: kpi.percentage_target_achieved ?? "-",
+          value: kpi.performance ?? "",
+          status: kpi.kpi_status?.toLowerCase() ?? "pending",
+          kpiId: kpi.id,
         });
       });
     });
@@ -83,15 +114,20 @@ export default function QACSubmissionReview() {
 
   // KPI counts & pending counts derived directly from fetched data
   const totalKpis = React.useMemo(
-    () => departmentPillars.reduce((sum, p) => sum + p.department_kpis.length, 0),
+    () =>
+      departmentPillars.reduce((sum, p) => sum + p.department_kpis.length, 0),
     [departmentPillars],
   );
   const pendingKpis = React.useMemo(
-    () => departmentPillars.reduce(
-      (sum, p) =>
-        sum + p.department_kpis.filter((k) => (k.kpi_status || "").toLowerCase() === "pending").length,
-      0,
-    ),
+    () =>
+      departmentPillars.reduce(
+        (sum, p) =>
+          sum +
+          p.department_kpis.filter(
+            (k) => (k.kpi_status || "").toLowerCase() === "pending",
+          ).length,
+        0,
+      ),
     [departmentPillars],
   );
 
@@ -112,11 +148,13 @@ export default function QACSubmissionReview() {
                 ? "Loading KPIs..."
                 : `Showing ${totalKpis} KPIs`}
           </div>
-          {selectedDepartment !== "all" && !isLoadingPillars && pendingKpis > 0 && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {pendingKpis} pending review
-            </div>
-          )}
+          {selectedDepartment !== "all" &&
+            !isLoadingPillars &&
+            pendingKpis > 0 && (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {pendingKpis} pending review
+              </div>
+            )}
         </div>
       </div>
 
@@ -145,7 +183,8 @@ export default function QACSubmissionReview() {
                         ? "Error loading departments"
                         : `Select Department (${departments.length})`}
                   </SelectItem>
-                  {!isLoadingDepartments && !departmentsError &&
+                  {!isLoadingDepartments &&
+                    !departmentsError &&
                     (departments as Department[]).map((dept) => (
                       <SelectItem
                         key={dept.id}
@@ -192,23 +231,34 @@ export default function QACSubmissionReview() {
           {/* Performance Sheet Table (new) */}
           <div className="mb-8">
             {isLoadingPillars ? (
-              <div className="p-6 text-center text-muted-foreground border rounded">Loading performance data...</div>
+              <div className="p-6 text-center text-muted-foreground border rounded">
+                Loading performance data...
+              </div>
             ) : performanceData.length ? (
               <PerformanceSheetTable
                 data={performanceData as any}
                 totalKpis={departmentPillars.reduce(
-                  (sum, p) => sum + p.department_kpis.length, 0)}
+                  (sum, p) => sum + p.department_kpis.length,
+                  0,
+                )}
               />
             ) : (
-              <div className="p-6 text-center text-muted-foreground border rounded">No pillars assigned to this department.</div>
+              <div className="p-6 text-center text-muted-foreground border rounded">
+                No pillars assigned to this department.
+              </div>
             )}
           </div>
           {/* KPI Cards */}
           <Card className="shadow-md border rounded-lg mb-8 p-4">
             {isLoadingPillars ? (
-              <div className="p-4 text-center text-muted-foreground">Loading KPIs...</div>
+              <div className="p-4 text-center text-muted-foreground">
+                Loading KPIs...
+              </div>
             ) : Object.keys(dynamicPillarKpis).length ? (
-              <Accordion type="multiple" defaultValue={Object.keys(dynamicPillarKpis)}>
+              <Accordion
+                type="multiple"
+                defaultValue={Object.keys(dynamicPillarKpis)}
+              >
                 {Object.entries(dynamicPillarKpis).map(([pillar, kpis]) => (
                   <AccordionItem key={pillar} value={pillar}>
                     <AccordionTrigger>{pillar}</AccordionTrigger>
@@ -225,7 +275,9 @@ export default function QACSubmissionReview() {
                 ))}
               </Accordion>
             ) : (
-              <div className="p-4 text-center text-muted-foreground">No KPIs found for assigned pillars.</div>
+              <div className="p-4 text-center text-muted-foreground">
+                No KPIs found for assigned pillars.
+              </div>
             )}
           </Card>
 

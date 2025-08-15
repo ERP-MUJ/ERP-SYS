@@ -215,24 +215,25 @@ export class DepartmentAssignmentService {
       orderBy: { kpi_number: 'asc' },
     });
 
-    for (const kpiTemplate of kpiTemplates) {
+    for (const kt of kpiTemplates) {
+      const kpiDataJson = kt.kpi_data ? JSON.parse(JSON.stringify(kt.kpi_data)) : null;
+      const metricsJson = kt.kpi_calculated_metrics ? JSON.parse(JSON.stringify(kt.kpi_calculated_metrics)) : null;
       await this.prisma.departmentKpi.create({
         data: {
           dept_id: departmentId,
           dept_pillar_id: departmentPillar.id,
-          template_id: kpiTemplate.id,
-          kpi_number: kpiTemplate.kpi_number,
-          kpi_metric_name: kpiTemplate.kpi_metric_name,
-          kpi_description: kpiTemplate.kpi_description,
-          kpi_value: kpiTemplate.kpi_value,
-          data_provided_by: kpiTemplate.data_provided_by,
-          kpi_data: kpiTemplate.kpi_data as any,
-          kpi_calculated_metrics: kpiTemplate.kpi_calculated_metrics as any,
+          template_id: kt.id,
+          kpi_number: kt.kpi_number,
+          kpi_metric_name: kt.kpi_metric_name,
+          kpi_description: kt.kpi_description,
+          kpi_value: kt.kpi_value,
+          data_provided_by: kt.data_provided_by,
+          kpi_data: kpiDataJson ?? undefined,
+          kpi_calculated_metrics: metricsJson ?? undefined,
           academic_year: new Date().getFullYear(),
         },
       });
     }
-
     return {
       message: 'Pillar assigned to department successfully',
       departmentPillar,

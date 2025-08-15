@@ -21,7 +21,10 @@ import { Badge } from "@workspace/ui/components/badge";
 import { AlertCircle, Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import AssignDialog from "@/components/hod/assign-dialog";
-import { useGetDepartmentFaculty, useAssignCoordinator } from "@/queries/hod/coordinator";
+import {
+  useGetDepartmentFaculty,
+  useAssignCoordinator,
+} from "@/queries/hod/coordinator";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   AlertDialog,
@@ -41,22 +44,33 @@ import {
 export default function KPICoordinatorsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUnassignDialogOpen, setIsUnassignDialogOpen] = useState(false);
-  const [selectedCoordinator, setSelectedCoordinator] = useState<{ id: string; name: string } | null>(null);
+  const [selectedCoordinator, setSelectedCoordinator] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Fetch real data from APIs
-  const { data: facultyData = [], isLoading, error } = useGetDepartmentFaculty();
+  const {
+    data: facultyData = [],
+    isLoading,
+    error,
+  } = useGetDepartmentFaculty();
   const assignCoordinatorMutation = useAssignCoordinator();
 
   // Separate coordinators and regular faculty
-  const coordinators = facultyData.filter(faculty => faculty.user_role === 'KPI_COORDINATOR');
-  const regularFaculty = facultyData.filter(faculty => faculty.user_role === 'FACULTY');
+  const coordinators = facultyData.filter(
+    (faculty) => faculty.user_role === "KPI_COORDINATOR",
+  );
+  const regularFaculty = facultyData.filter(
+    (faculty) => faculty.user_role === "FACULTY",
+  );
 
   // Handle assigning a faculty as KPI coordinator
   const handleAssignSubmit = (data: { facultyId: string }) => {
     assignCoordinatorMutation.mutate(
       {
         faculty_id: data.facultyId,
-        new_role: 'KPI_COORDINATOR',
+        new_role: "KPI_COORDINATOR",
       },
       {
         onSuccess: () => {
@@ -66,13 +80,16 @@ export default function KPICoordinatorsPage() {
           toast.error("Failed to assign coordinator", {
             description: error.message,
           });
-        }
-      }
+        },
+      },
     );
   };
 
   // Open confirmation dialog for unassigning
-  const openUnassignDialog = (coordinator: { id: string; user_name: string }) => {
+  const openUnassignDialog = (coordinator: {
+    id: string;
+    user_name: string;
+  }) => {
     setSelectedCoordinator({ id: coordinator.id, name: coordinator.user_name });
     setIsUnassignDialogOpen(true);
   };
@@ -80,11 +97,11 @@ export default function KPICoordinatorsPage() {
   // Handle unassigning a coordinator back to faculty
   const handleUnassign = () => {
     if (!selectedCoordinator) return;
-    
+
     assignCoordinatorMutation.mutate(
       {
         faculty_id: selectedCoordinator.id,
-        new_role: 'FACULTY',
+        new_role: "FACULTY",
       },
       {
         onSuccess: () => {
@@ -95,8 +112,8 @@ export default function KPICoordinatorsPage() {
           toast.error("Failed to unassign coordinator", {
             description: error.message,
           });
-        }
-      }
+        },
+      },
     );
   };
 
@@ -108,7 +125,9 @@ export default function KPICoordinatorsPage() {
           <CardContent className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-600">Loading faculty data...</p>
+              <p className="mt-2 text-sm text-gray-600">
+                Loading faculty data...
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -143,11 +162,15 @@ export default function KPICoordinatorsPage() {
               Manage and assign KPI coordinators for your department.
             </CardDescription>
           </div>
-          <Button 
+          <Button
             onClick={() => setIsDialogOpen(true)}
-            disabled={regularFaculty.length === 0 || assignCoordinatorMutation.isPending}
+            disabled={
+              regularFaculty.length === 0 || assignCoordinatorMutation.isPending
+            }
           >
-            {assignCoordinatorMutation.isPending && assignCoordinatorMutation.variables?.new_role === "KPI_COORDINATOR" ? (
+            {assignCoordinatorMutation.isPending &&
+            assignCoordinatorMutation.variables?.new_role ===
+              "KPI_COORDINATOR" ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <UserPlus className="mr-2 h-4 w-4" />
@@ -159,31 +182,41 @@ export default function KPICoordinatorsPage() {
           <AssignDialog
             isOpen={isDialogOpen}
             onClose={() => setIsDialogOpen(false)}
-            faculties={regularFaculty.map(faculty => ({
+            faculties={regularFaculty.map((faculty) => ({
               value: faculty.id,
               label: faculty.user_name,
             }))}
             onSubmit={handleAssignSubmit}
           />
-          
+
           {/* Unassign Confirmation Dialog */}
-          <AlertDialog open={isUnassignDialogOpen} onOpenChange={setIsUnassignDialogOpen}>
+          <AlertDialog
+            open={isUnassignDialogOpen}
+            onOpenChange={setIsUnassignDialogOpen}
+          >
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Unassign KPI Coordinator</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to unassign {selectedCoordinator?.name} as a KPI Coordinator? 
-                  They will be returned to regular faculty status.
+                  Are you sure you want to unassign {selectedCoordinator?.name}{" "}
+                  as a KPI Coordinator? They will be returned to regular faculty
+                  status.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={assignCoordinatorMutation.isPending}>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
+                <AlertDialogCancel
+                  disabled={assignCoordinatorMutation.isPending}
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
                   onClick={handleUnassign}
                   disabled={assignCoordinatorMutation.isPending}
                   className="bg-red-600 hover:bg-red-700"
                 >
-                  {assignCoordinatorMutation.isPending && assignCoordinatorMutation.variables?.new_role === "FACULTY" ? (
+                  {assignCoordinatorMutation.isPending &&
+                  assignCoordinatorMutation.variables?.new_role ===
+                    "FACULTY" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Unassigning...
@@ -195,7 +228,7 @@ export default function KPICoordinatorsPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          
+
           {/* Coordinators Table */}
           <Table>
             <TableHeader>
@@ -210,8 +243,12 @@ export default function KPICoordinatorsPage() {
             <TableBody>
               {coordinators.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No KPI coordinators assigned yet. Click &quot;Assign Coordinator&quot; to get started.
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    No KPI coordinators assigned yet. Click &quot;Assign
+                    Coordinator&quot; to get started.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -221,10 +258,16 @@ export default function KPICoordinatorsPage() {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
                           <AvatarFallback>
-                            {coordinator.user_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            {coordinator.user_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{coordinator.user_name}</span>
+                        <span className="font-medium">
+                          {coordinator.user_name}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>{coordinator.user_email}</TableCell>
@@ -243,8 +286,9 @@ export default function KPICoordinatorsPage() {
                           onClick={() => openUnassignDialog(coordinator)}
                           disabled={assignCoordinatorMutation.isPending}
                         >
-                          {assignCoordinatorMutation.isPending && 
-                           assignCoordinatorMutation.variables?.faculty_id === coordinator.id ? (
+                          {assignCoordinatorMutation.isPending &&
+                          assignCoordinatorMutation.variables?.faculty_id ===
+                            coordinator.id ? (
                             <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                           ) : null}
                           Unassign

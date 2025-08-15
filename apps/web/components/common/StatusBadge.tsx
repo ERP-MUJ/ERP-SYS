@@ -5,11 +5,11 @@ import { ReactNode } from "react";
 /**
  * Status types for the StatusBadge component
  */
-type StatusType = 
-  | "active" 
+type StatusType =
+  | "active"
   | "inactive"
-  | "pending" 
-  | "approved" 
+  | "pending"
+  | "approved"
   | "rejected"
   | "revision"
   | "overdue"
@@ -35,13 +35,24 @@ interface StatusBadgeProps {
  * A reusable status badge component for displaying different statuses
  * with consistent styling across the application
  */
-export function StatusBadge({ status, label, className = "" }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  label,
+  className = "",
+}: StatusBadgeProps) {
   // Configuration for different status types
   const statusConfig: Record<
-    StatusType, 
-    { 
-  baseVariant: "default" | "secondary" | "destructive" | "outline" | "pending" | "rejected" | "approved"; 
-      icon: ReactNode; 
+    StatusType,
+    {
+      baseVariant:
+        | "default"
+        | "secondary"
+        | "destructive"
+        | "outline"
+        | "pending"
+        | "rejected"
+        | "approved";
+      icon: ReactNode;
       text: string;
       className: string;
     }
@@ -50,56 +61,58 @@ export function StatusBadge({ status, label, className = "" }: StatusBadgeProps)
       baseVariant: "outline",
       icon: <CheckCircle className="w-3 h-3 mr-1" />,
       text: "Active",
-      className: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700"
+      className:
+        "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700",
     },
     inactive: {
       baseVariant: "outline",
       icon: <X className="w-3 h-3 mr-1" />,
       text: "Inactive",
-      className: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+      className:
+        "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
     },
     pending: {
       baseVariant: "pending",
       icon: <Clock className="w-3 h-3 mr-1" />,
       text: "Pending",
-      className: ""
+      className: "",
     },
     approved: {
       baseVariant: "approved",
       icon: <CheckCircle className="w-3 h-3 mr-1" />,
       text: "Approved",
-      className: ""
+      className: "",
     },
     rejected: {
       baseVariant: "rejected",
       icon: <X className="w-3 h-3 mr-1" />,
       text: "Rejected",
-      className: ""
+      className: "",
     },
     revision: {
       baseVariant: "pending", // mapped
       icon: <AlertCircle className="w-3 h-3 mr-1" />,
       text: "Revision",
-      className: ""
+      className: "",
     },
     overdue: {
       baseVariant: "destructive", // mapped
       icon: <AlertCircle className="w-3 h-3 mr-1" />,
       text: "Overdue",
-      className: ""
+      className: "",
     },
     waiting: {
       baseVariant: "pending", // reuse existing pending palette for consistency
       icon: <Clock className="w-3 h-3 mr-1" />,
       text: "Awaiting Approval",
-      className: "" // rely on variant styling
+      className: "", // rely on variant styling
     },
     draft: {
       baseVariant: "secondary",
       icon: <Clock className="w-3 h-3 mr-1" />,
       text: "Draft",
-      className: ""
-    }
+      className: "",
+    },
   };
 
   const config = statusConfig[status];

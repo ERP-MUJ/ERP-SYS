@@ -64,7 +64,9 @@ export function ReadOnlyFormTable({
                 }
               >
                 {c.attributes.label || c.attributes.name || c.id}
-                {c.attributes.required && <span className="text-rose-500 ml-0.5">*</span>}
+                {c.attributes.required && (
+                  <span className="text-rose-500 ml-0.5">*</span>
+                )}
               </TableHead>
             ))}
           </TableRow>

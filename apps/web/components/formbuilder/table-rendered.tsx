@@ -62,7 +62,12 @@ interface TableFormRendererProps {
   className?: string;
   id: string;
   existingData?: Record<string, any>[];
-  customSaveHook?: () => UseMutationResult<any, Error, { id: string; formData: { entries: Record<string, any>[] } }, unknown>;
+  customSaveHook?: () => UseMutationResult<
+    any,
+    Error,
+    { id: string; formData: { entries: Record<string, any>[] } },
+    unknown
+  >;
 }
 
 type FormEntry = Record<string, any>;
@@ -79,14 +84,16 @@ export default function TableFormRenderer({
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
   const defaultSaveHook = useSaveKpiData();
-  const { mutate: saveKpiData } = customSaveHook ? customSaveHook() : defaultSaveHook;
+  const { mutate: saveKpiData } = customSaveHook
+    ? customSaveHook()
+    : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
   const [activeElement, setActiveElement] =
     useState<FormElementInstance | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [complexValue, setComplexValue] = useState<any>(null);
-  
+
   // Local storage key for draft data
   const localStorageKey = `kpi-form-draft-${id}`;
 
@@ -97,7 +104,7 @@ export default function TableFormRenderer({
       setEntries(existingData);
       return;
     }
-    
+
     // If no server data, try to load from local storage
     try {
       const savedDraft = localStorage.getItem(localStorageKey);
@@ -112,11 +119,13 @@ export default function TableFormRenderer({
       console.error("Error loading draft data:", error);
     }
   }, [existingData, id, localStorageKey]);
-  
+
   // Save to local storage when entries change (debounced)
   useEffect(() => {
     // Only save non-empty entries
-    const filledEntries = entries.filter(entry => Object.keys(entry).length > 0);
+    const filledEntries = entries.filter(
+      (entry) => Object.keys(entry).length > 0,
+    );
     if (filledEntries.length > 0) {
       const saveTimeout = setTimeout(() => {
         try {
@@ -126,18 +135,20 @@ export default function TableFormRenderer({
           console.error("Error saving draft data:", error);
         }
       }, 1000); // 1 second debounce
-      
+
       return () => clearTimeout(saveTimeout);
     }
   }, [entries, localStorageKey]);
-  
+
   // Autosave to server periodically (every 30 seconds) if there are changes
   const [lastSavedEntries, setLastSavedEntries] = useState<string>("");
-  
+
   useEffect(() => {
     // Only consider filled entries
-    const filledEntries = entries.filter(entry => Object.keys(entry).length > 0);
-    
+    const filledEntries = entries.filter(
+      (entry) => Object.keys(entry).length > 0,
+    );
+
     // If we have data and it's different from last saved data
     const currentEntriesString = JSON.stringify(filledEntries);
     if (filledEntries.length > 0 && currentEntriesString !== lastSavedEntries) {
@@ -145,14 +156,14 @@ export default function TableFormRenderer({
         // Don't autosave if actively submitting
         if (!isSubmitting && filledEntries.length > 0) {
           console.log("Auto-saving to server...");
-          
+
           const formDataToSubmit = {
             id: id,
             formData: {
               entries: filledEntries,
             },
           };
-          
+
           // Silent autosave with no UI feedback unless it fails
           saveKpiData(formDataToSubmit, {
             onSuccess: () => {
@@ -165,11 +176,11 @@ export default function TableFormRenderer({
               toast.error("Auto-save failed. Your data is saved locally.", {
                 duration: 3000,
               });
-            }
+            },
           });
         }
       }, 30000); // 30 seconds
-      
+
       return () => clearTimeout(autoSaveTimeout);
     }
   }, [entries, id, saveKpiData, isSubmitting, lastSavedEntries]);
@@ -283,7 +294,7 @@ export default function TableFormRenderer({
         setIsSubmitting(false);
         toast.dismiss(toastId);
         toast.success("Data saved successfully!");
-        
+
         // Clear draft from local storage after successful save
         try {
           localStorage.removeItem(`kpi-form-draft-${id}`);
@@ -294,15 +305,17 @@ export default function TableFormRenderer({
       onError: (error) => {
         setIsSubmitting(false);
         toast.dismiss(toastId);
-        
+
         toast.error("Failed to save data. Retrying in 3 seconds...", {
-          description: error.message || "Please check your connection and try again",
+          description:
+            error.message || "Please check your connection and try again",
           duration: 5000,
         });
-        
+
         // Implement retry logic
         setTimeout(() => {
-          if (!document.hidden) { // Only retry if page is visible
+          if (!document.hidden) {
+            // Only retry if page is visible
             toast.loading("Retrying save...");
             saveKpiData(formDataToSubmit, {
               onSuccess: () => {
@@ -317,10 +330,10 @@ export default function TableFormRenderer({
                 toast.error("Save failed. Please try manually saving again.", {
                   action: {
                     label: "Try Again",
-                    onClick: () => handleSubmit()
-                  }
+                    onClick: () => handleSubmit(),
+                  },
                 });
-              }
+              },
             });
           }
         }, 3000);

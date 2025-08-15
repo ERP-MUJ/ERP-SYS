@@ -12,7 +12,13 @@ import { QcReviewController } from './review/qc-review.controller';
 import { QcReviewService } from './review/qc-review.service';
 
 @Module({
-  controllers: [PillarController, KpiController, DepartmentAssignmentController, QcDashboardController, QcReviewController],
+  controllers: [
+    PillarController,
+    KpiController,
+    DepartmentAssignmentController,
+    QcDashboardController,
+    QcReviewController,
+  ],
   providers: [PillarService, KpiService, DepartmentAssignmentService, QcDashboardService, QcReviewService],
   imports: [PrismaModule],
 })

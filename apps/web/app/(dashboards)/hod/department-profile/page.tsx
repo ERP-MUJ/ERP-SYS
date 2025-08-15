@@ -61,15 +61,12 @@ export default function DepartmentProfilePage() {
 
   useEffect(() => {
     if (existingData) {
-      const {
-        studentStrength,
-        ...mainData
-      } = existingData;
+      const { studentStrength, ...mainData } = existingData;
       setData(mainData);
       setTotalType(TotalCalculationType.ADMITTED);
       if (studentStrength && studentStrength.length > 0) {
         // Use functional update to avoid dependency on yearData
-        setYearData(prevYearData => 
+        setYearData((prevYearData) =>
           prevYearData.map((localYear) => {
             const foundYear = studentStrength.find(
               (dbYear) => dbYear.year === localYear.year,
@@ -81,7 +78,7 @@ export default function DepartmentProfilePage() {
                   admitted: foundYear.admitted,
                 }
               : localYear;
-          })
+          }),
         );
       }
     }

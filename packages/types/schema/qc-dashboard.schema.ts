@@ -16,14 +16,14 @@ export const SubmissionStatsSchema = z.object({
     .int()
     .nonnegative()
     .describe(
-      "Number of departments that have both Pillars and KPIs assigned."
+      "Number of departments that have both Pillars and KPIs assigned.",
     ),
   departmentsPending: z
     .number()
     .int()
     .nonnegative()
     .describe(
-      "Number of departments that are missing either Pillar or KPI assignments."
+      "Number of departments that are missing either Pillar or KPI assignments.",
     ),
 });
 

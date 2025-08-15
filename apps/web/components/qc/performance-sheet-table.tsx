@@ -155,27 +155,44 @@ export const PillarKpiTable: React.FC<
                 </TableCell>
                 {showStatusColumn && (
                   <TableCell className="text-center">
-                    {row.status && (() => {
-                      const raw = row.status.toLowerCase();
-                      // Normalize to backend enum
-                      let backendStatus: any = 'PENDING';
-                      if (raw === 'approved') backendStatus = 'APPROVED';
-                      else if (raw === 'rejected') backendStatus = 'REJECTED';
-                      else if (['revision','revision requested','needs revision','redo'].includes(raw)) backendStatus = 'REVISION';
-                      else if (raw === 'overdue') backendStatus = 'OVERDUE';
-                      else if (raw === 'draft' || raw === 'to be submitted') backendStatus = 'PENDING';
-                      const display = deriveDisplayStatus({ status: backendStatus, hasFormResponses: raw !== 'draft' && raw !== 'to be submitted' });
-                      const variantMap: Record<string, any> = {
-                        Approved: 'approved',
-                        Rejected: 'rejected',
-                        'Revision Requested': 'revision',
-                        'Awaiting Approval': 'waiting',
-                        'Draft (Not Submitted)': 'draft',
-                        Overdue: 'overdue'
-                      };
-                      const mappedVariant = (variantMap[display] || 'pending') as any;
-                      return <StatusBadge status={mappedVariant} label={display} />;
-                    })()}
+                    {row.status &&
+                      (() => {
+                        const raw = row.status.toLowerCase();
+                        // Normalize to backend enum
+                        let backendStatus: any = "PENDING";
+                        if (raw === "approved") backendStatus = "APPROVED";
+                        else if (raw === "rejected") backendStatus = "REJECTED";
+                        else if (
+                          [
+                            "revision",
+                            "revision requested",
+                            "needs revision",
+                            "redo",
+                          ].includes(raw)
+                        )
+                          backendStatus = "REVISION";
+                        else if (raw === "overdue") backendStatus = "OVERDUE";
+                        else if (raw === "draft" || raw === "to be submitted")
+                          backendStatus = "PENDING";
+                        const display = deriveDisplayStatus({
+                          status: backendStatus,
+                          hasFormResponses:
+                            raw !== "draft" && raw !== "to be submitted",
+                        });
+                        const variantMap: Record<string, any> = {
+                          Approved: "approved",
+                          Rejected: "rejected",
+                          "Revision Requested": "revision",
+                          "Awaiting Approval": "waiting",
+                          "Draft (Not Submitted)": "draft",
+                          Overdue: "overdue",
+                        };
+                        const mappedVariant = (variantMap[display] ||
+                          "pending") as any;
+                        return (
+                          <StatusBadge status={mappedVariant} label={display} />
+                        );
+                      })()}
                   </TableCell>
                 )}
                 <TableCell className="text-center">

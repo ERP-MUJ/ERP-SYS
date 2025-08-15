@@ -57,7 +57,9 @@ export function useGetDepartmentPillars(departmentId: string | null) {
       if (!departmentId) throw new Error("Department ID is required");
       const res = await getDepartmentPillars(departmentId);
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to fetch department pillars");
+      throw new Error(
+        res.error?.message || "Failed to fetch department pillars",
+      );
     },
     enabled: !!departmentId,
   });
@@ -73,7 +75,9 @@ export function useGetAllDepartmentPillars() {
     queryFn: async () => {
       const res = await getAllDepartmentPillars();
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to fetch all department pillars");
+      throw new Error(
+        res.error?.message || "Failed to fetch all department pillars",
+      );
     },
   });
 }
@@ -87,10 +91,13 @@ export function useGetDepartmentPillarKPIs(departmentPillarId: string | null) {
   return useQuery({
     queryKey: ["qc-department-pillar-kpis", departmentPillarId],
     queryFn: async () => {
-      if (!departmentPillarId) throw new Error("Department pillar ID is required");
+      if (!departmentPillarId)
+        throw new Error("Department pillar ID is required");
       const res = await getDepartmentPillarKPIs(departmentPillarId);
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to fetch department pillar KPIs");
+      throw new Error(
+        res.error?.message || "Failed to fetch department pillar KPIs",
+      );
     },
     enabled: !!departmentPillarId,
   });
@@ -104,16 +111,28 @@ export function useAssignPillarToDepartment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ departmentId, payload }: { departmentId: string; payload: AssignPillarPayload }) => {
+    mutationFn: async ({
+      departmentId,
+      payload,
+    }: {
+      departmentId: string;
+      payload: AssignPillarPayload;
+    }) => {
       const res = await assignPillarToDepartment(departmentId, payload);
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to assign pillar to department");
+      throw new Error(
+        res.error?.message || "Failed to assign pillar to department",
+      );
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch department pillars
-      queryClient.invalidateQueries({ queryKey: ["qc-department-pillars", variables.departmentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillars", variables.departmentId],
+      });
       // Invalidate all department pillars for cards view
-      queryClient.invalidateQueries({ queryKey: ["qc-all-department-pillars"] });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-all-department-pillars"],
+      });
       // Invalidate pillar templates to refresh counts
       queryClient.invalidateQueries({ queryKey: ["qc-pillar-templates"] });
       toast.success(data.message);
@@ -134,16 +153,28 @@ export function useUnassignPillarFromDepartment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ departmentPillarId, departmentId }: { departmentPillarId: string; departmentId: string }) => {
+    mutationFn: async ({
+      departmentPillarId,
+      departmentId,
+    }: {
+      departmentPillarId: string;
+      departmentId: string;
+    }) => {
       const res = await unassignPillarFromDepartment(departmentPillarId);
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to unassign pillar from department");
+      throw new Error(
+        res.error?.message || "Failed to unassign pillar from department",
+      );
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch department pillars
-      queryClient.invalidateQueries({ queryKey: ["qc-department-pillars", variables.departmentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillars", variables.departmentId],
+      });
       // Invalidate all department pillars for cards view
-      queryClient.invalidateQueries({ queryKey: ["qc-all-department-pillars"] });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-all-department-pillars"],
+      });
       // Invalidate pillar templates to refresh counts
       queryClient.invalidateQueries({ queryKey: ["qc-pillar-templates"] });
       toast.success(data.message);

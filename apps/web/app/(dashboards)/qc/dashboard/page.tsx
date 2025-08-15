@@ -66,7 +66,7 @@ export default function QACDashboard() {
   const { data, isLoading, error } = useGetDashboardData();
 
   if (isLoading) return <LoadingSpinner />;
-  
+
   if (error) {
     return (
       <div className="flex h-[50vh] items-center justify-center">

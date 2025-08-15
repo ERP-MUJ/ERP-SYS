@@ -51,7 +51,7 @@ export interface AssignedUser {
   id: string;
   user_name: string;
   user_email: string;
-  user_role: 'FACULTY' | 'KPI_COORDINATOR' | 'HOD' | 'QAC';
+  user_role: "FACULTY" | "KPI_COORDINATOR" | "HOD" | "QAC";
 }
 
 /**
@@ -72,7 +72,7 @@ export interface DepartmentKpi {
   kpi_data: any;
   academic_year: number;
   kpi_calculated_metrics: any;
-  kpi_status: 'APPROVED' | 'OVERDUE' | 'REJECTED' | 'REVISION' | 'PENDING';
+  kpi_status: "APPROVED" | "OVERDUE" | "REJECTED" | "REVISION" | "PENDING";
   assigned_date: string;
   due_date: string | null;
   completed_date: string | null;
@@ -122,7 +122,9 @@ export interface AssignPillarResponse {
  */
 export const getDepartments = async () => {
   try {
-    const response = await ApiClient.get<Department[]>("/qc/department-assignment/departments");
+    const response = await ApiClient.get<Department[]>(
+      "/qc/department-assignment/departments",
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;
@@ -136,7 +138,9 @@ export const getDepartments = async () => {
  */
 export const getPillarTemplates = async () => {
   try {
-    const response = await ApiClient.get<PillarTemplate[]>("/qc/department-assignment/pillar-templates");
+    const response = await ApiClient.get<PillarTemplate[]>(
+      "/qc/department-assignment/pillar-templates",
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;
@@ -151,7 +155,9 @@ export const getPillarTemplates = async () => {
  */
 export const getDepartmentPillars = async (departmentId: string) => {
   try {
-    const response = await ApiClient.get<DepartmentPillar[]>(`/qc/department-assignment/departments/${departmentId}/pillars`);
+    const response = await ApiClient.get<DepartmentPillar[]>(
+      `/qc/department-assignment/departments/${departmentId}/pillars`,
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;
@@ -165,7 +171,9 @@ export const getDepartmentPillars = async (departmentId: string) => {
  */
 export const getAllDepartmentPillars = async () => {
   try {
-    const response = await ApiClient.get<DepartmentPillar[]>("/qc/department-assignment/all-department-pillars");
+    const response = await ApiClient.get<DepartmentPillar[]>(
+      "/qc/department-assignment/all-department-pillars",
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;
@@ -179,9 +187,15 @@ export const getAllDepartmentPillars = async () => {
  * @param payload - Assignment data containing pillar template ID and weight
  * @returns Promise with assignment response
  */
-export const assignPillarToDepartment = async (departmentId: string, payload: AssignPillarPayload) => {
+export const assignPillarToDepartment = async (
+  departmentId: string,
+  payload: AssignPillarPayload,
+) => {
   try {
-    const response = await ApiClient.post<AssignPillarResponse>(`/qc/department-assignment/departments/${departmentId}/pillars`, payload);
+    const response = await ApiClient.post<AssignPillarResponse>(
+      `/qc/department-assignment/departments/${departmentId}/pillars`,
+      payload,
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;
@@ -194,9 +208,13 @@ export const assignPillarToDepartment = async (departmentId: string, payload: As
  * @param departmentPillarId - The department pillar ID
  * @returns Promise with unassignment response
  */
-export const unassignPillarFromDepartment = async (departmentPillarId: string) => {
+export const unassignPillarFromDepartment = async (
+  departmentPillarId: string,
+) => {
   try {
-    const response = await ApiClient.delete<{ message: string }>(`/qc/department-assignment/department-pillars/${departmentPillarId}`);
+    const response = await ApiClient.delete<{ message: string }>(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}`,
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;
@@ -211,7 +229,9 @@ export const unassignPillarFromDepartment = async (departmentPillarId: string) =
  */
 export const getDepartmentPillarKPIs = async (departmentPillarId: string) => {
   try {
-    const response = await ApiClient.get<DepartmentKpi[]>(`/qc/department-assignment/department-pillars/${departmentPillarId}/kpis`);
+    const response = await ApiClient.get<DepartmentKpi[]>(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}/kpis`,
+    );
     return response;
   } catch (error: unknown) {
     const apiError = error as ApiError;

@@ -48,12 +48,12 @@ export class HodKpiService {
    */
   async getDepartmentPillars(userId: string, userRole: UserRole) {
     console.log('HOD Service - getDepartmentPillars called with:', { userId, userRole });
-    
+
     if (!userId) throw new ForbiddenException('User not authenticated');
-    
+
     console.log('Checking HOD role...');
     this.assertHodRole(userRole);
-    
+
     console.log('Getting department ID...');
     const departmentId = await this.getHodDepartmentId(userId);
     console.log('Department ID found:', departmentId);
@@ -172,12 +172,11 @@ export class HodKpiService {
       ...kpi,
       kpi_name: kpi.kpi_metric_name,
       elements:
-        kpi.kpi_data && typeof kpi.kpi_data === 'object' && kpi.kpi_data['elements']
-          ? kpi.kpi_data['elements']
+        kpi.kpi_data && typeof kpi.kpi_data === 'object' && kpi.kpi_data['elements'] ? kpi.kpi_data['elements'] : [],
+      existingData:
+        kpi.form_responses && typeof kpi.form_responses === 'object' && kpi.form_responses['entries']
+          ? kpi.form_responses['entries']
           : [],
-      existingData: kpi.form_responses && typeof kpi.form_responses === 'object' && kpi.form_responses['entries']
-        ? kpi.form_responses['entries']
-        : [],
     };
   }
 
@@ -189,7 +188,12 @@ export class HodKpiService {
    * @param formResponses - The form response data
    * @returns Success message
    */
-  async updateKpiResponses(userId: string, userRole: UserRole, kpiId: string, formResponses: Record<string, any>) {
+  async updateKpiResponses(
+    userId: string,
+    userRole: UserRole,
+    kpiId: string,
+    formResponses: { entries: Record<string, unknown>[] },
+  ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(userRole);
 
@@ -210,7 +214,8 @@ export class HodKpiService {
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: formResponses as any,
+        // Deep clone to ensure plain JSON serializable structure
+        form_responses: JSON.parse(JSON.stringify(formResponses)),
         kpi_status: 'PENDING', // Set to pending for review
         completed_date: new Date(),
       },

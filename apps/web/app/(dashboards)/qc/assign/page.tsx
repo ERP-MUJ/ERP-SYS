@@ -7,7 +7,12 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { Label } from "@workspace/ui/components/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Separator } from "@workspace/ui/components/separator";
@@ -26,23 +31,36 @@ import {
 } from "@/queries/qc/department-assignment";
 
 export default function AssignKpiToDepartmentPage() {
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+    string | null
+  >(null);
   const [selectedPillarId, setSelectedPillarId] = useState<string | null>(null);
   const kpiSectionRef = useRef<HTMLDivElement>(null);
 
   // Fetch real data from APIs
-  const { data: departments = [], isLoading: departmentsLoading } = useGetDepartments();
-  const { data: pillarTemplates = [], isLoading: pillarTemplatesLoading } = useGetPillarTemplates();
+  const { data: departments = [], isLoading: departmentsLoading } =
+    useGetDepartments();
+  const { data: pillarTemplates = [], isLoading: pillarTemplatesLoading } =
+    useGetPillarTemplates();
 
   // Fetch department pillars for selected department (for detailed view)
-  const { data: selectedDepartmentPillars = [], isLoading: departmentPillarsLoading } = useGetDepartmentPillars(selectedDepartmentId);
+  const {
+    data: selectedDepartmentPillars = [],
+    isLoading: departmentPillarsLoading,
+  } = useGetDepartmentPillars(selectedDepartmentId);
 
   // Fetch ALL department pillars for cards view (we need this for all departments)
-  const { data: allDepartmentPillars = [], isLoading: allDepartmentPillarsLoading } = useGetAllDepartmentPillars();
+  const {
+    data: allDepartmentPillars = [],
+    isLoading: allDepartmentPillarsLoading,
+  } = useGetAllDepartmentPillars();
 
   // Get the department pillar ID for the selected pillar
-  const selectedDepartmentPillar = selectedDepartmentPillars.find(dp => dp.template_id === selectedPillarId);
-  const { data: departmentPillarKPIs = [], isLoading: kpisLoading } = useGetDepartmentPillarKPIs(selectedDepartmentPillar?.id || null);
+  const selectedDepartmentPillar = selectedDepartmentPillars.find(
+    (dp) => dp.template_id === selectedPillarId,
+  );
+  const { data: departmentPillarKPIs = [], isLoading: kpisLoading } =
+    useGetDepartmentPillarKPIs(selectedDepartmentPillar?.id || null);
 
   // Mutations
   const assignPillarMutation = useAssignPillarToDepartment();
@@ -54,10 +72,16 @@ export default function AssignKpiToDepartmentPage() {
       return { assignedPillars: [], unassignedPillars: [] };
     }
 
-    const assignedTemplateIds = selectedDepartmentPillars.map((dp: any) => dp.template_id);
+    const assignedTemplateIds = selectedDepartmentPillars.map(
+      (dp: any) => dp.template_id,
+    );
 
-    const assigned = pillarTemplates.filter(pt => assignedTemplateIds.includes(pt.id));
-    const unassigned = pillarTemplates.filter(pt => !assignedTemplateIds.includes(pt.id));
+    const assigned = pillarTemplates.filter((pt) =>
+      assignedTemplateIds.includes(pt.id),
+    );
+    const unassigned = pillarTemplates.filter(
+      (pt) => !assignedTemplateIds.includes(pt.id),
+    );
 
     return { assignedPillars: assigned, unassignedPillars: unassigned };
   }, [selectedDepartmentId, pillarTemplates, selectedDepartmentPillars]);
@@ -68,7 +92,9 @@ export default function AssignKpiToDepartmentPage() {
       return { assignedKpis: [], unassignedKpis: [] };
     }
 
-    const selectedPillar = pillarTemplates.find(pt => pt.id === selectedPillarId);
+    const selectedPillar = pillarTemplates.find(
+      (pt) => pt.id === selectedPillarId,
+    );
     if (!selectedPillar) {
       return { assignedKpis: [], unassignedKpis: [] };
     }
@@ -77,12 +103,12 @@ export default function AssignKpiToDepartmentPage() {
     if (!selectedDepartmentPillar) {
       return {
         assignedKpis: [],
-        unassignedKpis: selectedPillar.kpi_templates
+        unassignedKpis: selectedPillar.kpi_templates,
       };
     }
 
     // Map department KPIs to template KPI format for display
-    const assigned = departmentPillarKPIs.map(dk => ({
+    const assigned = departmentPillarKPIs.map((dk) => ({
       id: dk.template_id,
       // Map to the field names expected by AssignKpiTable component
       kpiNo: dk.kpi_number,
@@ -115,11 +141,18 @@ export default function AssignKpiToDepartmentPage() {
     }));
 
     // Find unassigned KPIs (template KPIs not in assigned list)
-    const assignedTemplateIds = assigned.map(k => k.id);
-    const unassigned = selectedPillar.kpi_templates.filter(kt => !assignedTemplateIds.includes(kt.id));
+    const assignedTemplateIds = assigned.map((k) => k.id);
+    const unassigned = selectedPillar.kpi_templates.filter(
+      (kt) => !assignedTemplateIds.includes(kt.id),
+    );
 
     return { assignedKpis: assigned, unassignedKpis: unassigned };
-  }, [selectedPillarId, pillarTemplates, selectedDepartmentPillar, departmentPillarKPIs]);
+  }, [
+    selectedPillarId,
+    pillarTemplates,
+    selectedDepartmentPillar,
+    departmentPillarKPIs,
+  ]);
 
   // Handle department change
   const handleDepartmentChange = (deptId: string) => {
@@ -137,7 +170,11 @@ export default function AssignKpiToDepartmentPage() {
   };
 
   // Handle assigning a pillar to a department
-  const handleAssignPillar = (pillar: { id: string; weight?: number; weightA?: number }) => {
+  const handleAssignPillar = (pillar: {
+    id: string;
+    weight?: number;
+    weightA?: number;
+  }) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department first");
       return;
@@ -160,7 +197,9 @@ export default function AssignKpiToDepartmentPage() {
     }
 
     // Find the department pillar ID
-    const departmentPillar = selectedDepartmentPillars.find((dp: any) => dp.template_id === pillar.id);
+    const departmentPillar = selectedDepartmentPillars.find(
+      (dp: any) => dp.template_id === pillar.id,
+    );
     if (!departmentPillar) {
       toast.error("Pillar not found in department");
       return;
@@ -174,16 +213,25 @@ export default function AssignKpiToDepartmentPage() {
 
   // Handle assigning a KPI to a pillar (placeholder for future implementation)
   const handleAssignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
-    toast.info("KPI assignment functionality will be implemented in the next phase");
+    toast.info(
+      "KPI assignment functionality will be implemented in the next phase",
+    );
   };
 
   // Handle unassigning a KPI from a pillar (placeholder for future implementation)
   const handleUnassignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
-    toast.info("KPI unassignment functionality will be implemented in the next phase");
+    toast.info(
+      "KPI unassignment functionality will be implemented in the next phase",
+    );
   };
 
   // Loading states
-  const isLoading = departmentsLoading || pillarTemplatesLoading || departmentPillarsLoading || allDepartmentPillarsLoading || kpisLoading;
+  const isLoading =
+    departmentsLoading ||
+    pillarTemplatesLoading ||
+    departmentPillarsLoading ||
+    allDepartmentPillarsLoading ||
+    kpisLoading;
 
   if (isLoading) {
     return (
@@ -204,164 +252,207 @@ export default function AssignKpiToDepartmentPage() {
         Assign Pillar and KPI to Department
       </h1>
 
-             {/* Department Cards View */}
-       {!selectedDepartmentId ? (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                       {departments.map((dept) => {
-              // Get department pillars for this department
-              const deptPillars = allDepartmentPillars.filter((dp: { dept_id: string }) => dp.dept_id === dept.id);
-              const totalKPIs = deptPillars.reduce((sum: number, pillar: { department_kpis?: any[] }) => sum + (pillar.department_kpis?.length || 0), 0);
+      {/* Department Cards View */}
+      {!selectedDepartmentId ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {departments.map((dept) => {
+            // Get department pillars for this department
+            const deptPillars = allDepartmentPillars.filter(
+              (dp: { dept_id: string }) => dp.dept_id === dept.id,
+            );
+            const totalKPIs = deptPillars.reduce(
+              (sum: number, pillar: { department_kpis?: any[] }) =>
+                sum + (pillar.department_kpis?.length || 0),
+              0,
+            );
 
-             return (
-               <Card
-                 key={dept.id}
-                 className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                 onClick={() => handleDepartmentChange(dept.id)}
-               >
-                 <CardHeader className="pb-3">
-                   <div className="flex items-start justify-between">
-                     <div>
-                       <CardTitle className="text-lg mb-1">{dept.dept_name}</CardTitle>
-                       {dept.hod_name && (
-                         <p className="text-sm text-muted-foreground">
-                           HOD: {dept.hod_name}
-                         </p>
-                       )}
-                     </div>
-                     <Badge variant="secondary">
-                       {deptPillars.length} Pillars
-                     </Badge>
-                   </div>
-                 </CardHeader>
+            return (
+              <Card
+                key={dept.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                onClick={() => handleDepartmentChange(dept.id)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg mb-1">
+                        {dept.dept_name}
+                      </CardTitle>
+                      {dept.hod_name && (
+                        <p className="text-sm text-muted-foreground">
+                          HOD: {dept.hod_name}
+                        </p>
+                      )}
+                    </div>
+                    <Badge variant="secondary">
+                      {deptPillars.length} Pillars
+                    </Badge>
+                  </div>
+                </CardHeader>
 
-                 <CardContent className="space-y-4">
-                   {/* Metadata Stats */}
-                   <div className="space-y-3">
-                     <div className="flex items-center justify-between">
-                       <span className="text-sm text-muted-foreground">Assigned Pillars:</span>
-                       <span className="text-sm font-medium">
-                         {deptPillars.length}
-                       </span>
-                     </div>
+                <CardContent className="space-y-4">
+                  {/* Metadata Stats */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Assigned Pillars:
+                      </span>
+                      <span className="text-sm font-medium">
+                        {deptPillars.length}
+                      </span>
+                    </div>
 
-                     <div className="flex items-center justify-between">
-                       <span className="text-sm text-muted-foreground">Total KPIs:</span>
-                       <span className="text-sm font-medium">
-                         {totalKPIs}
-                       </span>
-                     </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Total KPIs:
+                      </span>
+                      <span className="text-sm font-medium">{totalKPIs}</span>
+                    </div>
 
-                     <div className="flex items-center justify-between">
-                       <span className="text-sm text-muted-foreground">Status:</span>
-                       <Badge variant={deptPillars.length > 0 ? "default" : "secondary"}>
-                         {deptPillars.length > 0 ? 'Active' : 'Pending'}
-                       </Badge>
-                     </div>
-                   </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Status:
+                      </span>
+                      <Badge
+                        variant={
+                          deptPillars.length > 0 ? "default" : "secondary"
+                        }
+                      >
+                        {deptPillars.length > 0 ? "Active" : "Pending"}
+                      </Badge>
+                    </div>
+                  </div>
 
-                   <Separator />
+                  <Separator />
 
-                   {/* Action Button */}
-                   <Button className="w-full" variant="default">
-                     Manage Pillars & KPIs
-                   </Button>
-                 </CardContent>
-               </Card>
-             );
-           })}
-         </div>
+                  {/* Action Button */}
+                  <Button className="w-full" variant="default">
+                    Manage Pillars & KPIs
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       ) : (
-                 /* Detailed View for Selected Department */
-         <div className="space-y-6">
-           {/* Back Button */}
-           <div className="flex items-center gap-4">
-             <Button
-               variant="ghost"
-               onClick={() => {
-                 setSelectedDepartmentId(null);
-                 setSelectedPillarId(null);
-               }}
-               className="flex items-center gap-2"
-             >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-               </svg>
-               Back to Departments
-             </Button>
-             <Separator className="flex-1" />
-           </div>
+        /* Detailed View for Selected Department */
+        <div className="space-y-6">
+          {/* Back Button */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSelectedDepartmentId(null);
+                setSelectedPillarId(null);
+              }}
+              className="flex items-center gap-2"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Back to Departments
+            </Button>
+            <Separator className="flex-1" />
+          </div>
 
-           {/* Department Header */}
-           <Card>
-             <CardContent className="pt-6">
-               <div className="flex items-center justify-between">
-                 <div>
-                   <CardTitle className="text-2xl">
-                     {departments.find(d => d.id === selectedDepartmentId)?.dept_name}
-                   </CardTitle>
-                   <p className="text-muted-foreground mt-1">
-                     Manage pillar assignments and KPI configurations
-                   </p>
-                 </div>
-                 <div className="text-right">
-                   <div className="text-sm text-muted-foreground">Assigned Pillars</div>
-                   <div className="text-2xl font-bold text-primary">
-                     {assignedPillars.length}
-                   </div>
-                 </div>
-               </div>
-             </CardContent>
-           </Card>
+          {/* Department Header */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl">
+                    {
+                      departments.find((d) => d.id === selectedDepartmentId)
+                        ?.dept_name
+                    }
+                  </CardTitle>
+                  <p className="text-muted-foreground mt-1">
+                    Manage pillar assignments and KPI configurations
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">
+                    Assigned Pillars
+                  </div>
+                  <div className="text-2xl font-bold text-primary">
+                    {assignedPillars.length}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-           {/* Assign Pillar Section */}
-           <Card>
-             <CardHeader>
-               <CardTitle>Assign Pillar</CardTitle>
-             </CardHeader>
-             <CardContent>
-               <AssignPillarTable
-                 assignedPillars={assignedPillars}
-                 unassignedPillars={unassignedPillars}
-                 onAssign={handleAssignPillar}
-                 onUnassign={handleUnassignPillar}
-                 onView={handlePillarSelect}
-               />
-             </CardContent>
-           </Card>
+          {/* Assign Pillar Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Assign Pillar</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AssignPillarTable
+                assignedPillars={assignedPillars}
+                unassignedPillars={unassignedPillars}
+                onAssign={handleAssignPillar}
+                onUnassign={handleUnassignPillar}
+                onView={handlePillarSelect}
+              />
+            </CardContent>
+          </Card>
 
-           {/* KPIs for Selected Pillar */}
-           {selectedPillarId && (
-             <Card ref={kpiSectionRef}>
-               <CardHeader>
-                 <CardTitle>
-                   {pillarTemplates.find((p) => p.id === selectedPillarId)?.pillar_name || "KPIs for Pillar"}
-                 </CardTitle>
-               </CardHeader>
+          {/* KPIs for Selected Pillar */}
+          {selectedPillarId && (
+            <Card ref={kpiSectionRef}>
+              <CardHeader>
+                <CardTitle>
+                  {pillarTemplates.find((p) => p.id === selectedPillarId)
+                    ?.pillar_name || "KPIs for Pillar"}
+                </CardTitle>
+              </CardHeader>
 
-               {/* Debug Info */}
-               <CardContent className="bg-muted/50">
-                 <div className="text-sm space-y-1">
-                   <p><strong>Debug Info:</strong></p>
-                   <p>Selected Pillar ID: {selectedPillarId}</p>
-                   <p>Department Pillar ID: {selectedDepartmentPillar?.id || 'Not found'}</p>
-                   <p>Department Pillar KPIs Count: {departmentPillarKPIs.length}</p>
-                   <p>Assigned KPIs Count: {assignedKpis.length}</p>
-                   <p>Unassigned KPIs Count: {unassignedKpis.length}</p>
-                   <p>Template KPIs Count: {pillarTemplates.find(p => p.id === selectedPillarId)?.kpi_templates.length || 0}</p>
-                 </div>
-               </CardContent>
+              {/* Debug Info */}
+              <CardContent className="bg-muted/50">
+                <div className="text-sm space-y-1">
+                  <p>
+                    <strong>Debug Info:</strong>
+                  </p>
+                  <p>Selected Pillar ID: {selectedPillarId}</p>
+                  <p>
+                    Department Pillar ID:{" "}
+                    {selectedDepartmentPillar?.id || "Not found"}
+                  </p>
+                  <p>
+                    Department Pillar KPIs Count: {departmentPillarKPIs.length}
+                  </p>
+                  <p>Assigned KPIs Count: {assignedKpis.length}</p>
+                  <p>Unassigned KPIs Count: {unassignedKpis.length}</p>
+                  <p>
+                    Template KPIs Count:{" "}
+                    {pillarTemplates.find((p) => p.id === selectedPillarId)
+                      ?.kpi_templates.length || 0}
+                  </p>
+                </div>
+              </CardContent>
 
-               <CardContent>
-                 <AssignKpiTable
-                   assignedKpis={assignedKpis}
-                   unassignedKpis={unassignedKpis}
-                   onAssign={handleAssignKpi}
-                   onUnassign={handleUnassignKpi}
-                 />
-               </CardContent>
-             </Card>
-           )}
-         </div>
+              <CardContent>
+                <AssignKpiTable
+                  assignedKpis={assignedKpis}
+                  unassignedKpis={unassignedKpis}
+                  onAssign={handleAssignKpi}
+                  onUnassign={handleUnassignKpi}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </main>
   );

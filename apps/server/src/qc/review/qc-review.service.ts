@@ -62,18 +62,22 @@ export class QcReviewService {
         throw new BadRequestException('Invalid action');
     }
 
+    type ReviewEntry = { action: string; by: string; at: string; remark: string };
+    const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown> & {
+      review_history?: ReviewEntry[];
+    };
+    const existingHistory = Array.isArray(existingMetrics.review_history) ? existingMetrics.review_history : [];
+    const updatedMetrics = {
+      ...existingMetrics,
+      review_history: [...existingHistory, { action, by: userId, at: new Date().toISOString(), remark }],
+    };
+
     const updated = await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
         kpi_status: target,
         comments: remark,
-        kpi_calculated_metrics: {
-          ...(kpi.kpi_calculated_metrics as any),
-          review_history: [
-            ...(((kpi.kpi_calculated_metrics as any)?.review_history as any[]) || []),
-            { action, by: userId, at: new Date().toISOString(), remark },
-          ],
-        } as any,
+        kpi_calculated_metrics: updatedMetrics,
       },
       include: {
         department_pillar: { select: { pillar_name: true } },

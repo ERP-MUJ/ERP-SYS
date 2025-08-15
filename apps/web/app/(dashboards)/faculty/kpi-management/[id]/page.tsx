@@ -26,10 +26,12 @@ export default function KpiPage({
 
   const kpi = data.kpi.kpi_name || "Untitled KPI";
   const description = data.kpi.kpi_description || "No description available";
-  const elements = (data.kpi.elements || []).map((el: import("@/lib/types").FormElementInstance) => ({
-    ...el,
-    type: el.type as import("@/lib/types").FormElementType,
-  }));
+  const elements = (data.kpi.elements || []).map(
+    (el: import("@/lib/types").FormElementInstance) => ({
+      ...el,
+      type: el.type as import("@/lib/types").FormElementType,
+    }),
+  );
 
   return (
     <TableFormRenderer
