@@ -37,6 +37,8 @@ export class ApiClient {
             : {}),
           Authorization: `Bearer ${session?.user?.token}`,
         },
+        // Add reasonable timeout to prevent long-hanging requests
+        timeout: 15000, // 15 seconds
       });
       const response: AxiosResponse<T> = await client.request(config);
       return { data: response.data };

@@ -15,10 +15,6 @@ import {
   useCreateDepartmentInfo,
   useUpdateDepartmentInfo,
 } from "@/queries/hod/department-info";
-import {
-  DepartmentInfoInstance,
-  CreateDepartmentInfoInput,
-} from "@workspace/types/types";
 import { TotalCalculationType } from "@workspace/types/enums/enums";
 import { GeneralInfoSection } from "@/components/hod/DepartmentInfo/GeneralInfoSection";
 import { StudentStrengthSection } from "@/components/hod/DepartmentInfo/StudentStrengthSection";
@@ -67,30 +63,29 @@ export default function DepartmentProfilePage() {
     if (existingData) {
       const {
         studentStrength,
-        departmentId,
-        id,
-        totalCalculationType,
         ...mainData
       } = existingData;
       setData(mainData);
       setTotalType(TotalCalculationType.ADMITTED);
       if (studentStrength && studentStrength.length > 0) {
-        const updatedYearData = yearData.map((localYear) => {
-          const foundYear = studentStrength.find(
-            (dbYear) => dbYear.year === localYear.year,
-          );
-          return foundYear
-            ? {
-                ...localYear,
-                intake: foundYear.intake,
-                admitted: foundYear.admitted,
-              }
-            : localYear;
-        });
-        setYearData(updatedYearData);
+        // Use functional update to avoid dependency on yearData
+        setYearData(prevYearData => 
+          prevYearData.map((localYear) => {
+            const foundYear = studentStrength.find(
+              (dbYear) => dbYear.year === localYear.year,
+            );
+            return foundYear
+              ? {
+                  ...localYear,
+                  intake: foundYear.intake,
+                  admitted: foundYear.admitted,
+                }
+              : localYear;
+          })
+        );
       }
     }
-  }, [existingData]);
+  }, [existingData]); // Removed yearData from dependencies
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setData({ ...data, [e.target.name]: Number(e.target.value) });

@@ -24,6 +24,24 @@ import { useGetDepartmentPillars } from "@/queries/hod/kpi";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorDisplay } from "@/components/common/ErrorDisplay";
 
+// Define types for the data structures
+interface DepartmentKpi {
+  id: string;
+  kpi_number: string | number;
+  kpi_metric_name: string;
+  data_provided_by?: string;
+  kpi_value?: number;
+  percentage_target_achieved?: number;
+  kpi_status?: string;
+}
+
+interface DepartmentPillar {
+  id: string;
+  pillar_name: string;
+  description?: string;
+  department_kpis?: DepartmentKpi[];
+}
+
 export default function KpiManagementPage() {
   const router = useRouter();
   const [selectedPillarId, setSelectedPillarId] = useState<string>("");
@@ -40,14 +58,14 @@ export default function KpiManagementPage() {
 
   // Get the selected pillar data
   const selectedPillar = useMemo(() => {
-    return pillars.find((pillar: any) => pillar.id === selectedPillarId);
+    return pillars.find((pillar: DepartmentPillar) => pillar.id === selectedPillarId);
   }, [pillars, selectedPillarId]);
 
   // Transform KPI data to match the read-only table format
   const transformedKpis = useMemo(() => {
     if (!selectedPillar?.department_kpis) return [];
     
-    return selectedPillar.department_kpis.map((kpi: any) => ({
+    return selectedPillar.department_kpis.map((kpi: DepartmentKpi) => ({
       kpi_no: kpi.kpi_number,
       metric: kpi.kpi_metric_name,
       dataProvidedBy: kpi.data_provided_by || "N/A",
@@ -115,7 +133,7 @@ export default function KpiManagementPage() {
                 <SelectValue placeholder="Choose a pillar to view KPIs" />
               </SelectTrigger>
               <SelectContent>
-                {pillars.map((pillar: any) => (
+                {pillars.map((pillar: DepartmentPillar) => (
                   <SelectItem key={pillar.id} value={pillar.id}>
                     <div className="flex items-center space-x-2">
                       <BarChart3 className="h-4 w-4" />

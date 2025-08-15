@@ -99,6 +99,8 @@ export function useUpdateKpiResponses() {
  * @returns Mutation for saving KPI form data
  */
 export function useSaveHodKpiData() {
+  const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: async ({ id, formData }: { id: string; formData: { entries: Record<string, any>[] } }) => {
       // Transform the formData to match the backend expectation
@@ -107,17 +109,42 @@ export function useSaveHodKpiData() {
         submittedAt: new Date().toISOString(),
       };
       
-      const res = await HodKpiService.updateKpiResponses(id, formResponses);
-      if (res.error) {
-        throw new Error(res.error.message);
+      // Implement timeout promise to handle slow connections
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Request timed out. Server might be busy.")), 20000);
+      });
+      
+      try {
+        // Race between actual request and timeout
+        const result = await Promise.race([
+          HodKpiService.updateKpiResponses(id, formResponses),
+          timeoutPromise
+        ]) as Awaited<ReturnType<typeof HodKpiService.updateKpiResponses>>;
+        
+        if (result.error) {
+          throw new Error(result.error.message);
+        }
+        return result.data;
+      } catch (error: any) {
+        // Enhanced error for network issues
+        if (error.message?.includes('Network') || !navigator.onLine) {
+          throw new Error("Network connection issue. Your data has been saved locally.");
+        }
+        throw error;
       }
-      return res.data;
     },
-    onSuccess: () => {
-      toast.success("KPI data saved successfully");
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ["hod", "kpi-details", variables.id] });
+      
+      // Toast is now handled by the component for better UX
+      // (showing loading state and retry options)
     },
-    onError: (error) => {
-      toast.error(`Failed to save KPI data: ${error.message}`);
+    onError: () => {
+      // Error handling moved to component for better UX
     },
+    // Retry failed mutations
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 }

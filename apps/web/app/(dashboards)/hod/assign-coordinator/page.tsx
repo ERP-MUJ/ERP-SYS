@@ -211,7 +211,7 @@ export default function KPICoordinatorsPage() {
               {coordinators.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No KPI coordinators assigned yet. Click "Assign Coordinator" to get started.
+                    No KPI coordinators assigned yet. Click &quot;Assign Coordinator&quot; to get started.
                   </TableCell>
                 </TableRow>
               ) : (

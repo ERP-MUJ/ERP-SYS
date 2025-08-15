@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PlusCircle, TrendingUp, Calendar, BarChart3 } from "lucide-react";
+import { TrendingUp, BarChart3 } from "lucide-react";
 
 import { Button } from "@workspace/ui/components/button";
-import { Badge } from "@workspace/ui/components/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
@@ -21,14 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog";
 import {
   Table,
   TableHeader,

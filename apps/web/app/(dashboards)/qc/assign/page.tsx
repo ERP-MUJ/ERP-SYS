@@ -137,7 +137,7 @@ export default function AssignKpiToDepartmentPage() {
   };
 
   // Handle assigning a pillar to a department
-  const handleAssignPillar = (pillar: any) => {
+  const handleAssignPillar = (pillar: { id: string; weight?: number; weightA?: number }) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department first");
       return;
@@ -153,7 +153,7 @@ export default function AssignKpiToDepartmentPage() {
   };
 
   // Handle unassigning a pillar from a department
-  const handleUnassignPillar = (pillar: any) => {
+  const handleUnassignPillar = (pillar: { id: string }) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department first");
       return;
@@ -173,12 +173,12 @@ export default function AssignKpiToDepartmentPage() {
   };
 
   // Handle assigning a KPI to a pillar (placeholder for future implementation)
-  const handleAssignKpi = (kpi: any) => {
+  const handleAssignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
     toast.info("KPI assignment functionality will be implemented in the next phase");
   };
 
   // Handle unassigning a KPI from a pillar (placeholder for future implementation)
-  const handleUnassignKpi = (kpi: any) => {
+  const handleUnassignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
     toast.info("KPI unassignment functionality will be implemented in the next phase");
   };
 
@@ -209,8 +209,8 @@ export default function AssignKpiToDepartmentPage() {
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                        {departments.map((dept) => {
               // Get department pillars for this department
-              const deptPillars = allDepartmentPillars.filter((dp: any) => dp.dept_id === dept.id);
-              const totalKPIs = deptPillars.reduce((sum: number, pillar: any) => sum + (pillar.department_kpis?.length || 0), 0);
+              const deptPillars = allDepartmentPillars.filter((dp: { dept_id: string }) => dp.dept_id === dept.id);
+              const totalKPIs = deptPillars.reduce((sum: number, pillar: { department_kpis?: any[] }) => sum + (pillar.department_kpis?.length || 0), 0);
 
              return (
                <Card

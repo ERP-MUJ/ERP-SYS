@@ -86,13 +86,93 @@ export default function TableFormRenderer({
     useState<FormElementInstance | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [complexValue, setComplexValue] = useState<any>(null);
+  
+  // Local storage key for draft data
+  const localStorageKey = `kpi-form-draft-${id}`;
 
-  // Load existing data on component mount
+  // Load existing data or draft data on component mount
   useEffect(() => {
+    // First try to load from props (server data)
     if (existingData && existingData.length > 0) {
       setEntries(existingData);
+      return;
     }
-  }, [existingData]);
+    
+    // If no server data, try to load from local storage
+    try {
+      const savedDraft = localStorage.getItem(localStorageKey);
+      if (savedDraft) {
+        const parsedDraft = JSON.parse(savedDraft);
+        if (Array.isArray(parsedDraft) && parsedDraft.length > 0) {
+          setEntries(parsedDraft);
+          toast.info("Loaded your saved draft", { duration: 3000 });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading draft data:", error);
+    }
+  }, [existingData, id, localStorageKey]);
+  
+  // Save to local storage when entries change (debounced)
+  useEffect(() => {
+    // Only save non-empty entries
+    const filledEntries = entries.filter(entry => Object.keys(entry).length > 0);
+    if (filledEntries.length > 0) {
+      const saveTimeout = setTimeout(() => {
+        try {
+          localStorage.setItem(localStorageKey, JSON.stringify(filledEntries));
+          console.log("Draft saved to local storage");
+        } catch (error) {
+          console.error("Error saving draft data:", error);
+        }
+      }, 1000); // 1 second debounce
+      
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [entries, localStorageKey]);
+  
+  // Autosave to server periodically (every 30 seconds) if there are changes
+  const [lastSavedEntries, setLastSavedEntries] = useState<string>("");
+  
+  useEffect(() => {
+    // Only consider filled entries
+    const filledEntries = entries.filter(entry => Object.keys(entry).length > 0);
+    
+    // If we have data and it's different from last saved data
+    const currentEntriesString = JSON.stringify(filledEntries);
+    if (filledEntries.length > 0 && currentEntriesString !== lastSavedEntries) {
+      const autoSaveTimeout = setTimeout(() => {
+        // Don't autosave if actively submitting
+        if (!isSubmitting && filledEntries.length > 0) {
+          console.log("Auto-saving to server...");
+          
+          const formDataToSubmit = {
+            id: id,
+            formData: {
+              entries: filledEntries,
+            },
+          };
+          
+          // Silent autosave with no UI feedback unless it fails
+          saveKpiData(formDataToSubmit, {
+            onSuccess: () => {
+              setLastSavedEntries(currentEntriesString);
+              console.log("Auto-save successful");
+            },
+            onError: (error) => {
+              console.error("Auto-save failed:", error);
+              // Only notify on error
+              toast.error("Auto-save failed. Your data is saved locally.", {
+                duration: 3000,
+              });
+            }
+          });
+        }
+      }, 30000); // 30 seconds
+      
+      return () => clearTimeout(autoSaveTimeout);
+    }
+  }, [entries, id, saveKpiData, isSubmitting, lastSavedEntries]);
 
   // Filter elements that can be displayed in a table (simple inputs)
   const tableElements = elements.filter((element) =>
@@ -195,13 +275,55 @@ export default function TableFormRenderer({
       },
     };
 
+    // Create a toast with loading state that we can update
+    const toastId = toast.loading("Saving your data...");
+
     saveKpiData(formDataToSubmit, {
       onSuccess: () => {
         setIsSubmitting(false);
+        toast.dismiss(toastId);
         toast.success("Data saved successfully!");
+        
+        // Clear draft from local storage after successful save
+        try {
+          localStorage.removeItem(`kpi-form-draft-${id}`);
+        } catch (error) {
+          console.error("Error clearing draft data:", error);
+        }
       },
-      onError: () => {
+      onError: (error) => {
         setIsSubmitting(false);
+        toast.dismiss(toastId);
+        
+        toast.error("Failed to save data. Retrying in 3 seconds...", {
+          description: error.message || "Please check your connection and try again",
+          duration: 5000,
+        });
+        
+        // Implement retry logic
+        setTimeout(() => {
+          if (!document.hidden) { // Only retry if page is visible
+            toast.loading("Retrying save...");
+            saveKpiData(formDataToSubmit, {
+              onSuccess: () => {
+                toast.success("Data saved successfully on retry!");
+                try {
+                  localStorage.removeItem(`kpi-form-draft-${id}`);
+                } catch (error) {
+                  console.error("Error clearing draft data:", error);
+                }
+              },
+              onError: () => {
+                toast.error("Save failed. Please try manually saving again.", {
+                  action: {
+                    label: "Try Again",
+                    onClick: () => handleSubmit()
+                  }
+                });
+              }
+            });
+          }
+        }, 3000);
       },
     });
   };
