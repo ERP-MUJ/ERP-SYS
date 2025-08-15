@@ -96,14 +96,22 @@ export class AuthService {
       this.logger.warn(`[loginWithPassword] Password mismatch for email: ${email}`);
       throw new UnauthorizedException('Invalid email or password');
     }
-    // Validate role if expectedRole is provided
-    if (expectedRole && user.user_role !== expectedRole) {
-      this.logger.warn(
-        `[loginWithPassword] Role mismatch for email: ${email}. Expected: ${expectedRole}, Found: ${user.user_role}`,
-      );
-      throw new UnauthorizedException(
-        `Access denied. Expected role: ${expectedRole}, but user has role: ${user.user_role}`,
-      );
+    // Validate role if expectedRole is provided.
+    // Special case: allow KPI_COORDINATORs to authenticate when frontend expects FACULTY
+    // so they can reuse the same faculty dashboard without changing schema/flows.
+    if (expectedRole) {
+      const acceptableRoles = [expectedRole];
+      if (expectedRole === UserRole.FACULTY) {
+        acceptableRoles.push(UserRole.KPI_COORDINATOR as unknown as string);
+      }
+      if (!acceptableRoles.includes(user.user_role)) {
+        this.logger.warn(
+          `[loginWithPassword] Role mismatch for email: ${email}. Expected any of: ${acceptableRoles.join(', ')}, Found: ${user.user_role}`,
+        );
+        throw new UnauthorizedException(
+          `Access denied. Expected role: ${expectedRole}, but user has role: ${user.user_role}`,
+        );
+      }
     }
     // Generate JWT
     const jwtPayload = {

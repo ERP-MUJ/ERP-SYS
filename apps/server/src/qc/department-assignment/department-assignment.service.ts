@@ -283,29 +283,27 @@ export class DepartmentAssignmentService {
   async getDepartmentPillarKPIs(userId: string, userRole: UserRole, departmentPillarId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
-    // Verify department pillar exists
     const departmentPillar = await this.prisma.departmentPillar.findUnique({
       where: { id: departmentPillarId },
     });
-
     if (!departmentPillar) {
       throw new NotFoundException('Department pillar not found');
     }
-
-    return this.prisma.departmentKpi.findMany({
+  const kpis = await this.prisma.departmentKpi.findMany({
       where: { dept_pillar_id: departmentPillarId },
       include: {
         assigned_users: {
-          select: {
-            id: true,
-            user_name: true,
-            user_email: true,
-            user_role: true,
-          },
+          select: { id: true, user_name: true, user_email: true, user_role: true },
         },
       },
       orderBy: { kpi_number: 'asc' },
+    });
+    // Gating: allow if no coordinator workflow OR if coordinator_status === APPROVED_BY_HOD
+    return kpis.filter((k) => {
+      const fr = (k.form_responses || {}) as Record<string, unknown>;
+      const cw = fr['coordinator_workflow'] as { coordinator_status?: string } | undefined;
+      if (!cw) return true; // legacy / not yet submitted via coordinator flow
+      return cw.coordinator_status === 'APPROVED_BY_HOD';
     });
   }
 }

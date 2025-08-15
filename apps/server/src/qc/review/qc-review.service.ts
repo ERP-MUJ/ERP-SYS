@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole, KpiStatus } from '@repo/db/prisma/client';
@@ -15,7 +16,6 @@ export class QcReviewService {
   async getKpi(userId: string, userRole: UserRole, kpiId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
     const kpi = await this.prisma.departmentKpi.findUnique({
       where: { id: kpiId },
       include: {
@@ -25,7 +25,21 @@ export class QcReviewService {
       },
     });
     if (!kpi) throw new NotFoundException('KPI not found');
-    return kpi;
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const coordinatorWorkflow = (formResponses['coordinator_workflow'] || {}) as Record<string, unknown>;
+    const coordinatorStatus = coordinatorWorkflow['coordinator_status'] as string | undefined;
+    if (coordinatorStatus && coordinatorStatus !== 'APPROVED_BY_HOD') {
+      // Provide a placeholder view so QC can see context but not act yet
+      const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+      const baseEntries = (formResponses['entries'] as unknown[]) || [];
+      return {
+        ...kpi,
+        locked: true,
+        lock_reason: 'Awaiting HOD approval of coordinator submission',
+        preview_entries: baseEntries,
+      };
+    }
+    return { ...kpi, locked: false };
   }
 
   async updateStatus(
@@ -38,15 +52,18 @@ export class QcReviewService {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
     if (!remark?.trim()) throw new BadRequestException('Remark is required');
-
     const kpi = await this.prisma.departmentKpi.findUnique({ where: { id: kpiId } });
     if (!kpi) throw new NotFoundException('KPI not found');
-
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const coordinatorWorkflow = (formResponses['coordinator_workflow'] || {}) as Record<string, unknown>;
+    const coordinatorStatus = coordinatorWorkflow['coordinator_status'] as string | undefined;
+    if (coordinatorStatus && coordinatorStatus !== 'APPROVED_BY_HOD') {
+      throw new BadRequestException('KPI cannot be reviewed by QC until approved by HOD');
+    }
     const finalized = new Set<KpiStatus>([KpiStatus.APPROVED, KpiStatus.REJECTED]);
     if (finalized.has(kpi.kpi_status)) {
       throw new BadRequestException('Finalized KPI cannot be updated');
     }
-
     let target: KpiStatus;
     switch (action) {
       case 'APPROVE':
@@ -61,7 +78,6 @@ export class QcReviewService {
       default:
         throw new BadRequestException('Invalid action');
     }
-
     type ReviewEntry = { action: string; by: string; at: string; remark: string };
     const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown> & {
       review_history?: ReviewEntry[];
@@ -71,7 +87,6 @@ export class QcReviewService {
       ...existingMetrics,
       review_history: [...existingHistory, { action, by: userId, at: new Date().toISOString(), remark }],
     };
-
     const updated = await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
@@ -85,7 +100,6 @@ export class QcReviewService {
         assigned_users: { select: { id: true, user_name: true, user_email: true, user_role: true } },
       },
     });
-
     return { message: 'KPI status updated', data: updated };
   }
 }
