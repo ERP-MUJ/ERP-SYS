@@ -27,10 +27,9 @@ export class DepartmentAssignmentService {
    * @param userRole - The QAC's role
    * @returns Array of all departments
    */
-  async getDepartments(userId: string, userRole: UserRole) {
+  getDepartments(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
     return this.prisma.department.findMany({
       select: {
         id: true,
@@ -48,10 +47,9 @@ export class DepartmentAssignmentService {
    * @param userRole - The QAC's role
    * @returns Array of pillar templates with their KPIs
    */
-  async getPillarTemplates(userId: string, userRole: UserRole) {
+  getPillarTemplates(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
     return this.prisma.pillarTemplate.findMany({
       where: { created_by_user: userId },
       include: {
@@ -113,10 +111,9 @@ export class DepartmentAssignmentService {
    * @param userRole - The QAC's role
    * @returns Array of all department pillars with their KPIs
    */
-  async getAllDepartmentPillars(userId: string, userRole: UserRole) {
+  getAllDepartmentPillars(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
     return this.prisma.departmentPillar.findMany({
       where: {
         status: 'active',
