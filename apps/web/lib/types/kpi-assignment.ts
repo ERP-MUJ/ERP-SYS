@@ -6,7 +6,7 @@ export enum KpiStatus {
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
   REVISION = "REVISION",
-  OVERDUE = "OVERDUE"
+  OVERDUE = "OVERDUE",
 }
 
 export interface AssignKpiToCoordinatorRequest {
