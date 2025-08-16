@@ -24,6 +24,20 @@ export class QcReviewController {
     @Param('kpiId') kpiId: string,
     @Body() body: { action: 'APPROVE' | 'REVISION' | 'REJECT'; remark?: string },
   ) {
-    return this.reviewService.updateStatus(user.id, user.role, kpiId, body.action, body.remark || '');
+    console.log('QC Review Controller - updateStatus called:', {
+      userId: user.id,
+      userRole: user.role,
+      kpiId,
+      body,
+    });
+
+    try {
+      const result = await this.reviewService.updateStatus(user.id, user.role, kpiId, body.action, body.remark || '');
+      console.log('QC Review Controller - updateStatus success:', result);
+      return result;
+    } catch (error) {
+      console.error('QC Review Controller - updateStatus error:', error);
+      throw error;
+    }
   }
 }

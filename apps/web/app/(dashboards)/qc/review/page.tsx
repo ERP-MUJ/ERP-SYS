@@ -84,6 +84,12 @@ export default function QACSubmissionReview() {
       pillar.department_kpis.forEach((kpi: DepartmentKpi) => {
         const key = pillar.pillar_name;
         if (!acc[key]) acc[key] = [];
+
+        // Check if KPI has been submitted to QC from metadata
+        const metadata =
+          (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
+        const isSubmittedToQc = metadata.is_submitted_to_qc === true;
+
         acc[key].push({
           kpi_no: kpi.kpi_number,
           metric: kpi.kpi_metric_name,
@@ -94,6 +100,7 @@ export default function QACSubmissionReview() {
           value: kpi.performance ?? "",
           status: kpi.kpi_status?.toLowerCase() ?? "pending",
           kpiId: kpi.id,
+          isSubmittedToQc, // Pass submission status to the component
         });
       });
     });
@@ -123,9 +130,32 @@ export default function QACSubmissionReview() {
       departmentPillars.reduce(
         (sum, p) =>
           sum +
-          p.department_kpis.filter(
-            (k) => (k.kpi_status || "").toLowerCase() === "pending",
-          ).length,
+          p.department_kpis.filter((k) => {
+            const status = (k.kpi_status || "").toLowerCase();
+            const metadata =
+              (k.kpi_calculated_metrics as Record<string, unknown>) || {};
+            const isSubmittedToQc = metadata.is_submitted_to_qc === true;
+            // Count as pending only if status is pending AND not submitted to QC
+            return status === "pending" && !isSubmittedToQc;
+          }).length,
+        0,
+      ),
+    [departmentPillars],
+  );
+
+  const awaitingApprovalKpis = React.useMemo(
+    () =>
+      departmentPillars.reduce(
+        (sum, p) =>
+          sum +
+          p.department_kpis.filter((k) => {
+            const status = (k.kpi_status || "").toLowerCase();
+            const metadata =
+              (k.kpi_calculated_metrics as Record<string, unknown>) || {};
+            const isSubmittedToQc = metadata.is_submitted_to_qc === true;
+            // Count as awaiting approval if status is pending AND submitted to QC
+            return status === "pending" && isSubmittedToQc;
+          }).length,
         0,
       ),
     [departmentPillars],
@@ -150,9 +180,11 @@ export default function QACSubmissionReview() {
           </div>
           {selectedDepartment !== "all" &&
             !isLoadingPillars &&
-            pendingKpis > 0 && (
+            (pendingKpis > 0 || awaitingApprovalKpis > 0) && (
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                {pendingKpis} pending review
+                {pendingKpis > 0 && `${pendingKpis} pending, `}
+                {awaitingApprovalKpis > 0 &&
+                  `${awaitingApprovalKpis} awaiting review`}
               </div>
             )}
         </div>

@@ -27,6 +27,7 @@ export type ReadOnlyKpi = {
   value?: string | number;
   status?: string;
   kpiId?: string;
+  kpi_calculated_metrics?: any; // Add metrics to check submission status
 };
 
 export interface ReadOnlyKpiTableProps {
@@ -36,9 +37,24 @@ export interface ReadOnlyKpiTableProps {
   title?: string;
 }
 
+// Helper function to get the display label for KPI status
+const getKpiStatusLabel = (kpiStatus?: string, kpiMetrics?: any): string => {
+  if (!kpiStatus) return "Unknown";
+  const normalized = kpiStatus.toLowerCase();
+
+  if (normalized === "pending") {
+    const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
+    return isSubmittedToQc ? "Awaiting Approval" : "Pending";
+  }
+
+  // For other statuses, capitalize properly
+  return kpiStatus.replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 // Helper function to map KPI status to StatusBadge status type
 const mapKpiStatusToStatusBadgeType = (
   kpiStatus?: string,
+  kpiMetrics?: any, // Include metrics to check submission status
 ):
   | "pending"
   | "approved"
@@ -49,17 +65,32 @@ const mapKpiStatusToStatusBadgeType = (
   | "overdue"
   | "waiting"
   | "draft" => {
-  if (!kpiStatus) return "inactive";
+  if (!kpiStatus) return "pending";
   const normalized = kpiStatus.toLowerCase();
+
+  // Direct status mappings for new workflow
   if (normalized === "approved") return "approved";
+  if (normalized === "rejected") return "rejected";
+  if (normalized === "revision") return "revision";
+  if (normalized === "overdue") return "overdue";
+
+  // Check if PENDING status has been submitted to QC
+  if (normalized === "pending") {
+    const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
+    if (isSubmittedToQc) {
+      return "waiting"; // Yellow badge for "Awaiting QC Review"
+    }
+    // For non-submitted PENDING KPIs, show as pending (yellow) to indicate work needed
+    return "pending";
+  }
+
+  // Legacy status mappings
   if (
     normalized === "revision requested" ||
     normalized === "needs revision" ||
     normalized === "redo"
   )
     return "revision";
-  if (normalized === "rejected") return "rejected";
-  if (normalized === "overdue") return "overdue";
   if (
     normalized === "awaiting approval" ||
     normalized === "waiting for qc" ||
@@ -74,7 +105,7 @@ const mapKpiStatusToStatusBadgeType = (
   )
     return "draft";
   if (normalized === "active") return "active";
-  if (normalized === "pending") return "pending";
+
   return "pending";
 };
 
@@ -162,9 +193,13 @@ export const ReadOnlyKpiTable: React.FC<ReadOnlyKpiTableProps> = ({
                     <TableCell className="text-center">
                       {row.status ? (
                         <StatusBadge
-                          status={mapKpiStatusToStatusBadgeType(row.status)}
-                          label={row.status.replace(/\b\w/g, (c) =>
-                            c.toUpperCase(),
+                          status={mapKpiStatusToStatusBadgeType(
+                            row.status,
+                            row.kpi_calculated_metrics,
+                          )}
+                          label={getKpiStatusLabel(
+                            row.status,
+                            row.kpi_calculated_metrics,
                           )}
                         />
                       ) : (

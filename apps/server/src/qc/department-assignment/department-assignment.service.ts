@@ -289,7 +289,7 @@ export class DepartmentAssignmentService {
     if (!departmentPillar) {
       throw new NotFoundException('Department pillar not found');
     }
-  const kpis = await this.prisma.departmentKpi.findMany({
+    const kpis = await this.prisma.departmentKpi.findMany({
       where: { dept_pillar_id: departmentPillarId },
       include: {
         assigned_users: {

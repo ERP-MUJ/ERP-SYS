@@ -167,3 +167,37 @@ export function useSaveHodKpiData() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 }
+
+/**
+ * Hook to submit KPI to QC for review
+ * @returns Mutation for submitting KPI to QC
+ */
+export function useSubmitKpiToQc() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      kpiId,
+      formResponses,
+    }: {
+      kpiId: string;
+      formResponses: Record<string, any>;
+    }) => {
+      const res = await HodKpiService.submitKpiToQc(kpiId, formResponses);
+      if (res.error) {
+        throw new Error(res.error.message);
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ["hod", "pillars"] });
+      queryClient.invalidateQueries({ queryKey: ["hod", "pillar-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["hod", "kpi-details"] });
+      toast.success("KPI submitted to QC successfully");
+    },
+    onError: (error) => {
+      toast.error(`Failed to submit KPI to QC: ${error.message}`);
+    },
+  });
+}

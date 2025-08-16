@@ -17,6 +17,7 @@ export function useAuth() {
     QAC: "/qc",
     HOD: "/hod",
     FACULTY: "/faculty",
+    KPI_COORDINATOR: "/faculty", // KPI coordinators use faculty dashboard
   };
 
   const redirectToRoleDashboard = () => {
@@ -34,6 +35,7 @@ export function useAuth() {
       QAC: "Quality Assurance Committee",
       HOD: "Head of Department",
       FACULTY: "Faculty Member",
+      KPI_COORDINATOR: "KPI Coordinator",
     };
     return roleLabels[role as keyof typeof roleLabels] || role;
   };

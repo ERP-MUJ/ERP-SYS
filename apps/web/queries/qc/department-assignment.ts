@@ -61,7 +61,7 @@ export function useGetDepartmentPillars(departmentId: string | null) {
         res.error?.message || "Failed to fetch department pillars",
       );
     },
-    enabled: !!departmentId,
+    enabled: Boolean(departmentId),
   });
 }
 
@@ -99,7 +99,7 @@ export function useGetDepartmentPillarKPIs(departmentPillarId: string | null) {
         res.error?.message || "Failed to fetch department pillar KPIs",
       );
     },
-    enabled: !!departmentPillarId,
+    enabled: Boolean(departmentPillarId),
   });
 }
 

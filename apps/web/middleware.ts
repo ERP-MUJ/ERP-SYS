@@ -21,7 +21,11 @@ export default withAuth(
       url.pathname = "/hod";
       return NextResponse.redirect(url);
     }
-    if (role === "FACULTY" && !url.pathname.startsWith("/faculty")) {
+    // Allow both FACULTY and KPI_COORDINATOR to access faculty routes
+    if (
+      (role === "FACULTY" || role === "KPI_COORDINATOR") &&
+      !url.pathname.startsWith("/faculty")
+    ) {
       url.pathname = "/faculty";
       return NextResponse.redirect(url);
     }

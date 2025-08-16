@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from '@repo/db/prisma/client';
+import { UserRole, KpiStatus } from '@repo/db/prisma/client';
 @Injectable()
 export class HodKpiService {
   constructor(private readonly prisma: PrismaService) {}
@@ -9,13 +9,7 @@ export class HodKpiService {
     if (role !== UserRole.HOD) throw new ForbiddenException('Only HOD users can perform this action');
   }
   private assertDeptAccess(role: UserRole) {
-    if (
-      !(
-        role === UserRole.HOD ||
-        role === UserRole.KPI_COORDINATOR ||
-        role === UserRole.FACULTY
-      )
-    ) {
+    if (!(role === UserRole.HOD || role === UserRole.KPI_COORDINATOR || role === UserRole.FACULTY)) {
       throw new ForbiddenException('Access denied');
     }
   }
@@ -102,14 +96,113 @@ export class HodKpiService {
     const deptId = await this.getDeptId(userId);
     const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: deptId } });
     if (!kpi) throw new NotFoundException('KPI not found or not accessible');
+
+    // Check if KPI is locked (APPROVED, REJECTED, OVERDUE)
+    const lockedStatuses: KpiStatus[] = [KpiStatus.APPROVED, KpiStatus.REJECTED, KpiStatus.OVERDUE];
+    if (lockedStatuses.includes(kpi.kpi_status)) {
+      throw new ForbiddenException('Cannot modify KPI in current status');
+    }
+
+    // Save as draft - keep current status, update form responses
+    const newStatus = kpi.kpi_status;
+    let preserveComments: string | null = null;
+    let preserveMetrics: object | null = null;
+
+    if (kpi.kpi_status === KpiStatus.REVISION) {
+      // Preserve QC feedback when saving draft in revision status
+      preserveComments = kpi.comments;
+      preserveMetrics = kpi.kpi_calculated_metrics as object;
+    }
+
+    // Get existing metrics and preserve important data while updating draft status
+    const existingMetrics = (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
+    const updatedMetrics = {
+      ...existingMetrics,
+      ...preserveMetrics,
+      last_saved_at: new Date().toISOString(),
+      is_submitted_to_qc: false, // Mark as draft, not submitted
+    };
+
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
         form_responses: JSON.parse(JSON.stringify(formResponses)),
-        kpi_status: 'PENDING',
+        kpi_status: newStatus,
         completed_date: new Date(),
+        kpi_calculated_metrics: JSON.parse(JSON.stringify(updatedMetrics)),
+        // Preserve QC review data if in revision status
+        ...(preserveComments !== null && { comments: preserveComments }),
       },
     });
-    return { message: 'KPI responses updated successfully' };
+    return { message: 'KPI draft saved successfully' };
+  }
+
+  async submitKpiToQc(
+    userId: string,
+    role: UserRole,
+    kpiId: string,
+    formResponses: { entries: Record<string, unknown>[] },
+  ) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertHodRole(role);
+    const deptId = await this.getDeptId(userId);
+    const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: deptId } });
+    if (!kpi) throw new NotFoundException('KPI not found or not accessible');
+
+    // Check if KPI is locked (APPROVED, REJECTED, OVERDUE)
+    const lockedStatuses: KpiStatus[] = [KpiStatus.APPROVED, KpiStatus.REJECTED, KpiStatus.OVERDUE];
+    if (lockedStatuses.includes(kpi.kpi_status)) {
+      throw new ForbiddenException('Cannot submit KPI in current status');
+    }
+
+    // Validate that there is data to submit
+    if (!formResponses.entries || formResponses.entries.length === 0) {
+      throw new ForbiddenException('Cannot submit empty KPI. Please add data before submission.');
+    }
+
+    // Get current user info for submission tracking
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { user_name: true, user_email: true },
+    });
+
+    // Prepare submission metadata
+    const submissionMetadata = {
+      submitted_by: user?.user_name || 'Unknown',
+      submitted_by_email: user?.user_email || '',
+      submitted_at: new Date().toISOString(),
+      previous_status: kpi.kpi_status,
+    };
+
+    // Prepare update data
+    const existingMetrics = (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
+    const existingHistory = (existingMetrics.submission_history as unknown[]) || [];
+
+    const updateData = {
+      form_responses: JSON.parse(JSON.stringify(formResponses)),
+      kpi_status: KpiStatus.PENDING, // Stays PENDING but marked as submitted for QC review
+      completed_date: new Date(),
+      kpi_calculated_metrics: JSON.parse(
+        JSON.stringify({
+          ...existingMetrics,
+          is_submitted_to_qc: true, // Mark as submitted to QC
+          submitted_at: new Date().toISOString(),
+          submitted_by: user?.user_name || 'Unknown',
+          submission_history: [...existingHistory, submissionMetadata],
+        }),
+      ),
+    };
+
+    // Clear QC feedback only when resubmitting from REVISION
+    if (kpi.kpi_status === KpiStatus.REVISION) {
+      Object.assign(updateData, { comments: null });
+    }
+
+    await this.prisma.departmentKpi.update({
+      where: { id: kpiId },
+      data: updateData,
+    });
+
+    return { message: 'KPI submitted to QC successfully' };
   }
 }

@@ -56,13 +56,7 @@ export class CoordinatorKpiController {
     @Param('kpiId') kpiId: string,
     @Body() body: { entries: Record<string, unknown>[]; comments?: string },
   ) {
-    return this.coordinatorKpiService.saveDraft(
-      user.id,
-      user.role,
-      kpiId,
-      { entries: body.entries },
-      body.comments,
-    );
+    return this.coordinatorKpiService.saveDraft(user.id, user.role, kpiId, { entries: body.entries }, body.comments);
   }
 
   // Resubmit KPI after revision request

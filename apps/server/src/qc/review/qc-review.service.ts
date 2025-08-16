@@ -25,20 +25,34 @@ export class QcReviewService {
       },
     });
     if (!kpi) throw new NotFoundException('KPI not found');
+
+    // Check if this KPI has any form responses (either draft or submitted)
     const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
-    const coordinatorWorkflow = (formResponses['coordinator_workflow'] || {}) as Record<string, unknown>;
-    const coordinatorStatus = coordinatorWorkflow['coordinator_status'] as string | undefined;
-    if (coordinatorStatus && coordinatorStatus !== 'APPROVED_BY_HOD') {
-      // Provide a placeholder view so QC can see context but not act yet
-      const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
-      const baseEntries = (formResponses['entries'] as unknown[]) || [];
+    const entries = (formResponses['entries'] as unknown[]) || [];
+    const metrics = (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
+    const isSubmittedToQc = metrics.is_submitted_to_qc === true;
+
+    // If KPI has no form responses at all, QC can't review it yet
+    if (entries.length === 0) {
       return {
         ...kpi,
         locked: true,
-        lock_reason: 'Awaiting HOD approval of coordinator submission',
-        preview_entries: baseEntries,
+        lock_reason: 'No data submitted yet by HOD',
+        preview_entries: [],
       };
     }
+
+    // If KPI has form responses but not officially submitted to QC, show as preview
+    if (!isSubmittedToQc) {
+      return {
+        ...kpi,
+        locked: true,
+        lock_reason: 'HOD is still working on this KPI (draft mode)',
+        preview_entries: entries,
+      };
+    }
+
+    // KPI is officially submitted to QC and can be reviewed
     return { ...kpi, locked: false };
   }
 
@@ -52,18 +66,27 @@ export class QcReviewService {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
     if (!remark?.trim()) throw new BadRequestException('Remark is required');
+
     const kpi = await this.prisma.departmentKpi.findUnique({ where: { id: kpiId } });
     if (!kpi) throw new NotFoundException('KPI not found');
-    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
-    const coordinatorWorkflow = (formResponses['coordinator_workflow'] || {}) as Record<string, unknown>;
-    const coordinatorStatus = coordinatorWorkflow['coordinator_status'] as string | undefined;
-    if (coordinatorStatus && coordinatorStatus !== 'APPROVED_BY_HOD') {
-      throw new BadRequestException('KPI cannot be reviewed by QC until approved by HOD');
+
+    // Check if KPI can be reviewed - only PENDING status is reviewable
+    if (kpi.kpi_status !== KpiStatus.PENDING) {
+      throw new BadRequestException(`KPI status is ${kpi.kpi_status}. Only KPIs with PENDING status can be reviewed`);
     }
+
+    // Check if KPI has form responses
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const entries = (formResponses['entries'] as unknown[]) || [];
+    if (entries.length === 0) {
+      throw new BadRequestException('KPI has no form responses to review');
+    }
+
     const finalized = new Set<KpiStatus>([KpiStatus.APPROVED, KpiStatus.REJECTED]);
     if (finalized.has(kpi.kpi_status)) {
       throw new BadRequestException('Finalized KPI cannot be updated');
     }
+
     let target: KpiStatus;
     switch (action) {
       case 'APPROVE':
@@ -78,6 +101,7 @@ export class QcReviewService {
       default:
         throw new BadRequestException('Invalid action');
     }
+
     type ReviewEntry = { action: string; by: string; at: string; remark: string };
     const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown> & {
       review_history?: ReviewEntry[];
@@ -87,6 +111,14 @@ export class QcReviewService {
       ...existingMetrics,
       review_history: [...existingHistory, { action, by: userId, at: new Date().toISOString(), remark }],
     };
+
+    console.log('QC Review Service - About to update KPI:', {
+      kpiId,
+      targetStatus: target,
+      remark,
+      updatedMetrics,
+    });
+
     const updated = await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
@@ -100,6 +132,7 @@ export class QcReviewService {
         assigned_users: { select: { id: true, user_name: true, user_email: true, user_role: true } },
       },
     });
+
     return { message: 'KPI status updated', data: updated };
   }
 }

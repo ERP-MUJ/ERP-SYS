@@ -121,9 +121,8 @@ export class CoordinatorKpiService {
     return {
       ...kpi,
       pillar_name: kpi.department_pillar.pillar_name,
-      elements: kpi.kpi_data && typeof kpi.kpi_data === 'object' && kpi.kpi_data['elements'] 
-        ? kpi.kpi_data['elements'] 
-        : [],
+      elements:
+        kpi.kpi_data && typeof kpi.kpi_data === 'object' && kpi.kpi_data['elements'] ? kpi.kpi_data['elements'] : [],
       coordinator_workflow: coordinatorWorkflow,
       existing_data: coordinatorWorkflow?.coordinator_submission?.data || formResponses?.entries || [],
     };

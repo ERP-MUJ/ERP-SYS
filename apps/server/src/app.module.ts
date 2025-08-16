@@ -19,8 +19,8 @@ import { CoordinatorModule } from './coordinator/coordinator.module';
     }),
     AuthModule,
     QcModule,
-  HodModule,
-  CoordinatorModule,
+    HodModule,
+    CoordinatorModule,
   ],
   controllers: [AppController],
   providers: [

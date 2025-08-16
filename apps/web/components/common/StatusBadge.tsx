@@ -14,7 +14,7 @@ type StatusType =
   | "revision"
   | "overdue"
   | "waiting"
-  | "draft";
+  | "awaiting";
 
 /**
  * StatusBadge properties
@@ -107,11 +107,12 @@ export function StatusBadge({
       text: "Awaiting Approval",
       className: "", // rely on variant styling
     },
-    draft: {
-      baseVariant: "secondary",
+    awaiting: {
+      baseVariant: "outline",
       icon: <Clock className="w-3 h-3 mr-1" />,
-      text: "Draft",
-      className: "",
+      text: "Awaiting Approval",
+      className:
+        "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700",
     },
   };
 

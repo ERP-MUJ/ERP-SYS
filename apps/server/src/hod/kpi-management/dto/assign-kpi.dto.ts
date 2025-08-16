@@ -19,21 +19,3 @@ export class AssignKpiToCoordinatorDto {
   @IsString({ each: true })
   kpiIds: string[];
 }
-
-export class ReviewCoordinatorKpiDto {
-  @ApiProperty({
-    description: 'The action to take on the coordinator submission',
-    example: 'approve',
-    enum: ['approve', 'reject', 'revision'],
-  })
-  @IsString()
-  action: 'approve' | 'reject' | 'revision';
-
-  @ApiProperty({
-    description: 'Optional comments from the HOD about the review',
-    example: 'Good job, but please improve the data analysis section',
-    required: false,
-  })
-  @IsString()
-  comments?: string;
-}
