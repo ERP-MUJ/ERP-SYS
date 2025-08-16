@@ -9,6 +9,7 @@ import {
   PieChart,
   Users,
 } from "lucide-react";
+import { KpiCoordinatorNotification } from "@/components/faculty/KpiCoordinatorNotification";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -38,6 +39,7 @@ import {
 export function DashboardContent() {
   return (
     <div className="mx-auto max-w-7xl">
+      <KpiCoordinatorNotification />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Faculty Dashboard</h1>
         <div className="flex items-center gap-2">

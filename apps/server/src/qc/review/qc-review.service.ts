@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole, KpiStatus } from '@repo/db/prisma/client';
@@ -15,7 +16,6 @@ export class QcReviewService {
   async getKpi(userId: string, userRole: UserRole, kpiId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
     const kpi = await this.prisma.departmentKpi.findUnique({
       where: { id: kpiId },
       include: {
@@ -25,7 +25,35 @@ export class QcReviewService {
       },
     });
     if (!kpi) throw new NotFoundException('KPI not found');
-    return kpi;
+
+    // Check if this KPI has any form responses (either draft or submitted)
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const entries = (formResponses['entries'] as unknown[]) || [];
+    const metrics = (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
+    const isSubmittedToQc = metrics.is_submitted_to_qc === true;
+
+    // If KPI has no form responses at all, QC can't review it yet
+    if (entries.length === 0) {
+      return {
+        ...kpi,
+        locked: true,
+        lock_reason: 'No data submitted yet by HOD',
+        preview_entries: [],
+      };
+    }
+
+    // If KPI has form responses but not officially submitted to QC, show as preview
+    if (!isSubmittedToQc) {
+      return {
+        ...kpi,
+        locked: true,
+        lock_reason: 'HOD is still working on this KPI (draft mode)',
+        preview_entries: entries,
+      };
+    }
+
+    // KPI is officially submitted to QC and can be reviewed
+    return { ...kpi, locked: false };
   }
 
   async updateStatus(
@@ -41,6 +69,18 @@ export class QcReviewService {
 
     const kpi = await this.prisma.departmentKpi.findUnique({ where: { id: kpiId } });
     if (!kpi) throw new NotFoundException('KPI not found');
+
+    // Check if KPI can be reviewed - only PENDING status is reviewable
+    if (kpi.kpi_status !== KpiStatus.PENDING) {
+      throw new BadRequestException(`KPI status is ${kpi.kpi_status}. Only KPIs with PENDING status can be reviewed`);
+    }
+
+    // Check if KPI has form responses
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const entries = (formResponses['entries'] as unknown[]) || [];
+    if (entries.length === 0) {
+      throw new BadRequestException('KPI has no form responses to review');
+    }
 
     const finalized = new Set<KpiStatus>([KpiStatus.APPROVED, KpiStatus.REJECTED]);
     if (finalized.has(kpi.kpi_status)) {
@@ -71,6 +111,13 @@ export class QcReviewService {
       ...existingMetrics,
       review_history: [...existingHistory, { action, by: userId, at: new Date().toISOString(), remark }],
     };
+
+    console.log('QC Review Service - About to update KPI:', {
+      kpiId,
+      targetStatus: target,
+      remark,
+      updatedMetrics,
+    });
 
     const updated = await this.prisma.departmentKpi.update({
       where: { id: kpiId },

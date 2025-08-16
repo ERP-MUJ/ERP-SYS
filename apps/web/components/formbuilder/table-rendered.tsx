@@ -68,6 +68,13 @@ interface TableFormRendererProps {
     { id: string; formData: { entries: Record<string, any>[] } },
     unknown
   >;
+  secondaryAction?: {
+    label: string;
+    onAction: (entries: Record<string, any>[]) => Promise<void> | void;
+    disabled?: boolean;
+    loading?: boolean;
+    variant?: "default" | "outline";
+  };
 }
 
 type FormEntry = Record<string, any>;
@@ -81,6 +88,7 @@ export default function TableFormRenderer({
   className = "",
   existingData = [],
   customSaveHook,
+  secondaryAction,
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
   const defaultSaveHook = useSaveKpiData();
@@ -286,13 +294,10 @@ export default function TableFormRenderer({
       },
     };
 
-    // Create a toast with loading state that we can update
-    const toastId = toast.loading("Saving your data...");
-
+    // Perform save without persistent loading toast (only spinner on button)
     saveKpiData(formDataToSubmit, {
       onSuccess: () => {
         setIsSubmitting(false);
-        toast.dismiss(toastId);
         toast.success("Data saved successfully!");
 
         // Clear draft from local storage after successful save
@@ -304,8 +309,6 @@ export default function TableFormRenderer({
       },
       onError: (error) => {
         setIsSubmitting(false);
-        toast.dismiss(toastId);
-
         toast.error("Failed to save data. Retrying in 3 seconds...", {
           description:
             error.message || "Please check your connection and try again",
@@ -339,6 +342,33 @@ export default function TableFormRenderer({
         }, 3000);
       },
     });
+  };
+
+  const handleSecondaryAction = async () => {
+    if (!secondaryAction) return;
+    const filledEntries = entries.filter(
+      (entry) => Object.keys(entry).length > 0,
+    );
+    if (filledEntries.length === 0) {
+      toast.warning("No data to submit", {
+        description: "Please add at least one entry to the table",
+      });
+      return;
+    }
+    const invalidRows = validateEntries();
+    if (invalidRows.length > 0) {
+      toast.error("Missing required fields", {
+        description: `Please complete all required fields in rows: ${invalidRows.join(", ")}`,
+      });
+      return;
+    }
+    try {
+      await secondaryAction.onAction(filledEntries);
+    } catch (e: any) {
+      toast.error("Action failed", {
+        description: e.message || "Unknown error",
+      });
+    }
   };
 
   const downloadExcel = () => {
@@ -582,20 +612,40 @@ export default function TableFormRenderer({
             Upload Excel
           </Button>
         </div>
-
-        <Button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save All Changes
-            </>
+        <div className="flex gap-2">
+          {secondaryAction && (
+            <Button
+              variant={secondaryAction.variant || "default"}
+              onClick={handleSecondaryAction}
+              disabled={secondaryAction.disabled || secondaryAction.loading}
+            >
+              {secondaryAction.loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {secondaryAction.label}
+                </>
+              ) : (
+                <>
+                  <FileUp className="mr-2 h-4 w-4" />
+                  {secondaryAction.label}
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Draft
+              </>
+            )}
+          </Button>
+        </div>
       </CardFooter>
 
       {/* Dialog for complex elements */}

@@ -1,6 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useGetKpi, useUpdateKpiStatus } from "@/queries/qc/review";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   deriveDisplayStatus,
   displayStatusToBadgeVariant,
@@ -18,6 +19,7 @@ import { Separator } from "@workspace/ui/components/separator";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { Badge } from "@workspace/ui/components/badge";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 
 export default function QcKpiReviewPage() {
   const params = useParams();
@@ -30,16 +32,33 @@ export default function QcKpiReviewPage() {
 
   const displayStatus = useMemo(() => {
     if (!data) return null;
+    const metrics = data.kpi_calculated_metrics as any;
+    const isSubmittedToQc = metrics?.is_submitted_to_qc === true;
     return deriveDisplayStatus({
       status: data.kpi_status,
-      hasFormResponses: !!data.form_responses,
+      hasFormResponses: Boolean(data.form_responses?.entries?.length),
+      isSubmittedToQc,
     });
   }, [data]);
 
   function act(action: "APPROVE" | "REVISION" | "REJECT") {
     if (!kpiId) return;
-    updateStatus({ kpiId, payload: { action, remark } });
-    setRemark("");
+
+    const trimmedRemark = remark.trim();
+    if (!trimmedRemark) {
+      // Server requires non-empty remark
+      toast.error("Please provide a remark before submitting your review");
+      return;
+    }
+
+    updateStatus(
+      { kpiId, payload: { action, remark: trimmedRemark } },
+      {
+        onSuccess: () => {
+          setRemark("");
+        },
+      },
+    );
   }
 
   if (isLoading) return <div className="p-6">Loading KPI...</div>;
@@ -59,9 +78,10 @@ export default function QcKpiReviewPage() {
         </Button>
         <h1 className="text-xl font-semibold flex-1">KPI Review</h1>
         {displayStatus && (
-          <Badge variant={displayStatusToBadgeVariant(displayStatus) as any}>
-            {displayStatus}
-          </Badge>
+          <StatusBadge
+            status={displayStatusToBadgeVariant(displayStatus) as any}
+            label={displayStatus}
+          />
         )}
       </div>
       <Card>
@@ -101,32 +121,56 @@ export default function QcKpiReviewPage() {
             </div>
             {showPanel && (
               <div className="border rounded-md p-4 space-y-5 bg-background/60">
-                <div className="space-y-3">
-                  <Textarea
-                    placeholder="Remark (optional)"
-                    value={remark}
-                    onChange={(e) => setRemark(e.target.value)}
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => act("APPROVE")} disabled={updating}>
-                      Approve
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => act("REVISION")}
-                      disabled={updating}
-                    >
-                      Ask Revision
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => act("REJECT")}
-                      disabled={updating}
-                    >
-                      Reject
-                    </Button>
+                {data.locked ? (
+                  <div className="space-y-3">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="h-2 w-2 bg-amber-500 rounded-full" />
+                        <span className="text-sm font-medium text-amber-800">
+                          Preview Mode
+                        </span>
+                      </div>
+                      <p className="text-sm text-amber-700 mt-1">
+                        {data.lock_reason ||
+                          "This KPI cannot be reviewed at this time."}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      You can view the current form responses below, but review
+                      actions are disabled.
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Textarea
+                      placeholder="Remark (required)"
+                      value={remark}
+                      onChange={(e) => setRemark(e.target.value)}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={() => act("APPROVE")}
+                        disabled={updating || remark.trim().length === 0}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => act("REVISION")}
+                        disabled={updating || remark.trim().length === 0}
+                      >
+                        Ask Revision
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => act("REJECT")}
+                        disabled={updating || remark.trim().length === 0}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <h3 className="font-medium mb-2 text-sm">Review History</h3>
                   {Array.isArray(data.kpi_calculated_metrics?.review_history) &&

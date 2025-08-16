@@ -24,6 +24,12 @@ const badgeVariants = cva(
           "border-transparent bg-red-200 text-red-800 [a&]:hover:bg-red-300 focus-visible:ring-red-200/50",
         approved:
           "border-transparent bg-green-200 text-green-800 [a&]:hover:bg-green-300 focus-visible:ring-green-200/50",
+        revision:
+          "border-transparent bg-orange-200 text-orange-800 [a&]:hover:bg-orange-300 focus-visible:ring-orange-200/50",
+        waitinghod:
+          "border-transparent bg-blue-200 text-blue-800 [a&]:hover:bg-blue-300 focus-visible:ring-blue-200/50",
+        hodapproved:
+          "border-transparent bg-emerald-200 text-emerald-800 [a&]:hover:bg-emerald-300 focus-visible:ring-emerald-200/50",
       },
     },
     defaultVariants: {

@@ -55,4 +55,15 @@ export class HodKpiController {
   ) {
     return this.hodKpiService.updateKpiResponses(user.id, user.role, kpiId, formResponses);
   }
+
+  @Put('/kpi/:kpiId/submit')
+  @ApiOperation({ summary: 'Submit KPI to QC for review' })
+  @ApiResponse({ status: 200, description: 'KPI submitted to QC successfully' })
+  async submitKpiToQc(
+    @CurrentUser() user: RequestUser,
+    @Param('kpiId') kpiId: string,
+    @Body() formResponses: { entries: Record<string, unknown>[] },
+  ) {
+    return this.hodKpiService.submitKpiToQc(user.id, user.role, kpiId, formResponses);
+  }
 }

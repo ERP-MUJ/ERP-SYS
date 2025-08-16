@@ -128,22 +128,24 @@ function Value({ value, type }: { value: any; type: string }) {
           {value ? "Yes" : "No"}
         </span>
       );
-    case "date":
-      try {
-        return new Date(value).toLocaleDateString();
-      } catch {
-        return String(value);
-      }
-    case "number":
-      return typeof value === "number" ? value : Number(value) || String(value);
+    case "date": {
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
+    }
+    case "number": {
+      if (typeof value === "number") return value;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : String(value);
+    }
     case "file":
       if (Array.isArray(value)) return value.join(", ");
       return String(value);
-    default:
+    default: {
       if (typeof value === "object") return JSON.stringify(value);
       // Truncate long textareas
       const s = String(value);
       return s.length > 120 ? s.slice(0, 117) + "…" : s;
+    }
   }
 }
 export default ReadOnlyFormTable;

@@ -5,6 +5,9 @@ import { DepartmentKpi } from "@/services/qc/department-assignment.service";
 export interface QcReviewedKpi extends DepartmentKpi {
   department?: { dept_name: string };
   department_pillar?: { pillar_name: string };
+  locked?: boolean;
+  lock_reason?: string;
+  preview_entries?: any[];
 }
 
 export interface UpdateKpiStatusPayload {

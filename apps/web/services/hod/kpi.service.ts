@@ -34,4 +34,17 @@ export class HodKpiService {
       formResponses,
     );
   }
+
+  /**
+   * Submit KPI to QC for review
+   */
+  static async submitKpiToQc(
+    kpiId: string,
+    formResponses: Record<string, any>,
+  ) {
+    return await ApiClient.put(
+      `/hod/kpi-management/kpi/${kpiId}/submit`,
+      formResponses,
+    );
+  }
 }

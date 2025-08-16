@@ -18,26 +18,18 @@ import { useRouter } from "next/navigation";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { ReadOnlyKpiTable } from "@/components/hod/ReadOnlyKpiTable";
 import { useGetDepartmentPillars } from "@/queries/hod/kpi";
+import {
+  useGetKpisForReview,
+  useReviewCoordinatorSubmission,
+} from "@/queries/hod/coordinator-workflow";
+import { Button } from "@workspace/ui/components/button";
+import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorDisplay } from "@/components/common/ErrorDisplay";
-
-// Define types for the data structures
-interface DepartmentKpi {
-  id: string;
-  kpi_number: string | number;
-  kpi_metric_name: string;
-  data_provided_by?: string;
-  kpi_value?: number;
-  percentage_target_achieved?: number;
-  kpi_status?: string;
-}
-
-interface DepartmentPillar {
-  id: string;
-  pillar_name: string;
-  description?: string;
-  department_kpis?: DepartmentKpi[];
-}
+import {
+  DepartmentKpi,
+  DepartmentPillar,
+} from "@/services/qc/department-assignment.service";
 
 export default function KpiManagementPage() {
   const router = useRouter();
@@ -52,6 +44,38 @@ export default function KpiManagementPage() {
 
   // Ensure pillars is always an array
   const pillars = Array.isArray(pillarsData) ? pillarsData : [];
+
+  // Coordinator submissions awaiting HOD review
+  const {
+    data: reviewKpis = [],
+    isLoading: isReviewLoading,
+    error: reviewError,
+  } = useGetKpisForReview();
+  const reviewMutation = useReviewCoordinatorSubmission();
+
+  const handleReviewAction = async (
+    kpiId: string,
+    action: "APPROVE" | "REJECT" | "REQUEST_REVISION",
+  ) => {
+    let comments = "";
+    if (action !== "APPROVE") {
+      comments =
+        window.prompt(
+          `Enter comments for ${action.toLowerCase()} (required)`,
+          "",
+        ) || "";
+      if (!comments.trim()) {
+        toast.error("Comments required for this action");
+        return;
+      }
+    }
+    try {
+      await reviewMutation.mutateAsync({ kpiId, action, comments });
+    } catch (e: any) {
+      // toast handled in hook
+      console.error(e);
+    }
+  };
 
   // Get the selected pillar data
   const selectedPillar = useMemo(() => {
@@ -74,6 +98,7 @@ export default function KpiManagementPage() {
       value: kpi.kpi_value?.toString() || "0",
       status: kpi.kpi_status?.toLowerCase() || "pending",
       kpiId: kpi.id,
+      kpi_calculated_metrics: kpi.kpi_calculated_metrics, // Include metrics for status determination
     }));
   }, [selectedPillar]);
 
@@ -153,6 +178,120 @@ export default function KpiManagementPage() {
       </div>
 
       {/* KPI Display */}
+      <div className="space-y-6 mb-10">
+        <Card>
+          <CardHeader>
+            <CardTitle>Coordinator Submissions Pending Review</CardTitle>
+            <CardDescription>
+              KPIs submitted by coordinator awaiting your action
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isReviewLoading ? (
+              <div className="text-sm text-gray-500">
+                Loading submissions...
+              </div>
+            ) : reviewError ? (
+              <div className="text-sm text-red-600">
+                Failed to load submissions
+              </div>
+            ) : reviewKpis.length === 0 ? (
+              <div className="text-sm text-gray-500">
+                No submissions awaiting review.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="py-2 pr-4">KPI #</th>
+                      <th className="py-2 pr-4">Metric</th>
+                      <th className="py-2 pr-4">Submitted At</th>
+                      <th className="py-2 pr-4">Rows</th>
+                      <th className="py-2 pr-4">Comments</th>
+                      <th className="py-2 pr-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reviewKpis.map((rk: any) => {
+                      const submission =
+                        rk.coordinator_workflow?.coordinator_submission;
+                      const rows = submission?.data?.length || 0;
+                      return (
+                        <tr key={rk.id} className="border-b last:border-none">
+                          <td className="py-2 pr-4">{rk.kpi_number}</td>
+                          <td
+                            className="py-2 pr-4 max-w-xs truncate"
+                            title={rk.kpi_metric_name}
+                          >
+                            {rk.kpi_metric_name}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {submission?.submitted_at
+                              ? new Date(
+                                  submission.submitted_at,
+                                ).toLocaleString()
+                              : "-"}
+                          </td>
+                          <td className="py-2 pr-4">{rows}</td>
+                          <td
+                            className="py-2 pr-4 max-w-xs truncate"
+                            title={submission?.comments}
+                          >
+                            {submission?.comments || "-"}
+                          </td>
+                          <td className="py-2 pr-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                disabled={reviewMutation.isPending}
+                                onClick={() =>
+                                  handleReviewAction(rk.id, "APPROVE")
+                                }
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={reviewMutation.isPending}
+                                onClick={() =>
+                                  handleReviewAction(rk.id, "REJECT")
+                                }
+                              >
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={reviewMutation.isPending}
+                                onClick={() =>
+                                  handleReviewAction(rk.id, "REQUEST_REVISION")
+                                }
+                              >
+                                Revision
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => handleOpenKpi(rk.id)}
+                              >
+                                Open
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {!selectedPillarId ? (
         <div className="text-center py-12">
           <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />

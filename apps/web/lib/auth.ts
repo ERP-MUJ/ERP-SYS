@@ -58,6 +58,7 @@ function getExpectedRole(frontendRole: string): string {
     qac: "QAC",
     hod: "HOD",
     faculty: "FACULTY",
+    "kpi-coordinator": "KPI_COORDINATOR",
   };
   return roleMapping[frontendRole as keyof typeof roleMapping] || "FACULTY";
 }

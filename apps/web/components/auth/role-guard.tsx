@@ -33,6 +33,7 @@ export function RoleGuard({
         QAC: "/qc",
         HOD: "/hod",
         FACULTY: "/faculty",
+        KPI_COORDINATOR: "/faculty", // KPI coordinators use faculty dashboard
       };
 
       const redirectPath =

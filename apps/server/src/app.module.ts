@@ -7,6 +7,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { QcModule } from './qc/qc.module';
 import { HodModule } from './hod/hod.module';
+import { CoordinatorModule } from './coordinator/coordinator.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { HodModule } from './hod/hod.module';
     AuthModule,
     QcModule,
     HodModule,
+    CoordinatorModule,
   ],
   controllers: [AppController],
   providers: [

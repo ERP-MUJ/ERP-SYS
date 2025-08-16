@@ -30,6 +30,7 @@ export type PillarKpi = {
   value?: string | number;
   status?: string;
   kpiId?: string;
+  isSubmittedToQc?: boolean;
 };
 
 export interface PillarTableProps {
@@ -178,13 +179,14 @@ export const PillarKpiTable: React.FC<
                           status: backendStatus,
                           hasFormResponses:
                             raw !== "draft" && raw !== "to be submitted",
+                          isSubmittedToQc: row.isSubmittedToQc || false,
                         });
                         const variantMap: Record<string, any> = {
                           Approved: "approved",
                           Rejected: "rejected",
                           "Revision Requested": "revision",
-                          "Awaiting Approval": "waiting",
-                          "Draft (Not Submitted)": "draft",
+                          "Awaiting Approval": "awaiting",
+                          Pending: "pending",
                           Overdue: "overdue",
                         };
                         const mappedVariant = (variantMap[display] ||
