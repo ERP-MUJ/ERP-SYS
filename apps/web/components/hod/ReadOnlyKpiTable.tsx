@@ -64,7 +64,7 @@ const mapKpiStatusToStatusBadgeType = (
   | "revision"
   | "overdue"
   | "waiting"
-  | "draft" => {
+  | "awaiting" => {
   if (!kpiStatus) return "pending";
   const normalized = kpiStatus.toLowerCase();
 
@@ -78,7 +78,7 @@ const mapKpiStatusToStatusBadgeType = (
   if (normalized === "pending") {
     const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
     if (isSubmittedToQc) {
-      return "waiting"; // Yellow badge for "Awaiting QC Review"
+      return "awaiting"; // Blue badge for "Awaiting QC Review"
     }
     // For non-submitted PENDING KPIs, show as pending (yellow) to indicate work needed
     return "pending";
@@ -97,13 +97,13 @@ const mapKpiStatusToStatusBadgeType = (
     normalized === "waiting" ||
     normalized === "pending review"
   )
-    return "waiting";
+    return "awaiting";
   if (
     normalized === "draft" ||
     normalized === "draft (not submitted)" ||
     normalized === "to be submitted"
   )
-    return "draft";
+    return "pending"; // Map draft to pending instead
   if (normalized === "active") return "active";
 
   return "pending";

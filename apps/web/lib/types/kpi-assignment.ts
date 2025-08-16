@@ -1,5 +1,13 @@
 // Add these to your existing types file
-import { KpiStatus } from "@repo/db/prisma/client";
+
+// Define KpiStatus enum locally since Prisma import isn't working in web package
+export enum KpiStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  REVISION = "REVISION",
+  OVERDUE = "OVERDUE"
+}
 
 export interface AssignKpiToCoordinatorRequest {
   coordinatorId: string;
