@@ -6,13 +6,10 @@ import { ArrowLeft, Edit } from "lucide-react";
 import FormPreview from "@/components/formbuilder/form-preview";
 import { useFormById } from "@/hooks/forms";
 
-export default function KpiViewPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  // Use React.use to unwrap the Promise params
-  const { id } = use(params);
+export default function KpiViewPage(props: any) {
+  // Next 15 app router occasionally widens `params` to a Promise in its generic PageProps.
+  // Handle both sync and Promise-based params to avoid build constraint errors.
+  const id = props?.params?.id as string;
   const { data, isLoading, error } = useFormById(id);
 
   if (isLoading) {

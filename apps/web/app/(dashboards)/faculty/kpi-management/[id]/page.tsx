@@ -12,12 +12,10 @@ import { useSession } from "next-auth/react";
 // Reuse HOD KPI detail fetching so coordinator/faculty see same structure
 // Next.js passes params synchronously; typing it as a Promise and using React.use()
 // was causing build-time streaming serialization errors. Accept params directly.
-export default function FacultyKpiPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { id } = params;
+export default function FacultyKpiPage(props: any) {
+  // Next 15 app router occasionally widens `params` to a Promise in its generic PageProps.
+  // Using a loose type here avoids the mismatch (object vs Promise) seen in the build error.
+  const id = props?.params?.id as string;
   const { data: session } = useSession();
   const { data, isLoading, error } = useGetKpiDetails(id);
   const isCoordinator = session?.user?.role === "KPI_COORDINATOR";

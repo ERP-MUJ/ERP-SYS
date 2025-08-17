@@ -27,13 +27,13 @@ import {
 
 // This interface defines the props our component will receive
 interface KpiDetailPageProps {
-  params: {
-    kpiId: string;
-  };
+  params: any; // Loosened to avoid Next 15 Promise constraint mismatch
 }
 
-export default function KpiDetailPage({ params }: KpiDetailPageProps) {
-  const { kpiId } = params;
+export default function KpiDetailPage(props: KpiDetailPageProps) {
+  // Next 15 app router occasionally widens `params` to a Promise in its generic PageProps.
+  // Using a loose type here avoids the mismatch (object vs Promise) seen in the build error.
+  const kpiId = props?.params?.kpiId as string;
   const searchParams = useSearchParams();
   const pillarId = searchParams.get("pillarId") || "";
   const mode = searchParams.get("mode");
