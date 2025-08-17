@@ -1059,3 +1059,8 @@ export function DashboardContent() {
     </div>
   );
 }
+
+// Provide default export required by Next.js page system
+export default function HodDashboardPage() {
+  return <DashboardContent />;
+}

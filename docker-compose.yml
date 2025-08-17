@@ -11,8 +11,8 @@ services:
       - apps/server/.env
       - apps/web/.env
       - packages/db/.env
-    environment:
-      - NODE_ENV=development
+  # Avoid forcing NODE_ENV here; Next.js build determines correct value.
+  # Setting a non-standard or conflicting NODE_ENV caused build-time RSC parsing errors.
     restart: on-failure:5
     networks:
       - app_network

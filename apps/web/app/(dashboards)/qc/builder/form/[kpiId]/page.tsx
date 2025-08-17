@@ -27,13 +27,13 @@ import {
 
 // This interface defines the props our component will receive
 interface KpiDetailPageProps {
-  params: Promise<{
-    kpiId: string; // This comes from the URL [kpiId]
-  }>;
+  params: {
+    kpiId: string;
+  };
 }
 
 export default function KpiDetailPage({ params }: KpiDetailPageProps) {
-  const { kpiId } = React.use(params);
+  const { kpiId } = params;
   const searchParams = useSearchParams();
   const pillarId = searchParams.get("pillarId") || "";
   const mode = searchParams.get("mode");

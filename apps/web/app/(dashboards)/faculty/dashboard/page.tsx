@@ -316,3 +316,10 @@ export function DashboardContent() {
     </div>
   );
 }
+
+// Next.js requires a default export from every page file. Docker build was failing with
+// "The default export is not a React Component" because only a named export existed.
+// Provide a simple wrapper component as the default export.
+export default function FacultyDashboardPage() {
+  return <DashboardContent />;
+}

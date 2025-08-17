@@ -95,9 +95,9 @@ function getStatusDisplayText(status?: string) {
 export default function HodKpiPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = React.use(params);
+  const { id } = params;
   const { data, isLoading, error } = useGetKpiDetails(id);
   const submitToQc = useSubmitKpiToQc();
   console.log("HOD KPI Data:", data);
