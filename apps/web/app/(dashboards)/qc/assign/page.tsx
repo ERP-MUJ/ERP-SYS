@@ -28,6 +28,8 @@ import {
   useGetDepartmentPillarKPIs,
   useAssignPillarToDepartment,
   useUnassignPillarFromDepartment,
+  useAssignKpiToDepartmentPillar,
+  useUnassignKpiFromDepartmentPillar,
 } from "@/queries/qc/department-assignment";
 
 export default function AssignKpiToDepartmentPage() {
@@ -65,6 +67,8 @@ export default function AssignKpiToDepartmentPage() {
   // Mutations
   const assignPillarMutation = useAssignPillarToDepartment();
   const unassignPillarMutation = useUnassignPillarFromDepartment();
+  const assignKpiMutation = useAssignKpiToDepartmentPillar();
+  const unassignKpiMutation = useUnassignKpiFromDepartmentPillar();
 
   // Compute assigned and unassigned pillars
   const { assignedPillars, unassignedPillars } = useMemo(() => {
@@ -211,18 +215,36 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  // Handle assigning a KPI to a pillar (placeholder for future implementation)
+  // Handle assigning a KPI to a pillar
   const handleAssignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
-    toast.info(
-      "KPI assignment functionality will be implemented in the next phase",
-    );
+    if (!selectedDepartmentPillar) {
+      toast.error("No department pillar selected");
+      return;
+    }
+    assignKpiMutation.mutate({
+      departmentPillarId: selectedDepartmentPillar.id,
+      kpiTemplateId: kpi.id,
+    });
   };
 
-  // Handle unassigning a KPI from a pillar (placeholder for future implementation)
+  // Handle unassigning a KPI from a pillar
   const handleUnassignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
-    toast.info(
-      "KPI unassignment functionality will be implemented in the next phase",
+    if (!selectedDepartmentPillar) {
+      toast.error("No department pillar selected");
+      return;
+    }
+    // Find the DepartmentKpi object for this KPI template
+    const departmentKpi = departmentPillarKPIs.find(
+      (dk) => dk.template_id === kpi.id,
     );
+    if (!departmentKpi) {
+      toast.error("KPI not found in department pillar");
+      return;
+    }
+    unassignKpiMutation.mutate({
+      departmentKpiId: departmentKpi.id,
+      departmentPillarId: selectedDepartmentPillar.id,
+    });
   };
 
   // Loading states
@@ -417,30 +439,6 @@ export default function AssignKpiToDepartmentPage() {
                     ?.pillar_name || "KPIs for Pillar"}
                 </CardTitle>
               </CardHeader>
-
-              {/* Debug Info */}
-              <CardContent className="bg-muted/50">
-                <div className="text-sm space-y-1">
-                  <p>
-                    <strong>Debug Info:</strong>
-                  </p>
-                  <p>Selected Pillar ID: {selectedPillarId}</p>
-                  <p>
-                    Department Pillar ID:{" "}
-                    {selectedDepartmentPillar?.id || "Not found"}
-                  </p>
-                  <p>
-                    Department Pillar KPIs Count: {departmentPillarKPIs.length}
-                  </p>
-                  <p>Assigned KPIs Count: {assignedKpis.length}</p>
-                  <p>Unassigned KPIs Count: {unassignedKpis.length}</p>
-                  <p>
-                    Template KPIs Count:{" "}
-                    {pillarTemplates.find((p) => p.id === selectedPillarId)
-                      ?.kpi_templates.length || 0}
-                  </p>
-                </div>
-              </CardContent>
 
               <CardContent>
                 <AssignKpiTable

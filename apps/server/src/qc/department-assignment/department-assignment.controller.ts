@@ -59,4 +59,32 @@ export class DepartmentAssignmentController {
   getDepartmentPillarKPIs(@CurrentUser() user: RequestUser, @Param('departmentPillarId') departmentPillarId: string) {
     return this.departmentAssignmentService.getDepartmentPillarKPIs(user.id, user.role, departmentPillarId);
   }
+
+  /**
+   * Assign a KPI template to a department pillar
+   * POST /qc/department-assignment/department-pillars/:departmentPillarId/kpis
+   * Body: { kpiTemplateId: string }
+   */
+  @Post('department-pillars/:departmentPillarId/kpis')
+  assignKpiToDepartmentPillar(
+    @CurrentUser() user: RequestUser,
+    @Param('departmentPillarId') departmentPillarId: string,
+    @Body() body: { kpiTemplateId: string },
+  ) {
+    return this.departmentAssignmentService.assignKpiToDepartmentPillar(
+      user.id,
+      user.role,
+      departmentPillarId,
+      body.kpiTemplateId,
+    );
+  }
+
+  /**
+   * Unassign a KPI from a department pillar
+   * DELETE /qc/department-assignment/department-kpis/:departmentKpiId
+   */
+  @Delete('department-kpis/:departmentKpiId')
+  unassignKpiFromDepartmentPillar(@CurrentUser() user: RequestUser, @Param('departmentKpiId') departmentKpiId: string) {
+    return this.departmentAssignmentService.unassignKpiFromDepartmentPillar(user.id, user.role, departmentKpiId);
+  }
 }

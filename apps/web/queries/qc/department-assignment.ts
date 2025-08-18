@@ -8,6 +8,8 @@ import {
   assignPillarToDepartment,
   unassignPillarFromDepartment,
   getDepartmentPillarKPIs,
+  assignKpiToDepartmentPillar,
+  unassignKpiFromDepartmentPillar,
   Department,
   PillarTemplate,
   DepartmentPillar,
@@ -181,6 +183,79 @@ export function useUnassignPillarFromDepartment() {
     },
     onError: (error: any) => {
       toast.error("Failed to unassign pillar from department", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * React Query mutation hook for assigning KPI to department pillar
+ * @returns Mutation object with assign KPI functionality
+ */
+export function useAssignKpiToDepartmentPillar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      departmentPillarId,
+      kpiTemplateId,
+    }: {
+      departmentPillarId: string;
+      kpiTemplateId: string;
+    }) => {
+      const res = await assignKpiToDepartmentPillar(
+        departmentPillarId,
+        kpiTemplateId,
+      );
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message || "Failed to assign KPI to department pillar",
+      );
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch KPIs for the department pillar
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillar-kpis", variables.departmentPillarId],
+      });
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error("Failed to assign KPI to department pillar", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * React Query mutation hook for unassigning KPI from department pillar
+ * @returns Mutation object with unassign KPI functionality
+ */
+export function useUnassignKpiFromDepartmentPillar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      departmentKpiId,
+      departmentPillarId,
+    }: {
+      departmentKpiId: string;
+      departmentPillarId: string;
+    }) => {
+      const res = await unassignKpiFromDepartmentPillar(departmentKpiId);
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message || "Failed to unassign KPI from department pillar",
+      );
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch KPIs for the department pillar
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillar-kpis", variables.departmentPillarId],
+      });
+      toast.success(data.message);
+    },
+    onError: (error: any) => {
+      toast.error("Failed to unassign KPI from department pillar", {
         description: error.message || "An error occurred",
       });
     },
