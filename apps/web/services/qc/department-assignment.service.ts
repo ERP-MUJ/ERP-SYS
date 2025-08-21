@@ -238,3 +238,47 @@ export const getDepartmentPillarKPIs = async (departmentPillarId: string) => {
     throw error;
   }
 };
+
+/**
+ * Assigns a KPI template to a department pillar
+ * @param departmentPillarId - The department pillar ID
+ * @param kpiTemplateId - The KPI template ID
+ * @returns Promise with assignment response
+ */
+export const assignKpiToDepartmentPillar = async (
+  departmentPillarId: string,
+  kpiTemplateId: string,
+) => {
+  try {
+    const response = await ApiClient.post<{
+      message: string;
+      departmentKpi: DepartmentKpi;
+    }>(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}/kpis`,
+      { kpiTemplateId },
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};
+
+/**
+ * Unassigns a KPI from a department pillar
+ * @param departmentKpiId - The DepartmentKpi ID
+ * @returns Promise with unassignment response
+ */
+export const unassignKpiFromDepartmentPillar = async (
+  departmentKpiId: string,
+) => {
+  try {
+    const response = await ApiClient.delete<{ message: string }>(
+      `/qc/department-assignment/department-kpis/${departmentKpiId}`,
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};

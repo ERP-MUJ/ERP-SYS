@@ -306,4 +306,103 @@ export class DepartmentAssignmentService {
       return cw.coordinator_status === 'APPROVED_BY_HOD';
     });
   }
+
+  /**
+   * Assigns a KPI template to a department pillar (creates DepartmentKpi)
+   * @param userId - The QAC's user ID
+   * @param userRole - The QAC's role
+   * @param departmentPillarId - The department pillar ID
+   * @param kpiTemplateId - The KPI template ID
+   * @returns Success message and created DepartmentKpi
+   */
+  async assignKpiToDepartmentPillar(
+    userId: string,
+    userRole: UserRole,
+    departmentPillarId: string,
+    kpiTemplateId: string,
+  ) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    // Check if department pillar exists
+    const departmentPillar = await this.prisma.departmentPillar.findUnique({
+      where: { id: departmentPillarId },
+    });
+    if (!departmentPillar) {
+      throw new NotFoundException('Department pillar not found');
+    }
+
+    // Check if KPI template exists
+    const kpiTemplate = await this.prisma.kpiTemplate.findUnique({
+      where: { id: kpiTemplateId },
+    });
+    if (!kpiTemplate) {
+      throw new NotFoundException('KPI template not found');
+    }
+
+    // Check if already assigned
+    const existing = await this.prisma.departmentKpi.findUnique({
+      where: {
+        dept_pillar_id_template_id: {
+          dept_pillar_id: departmentPillarId,
+          template_id: kpiTemplateId,
+        },
+      },
+    });
+    if (existing) {
+      throw new ForbiddenException('KPI already assigned to this pillar');
+    }
+
+    // Create DepartmentKpi
+    const kpiDataJson = kpiTemplate.kpi_data ? JSON.parse(JSON.stringify(kpiTemplate.kpi_data)) : null;
+    const metricsJson = kpiTemplate.kpi_calculated_metrics
+      ? JSON.parse(JSON.stringify(kpiTemplate.kpi_calculated_metrics))
+      : null;
+    const departmentKpi = await this.prisma.departmentKpi.create({
+      data: {
+        dept_id: departmentPillar.dept_id,
+        dept_pillar_id: departmentPillarId,
+        template_id: kpiTemplateId,
+        kpi_number: kpiTemplate.kpi_number,
+        kpi_metric_name: kpiTemplate.kpi_metric_name,
+        kpi_description: kpiTemplate.kpi_description,
+        kpi_value: kpiTemplate.kpi_value,
+        data_provided_by: kpiTemplate.data_provided_by,
+        kpi_data: kpiDataJson ?? undefined,
+        kpi_calculated_metrics: metricsJson ?? undefined,
+        academic_year: new Date().getFullYear(),
+      },
+    });
+    return {
+      message: 'KPI assigned to department pillar successfully',
+      departmentKpi,
+    };
+  }
+
+  /**
+   * Unassigns a KPI from a department pillar (deletes DepartmentKpi)
+   * @param userId - The QAC's user ID
+   * @param userRole - The QAC's role
+   * @param departmentKpiId - The DepartmentKpi ID
+   * @returns Success message
+   */
+  async unassignKpiFromDepartmentPillar(userId: string, userRole: UserRole, departmentKpiId: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    // Check if DepartmentKpi exists
+    const departmentKpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: departmentKpiId },
+    });
+    if (!departmentKpi) {
+      throw new NotFoundException('Department KPI not found');
+    }
+
+    await this.prisma.departmentKpi.delete({
+      where: { id: departmentKpiId },
+    });
+    return {
+      message: 'KPI unassigned from department pillar successfully',
+    };
+  }
 }
