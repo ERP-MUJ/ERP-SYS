@@ -503,17 +503,6 @@ export default function TableFormRenderer({
               <FileText className="mr-2 h-4 w-4" />
               Download PDF
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                toast.success(
-                  "Report generation functionality will be implemented",
-                );
-              }}
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Generate Report
-            </Button>
           </div>
         </div>
       </CardHeader>
