@@ -59,18 +59,6 @@ export function useSidebarConfig(): SidebarConfig {
           id: "review-submissions",
           path: "/qc/review",
         },
-        {
-          icon: DownloadCloudIcon,
-          label: "Generate Report",
-          id: "generate-report",
-          path: "/qc/report",
-        },
-        {
-          icon: Settings,
-          label: "Settings",
-          id: "qc-settings",
-          path: "/qc/settings",
-        },
       ],
     },
     faculty: {
@@ -87,12 +75,6 @@ export function useSidebarConfig(): SidebarConfig {
           label: "KPI Management",
           id: "kpi-management",
           path: "/faculty/kpi-management", // Nested KPI items with required paths
-        },
-        {
-          icon: Settings,
-          label: "Settings",
-          id: "settings",
-          path: "/faculty/settings",
         },
       ],
     },
@@ -122,12 +104,6 @@ export function useSidebarConfig(): SidebarConfig {
           label: "Assign KPI Coordinator",
           id: "kpi-coordinator",
           path: "/hod/assign-coordinator", // Nested KPI items with required paths
-        },
-        {
-          icon: Settings,
-          label: "Settings",
-          id: "settings",
-          path: "/hod/settings",
         },
       ],
     },
