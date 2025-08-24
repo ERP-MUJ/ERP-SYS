@@ -2,31 +2,16 @@ import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/commo
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@repo/db/prisma/client';
 
-/**
- * Service for QAC to manage department pillar and KPI assignments
- * Handles assigning/unassigning pillars and KPIs to departments
- */
 @Injectable()
 export class DepartmentAssignmentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Asserts that the user has QAC role
-   * @param userRole - The user's role to validate
-   * @throws ForbiddenException if user is not QAC
-   */
   private assertQacRole(userRole: UserRole) {
     if (userRole !== UserRole.QAC) {
       throw new ForbiddenException('Only QAC users can perform this action');
     }
   }
 
-  /**
-   * Retrieves all departments
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @returns Array of all departments
-   */
   getDepartments(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
@@ -41,12 +26,6 @@ export class DepartmentAssignmentService {
     });
   }
 
-  /**
-   * Retrieves all pillar templates created by QAC
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @returns Array of pillar templates with their KPIs
-   */
   getPillarTemplates(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
@@ -61,26 +40,15 @@ export class DepartmentAssignmentService {
     });
   }
 
-  /**
-   * Retrieves pillars assigned to a specific department
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @param departmentId - The department ID
-   * @returns Array of department pillars with their KPIs
-   */
   async getDepartmentPillars(userId: string, userRole: UserRole, departmentId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
-    // Verify department exists
     const department = await this.prisma.department.findUnique({
       where: { id: departmentId },
     });
-
     if (!department) {
       throw new NotFoundException('Department not found');
     }
-
     return this.prisma.departmentPillar.findMany({
       where: {
         dept_id: departmentId,
@@ -105,12 +73,6 @@ export class DepartmentAssignmentService {
     });
   }
 
-  /**
-   * Retrieves all department pillars for overview (used in cards view)
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @returns Array of all department pillars with their KPIs
-   */
   getAllDepartmentPillars(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
@@ -137,15 +99,6 @@ export class DepartmentAssignmentService {
     });
   }
 
-  /**
-   * Assigns a pillar template to a department
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @param departmentId - The department ID
-   * @param pillarTemplateId - The pillar template ID
-   * @param pillarWeight - The weight to assign to the pillar
-   * @returns Success message and created department pillar
-   */
   async assignPillarToDepartment(
     userId: string,
     userRole: UserRole,
@@ -155,29 +108,21 @@ export class DepartmentAssignmentService {
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
-    // Verify department exists
     const department = await this.prisma.department.findUnique({
       where: { id: departmentId },
     });
-
     if (!department) {
       throw new NotFoundException('Department not found');
     }
-
-    // Verify pillar template exists and belongs to QAC
     const pillarTemplate = await this.prisma.pillarTemplate.findFirst({
       where: {
         id: pillarTemplateId,
         created_by_user: userId,
       },
     });
-
     if (!pillarTemplate) {
       throw new NotFoundException('Pillar template not found');
     }
-
-    // Check if pillar is already assigned to department
     const existingAssignment = await this.prisma.departmentPillar.findUnique({
       where: {
         dept_id_template_id: {
@@ -186,12 +131,9 @@ export class DepartmentAssignmentService {
         },
       },
     });
-
     if (existingAssignment) {
       throw new ForbiddenException('Pillar is already assigned to this department');
     }
-
-    // Create department pillar assignment
     const departmentPillar = await this.prisma.departmentPillar.create({
       data: {
         dept_id: departmentId,
@@ -205,13 +147,10 @@ export class DepartmentAssignmentService {
         department_kpis: true,
       },
     });
-
-    // Assign all KPIs from the pillar template to the department pillar
     const kpiTemplates = await this.prisma.kpiTemplate.findMany({
       where: { pillar_template_id: pillarTemplateId },
       orderBy: { kpi_number: 'asc' },
     });
-
     for (const kt of kpiTemplates) {
       const kpiDataJson = kt.kpi_data ? JSON.parse(JSON.stringify(kt.kpi_data)) : null;
       const metricsJson = kt.kpi_calculated_metrics ? JSON.parse(JSON.stringify(kt.kpi_calculated_metrics)) : null;
@@ -238,48 +177,60 @@ export class DepartmentAssignmentService {
   }
 
   /**
-   * Unassigns a pillar from a department
+   * Updates a DepartmentPillar, specifically its pillar_weight
    * @param userId - The QAC's user ID
    * @param userRole - The QAC's role
-   * @param departmentPillarId - The department pillar ID
-   * @returns Success message
+   * @param departmentPillarId - The ID of the DepartmentPillar to update
+   * @param pillarWeight - The new value for the pillar weight
+   * @returns The updated DepartmentPillar
    */
-  async unassignPillarFromDepartment(userId: string, userRole: UserRole, departmentPillarId: string) {
+  async updateDepartmentPillar(userId: string, userRole: UserRole, departmentPillarId: string, pillarWeight: number) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
 
-    // Verify department pillar exists
     const departmentPillar = await this.prisma.departmentPillar.findUnique({
       where: { id: departmentPillarId },
-      include: { department: true },
     });
-
     if (!departmentPillar) {
       throw new NotFoundException('Department pillar not found');
     }
 
-    // Delete all KPIs associated with this pillar
+    if (pillarWeight < 0) {
+      throw new ForbiddenException('Pillar weight cannot be negative');
+    }
+
+    const updatedPillar = await this.prisma.departmentPillar.update({
+      where: { id: departmentPillarId },
+      data: { pillar_weight: pillarWeight },
+    });
+
+    return {
+      message: 'Pillar weight updated successfully',
+      departmentPillar: updatedPillar,
+    };
+  }
+
+  async unassignPillarFromDepartment(userId: string, userRole: UserRole, departmentPillarId: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+    const departmentPillar = await this.prisma.departmentPillar.findUnique({
+      where: { id: departmentPillarId },
+      include: { department: true },
+    });
+    if (!departmentPillar) {
+      throw new NotFoundException('Department pillar not found');
+    }
     await this.prisma.departmentKpi.deleteMany({
       where: { dept_pillar_id: departmentPillarId },
     });
-
-    // Delete the department pillar
     await this.prisma.departmentPillar.delete({
       where: { id: departmentPillarId },
     });
-
     return {
       message: 'Pillar unassigned from department successfully',
     };
   }
 
-  /**
-   * Retrieves KPIs for a specific department pillar
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @param departmentPillarId - The department pillar ID
-   * @returns Array of department KPIs with assigned users
-   */
   async getDepartmentPillarKPIs(userId: string, userRole: UserRole, departmentPillarId: string) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
@@ -298,49 +249,35 @@ export class DepartmentAssignmentService {
       },
       orderBy: { kpi_number: 'asc' },
     });
-    // Gating: allow if no coordinator workflow OR if coordinator_status === APPROVED_BY_HOD
     return kpis.filter((k) => {
       const fr = (k.form_responses || {}) as Record<string, unknown>;
       const cw = fr['coordinator_workflow'] as { coordinator_status?: string } | undefined;
-      if (!cw) return true; // legacy / not yet submitted via coordinator flow
+      if (!cw) return true;
       return cw.coordinator_status === 'APPROVED_BY_HOD';
     });
   }
 
-  /**
-   * Assigns a KPI template to a department pillar (creates DepartmentKpi)
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @param departmentPillarId - The department pillar ID
-   * @param kpiTemplateId - The KPI template ID
-   * @returns Success message and created DepartmentKpi
-   */
   async assignKpiToDepartmentPillar(
     userId: string,
     userRole: UserRole,
     departmentPillarId: string,
     kpiTemplateId: string,
+    kpiValue: number,
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
-    // Check if department pillar exists
     const departmentPillar = await this.prisma.departmentPillar.findUnique({
       where: { id: departmentPillarId },
     });
     if (!departmentPillar) {
       throw new NotFoundException('Department pillar not found');
     }
-
-    // Check if KPI template exists
     const kpiTemplate = await this.prisma.kpiTemplate.findUnique({
       where: { id: kpiTemplateId },
     });
     if (!kpiTemplate) {
       throw new NotFoundException('KPI template not found');
     }
-
-    // Check if already assigned
     const existing = await this.prisma.departmentKpi.findUnique({
       where: {
         dept_pillar_id_template_id: {
@@ -352,8 +289,6 @@ export class DepartmentAssignmentService {
     if (existing) {
       throw new ForbiddenException('KPI already assigned to this pillar');
     }
-
-    // Create DepartmentKpi
     const kpiDataJson = kpiTemplate.kpi_data ? JSON.parse(JSON.stringify(kpiTemplate.kpi_data)) : null;
     const metricsJson = kpiTemplate.kpi_calculated_metrics
       ? JSON.parse(JSON.stringify(kpiTemplate.kpi_calculated_metrics))
@@ -366,7 +301,7 @@ export class DepartmentAssignmentService {
         kpi_number: kpiTemplate.kpi_number,
         kpi_metric_name: kpiTemplate.kpi_metric_name,
         kpi_description: kpiTemplate.kpi_description,
-        kpi_value: kpiTemplate.kpi_value,
+        kpi_value: kpiValue,
         data_provided_by: kpiTemplate.data_provided_by,
         kpi_data: kpiDataJson ?? undefined,
         kpi_calculated_metrics: metricsJson ?? undefined,
@@ -379,25 +314,37 @@ export class DepartmentAssignmentService {
     };
   }
 
-  /**
-   * Unassigns a KPI from a department pillar (deletes DepartmentKpi)
-   * @param userId - The QAC's user ID
-   * @param userRole - The QAC's role
-   * @param departmentKpiId - The DepartmentKpi ID
-   * @returns Success message
-   */
-  async unassignKpiFromDepartmentPillar(userId: string, userRole: UserRole, departmentKpiId: string) {
+  async updateDepartmentKpi(userId: string, userRole: UserRole, departmentKpiId: string, kpiValue: number) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-
-    // Check if DepartmentKpi exists
     const departmentKpi = await this.prisma.departmentKpi.findUnique({
       where: { id: departmentKpiId },
     });
     if (!departmentKpi) {
       throw new NotFoundException('Department KPI not found');
     }
+    if (kpiValue < 0 || kpiValue > 1) {
+      throw new ForbiddenException('KPI value must be between 0 and 1');
+    }
+    const updatedKpi = await this.prisma.departmentKpi.update({
+      where: { id: departmentKpiId },
+      data: { kpi_value: kpiValue },
+    });
+    return {
+      message: 'KPI weightage updated successfully',
+      departmentKpi: updatedKpi,
+    };
+  }
 
+  async unassignKpiFromDepartmentPillar(userId: string, userRole: UserRole, departmentKpiId: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+    const departmentKpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: departmentKpiId },
+    });
+    if (!departmentKpi) {
+      throw new NotFoundException('Department KPI not found');
+    }
     await this.prisma.departmentKpi.delete({
       where: { id: departmentKpiId },
     });

@@ -1,6 +1,10 @@
 import { ApiClient } from "@/lib/api-client";
 import { ApiError } from "@/types/error";
 
+export interface UpdatePillarWeightPayload {
+  pillarWeight: number;
+}
+
 /**
  * Interface for department data
  */
@@ -248,6 +252,7 @@ export const getDepartmentPillarKPIs = async (departmentPillarId: string) => {
 export const assignKpiToDepartmentPillar = async (
   departmentPillarId: string,
   kpiTemplateId: string,
+  kpiValue: number,
 ) => {
   try {
     const response = await ApiClient.post<{
@@ -282,3 +287,57 @@ export const unassignKpiFromDepartmentPillar = async (
     throw error;
   }
 };
+
+/**
+ * Updates a KPI value in a department pillar
+ * @param departmentKpiId - The DepartmentKpi ID
+ * @param payload - Update data containing new KPI value
+ * @returns Promise with update response
+ */
+export const updateDepartmentKpi = async (
+  departmentKpiId: string,
+  payload: { kpiValue: number },
+) => {
+  try {
+    const response = await ApiClient.patch<{
+      message: string;
+      departmentKpi: DepartmentKpi;
+    }>(`/qc/department-assignment/department-kpis/${departmentKpiId}`, payload);
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    return {
+      data: null,
+      error: {
+        message: apiError.message || "An error occurred while updating KPI",
+      },
+    };
+  }
+};
+
+export interface ServiceResponse<T = any> {
+  data: T | null;
+  error?: {
+    message: string;
+  };
+  message?: string;
+}
+
+export async function updateDepartmentPillar(
+  departmentPillarId: string,
+  payload: UpdatePillarWeightPayload,
+): Promise<ServiceResponse> {
+  try {
+    const response = await ApiClient.patch(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}`,
+      payload,
+    );
+    return {
+      data: response.data || null,
+      message: "Pillar weight updated successfully",
+    };
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+}

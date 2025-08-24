@@ -1,13 +1,5 @@
 "use client";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
-import { Label } from "@workspace/ui/components/label";
-import {
   Card,
   CardContent,
   CardHeader,
@@ -19,7 +11,10 @@ import { Separator } from "@workspace/ui/components/separator";
 import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { AssignPillarTable } from "@/components/qc/assign/AssignPillarTable";
-import { AssignKpiTable } from "@/components/qc/assign/AssignKpiTable";
+import {
+  AssignKpiTable,
+  type KpiData,
+} from "@/components/qc/assign/AssignKpiTable";
 import {
   useGetDepartments,
   useGetPillarTemplates,
@@ -28,9 +23,18 @@ import {
   useGetDepartmentPillarKPIs,
   useAssignPillarToDepartment,
   useUnassignPillarFromDepartment,
+  useUpdateDepartmentPillar,
   useAssignKpiToDepartmentPillar,
   useUnassignKpiFromDepartmentPillar,
+  useUpdateDepartmentKpi,
 } from "@/queries/qc/department-assignment";
+
+interface PillarData {
+  id: string;
+  pillar_name: string;
+  pillar_weight?: number | null;
+  departmentPillarId?: string;
+}
 
 export default function AssignKpiToDepartmentPage() {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<
@@ -39,82 +43,78 @@ export default function AssignKpiToDepartmentPage() {
   const [selectedPillarId, setSelectedPillarId] = useState<string | null>(null);
   const kpiSectionRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real data from APIs
   const { data: departments = [], isLoading: departmentsLoading } =
     useGetDepartments();
   const { data: pillarTemplates = [], isLoading: pillarTemplatesLoading } =
     useGetPillarTemplates();
-
-  // Fetch department pillars for selected department (for detailed view)
   const {
     data: selectedDepartmentPillars = [],
     isLoading: departmentPillarsLoading,
   } = useGetDepartmentPillars(selectedDepartmentId);
-
-  // Fetch ALL department pillars for cards view (we need this for all departments)
   const {
     data: allDepartmentPillars = [],
     isLoading: allDepartmentPillarsLoading,
   } = useGetAllDepartmentPillars();
 
-  // Get the department pillar ID for the selected pillar
   const selectedDepartmentPillar = selectedDepartmentPillars.find(
     (dp) => dp.template_id === selectedPillarId,
   );
   const { data: departmentPillarKPIs = [], isLoading: kpisLoading } =
     useGetDepartmentPillarKPIs(selectedDepartmentPillar?.id || null);
 
-  // Mutations
   const assignPillarMutation = useAssignPillarToDepartment();
   const unassignPillarMutation = useUnassignPillarFromDepartment();
+  const updatePillarMutation = useUpdateDepartmentPillar();
   const assignKpiMutation = useAssignKpiToDepartmentPillar();
   const unassignKpiMutation = useUnassignKpiFromDepartmentPillar();
+  const updateKpiMutation = useUpdateDepartmentKpi();
 
-  // Compute assigned and unassigned pillars
   const { assignedPillars, unassignedPillars } = useMemo(() => {
     if (!selectedDepartmentId || !pillarTemplates.length) {
       return { assignedPillars: [], unassignedPillars: [] };
     }
 
-    const assignedTemplateIds = selectedDepartmentPillars.map(
-      (dp: any) => dp.template_id,
+    const assignedPillarMap = new Map(
+      selectedDepartmentPillars.map((dp) => [dp.template_id, dp]),
     );
 
-    const assigned = pillarTemplates.filter((pt) =>
-      assignedTemplateIds.includes(pt.id),
-    );
+    const assigned = pillarTemplates
+      .filter((pt) => assignedPillarMap.has(pt.id))
+      .map((pt) => {
+        const departmentPillar = assignedPillarMap.get(pt.id);
+        return {
+          ...pt,
+          departmentPillarId: departmentPillar?.id,
+          pillar_weight: departmentPillar?.pillar_weight,
+        };
+      });
+
     const unassigned = pillarTemplates.filter(
-      (pt) => !assignedTemplateIds.includes(pt.id),
+      (pt) => !assignedPillarMap.has(pt.id),
     );
 
     return { assignedPillars: assigned, unassignedPillars: unassigned };
   }, [selectedDepartmentId, pillarTemplates, selectedDepartmentPillars]);
 
-  // Compute assigned and unassigned KPIs for selected pillar
   const { assignedKpis, unassignedKpis } = useMemo(() => {
     if (!selectedPillarId || !pillarTemplates.length) {
       return { assignedKpis: [], unassignedKpis: [] };
     }
-
     const selectedPillar = pillarTemplates.find(
       (pt) => pt.id === selectedPillarId,
     );
     if (!selectedPillar) {
       return { assignedKpis: [], unassignedKpis: [] };
     }
-
-    // If no department pillar exists, all KPIs are unassigned
     if (!selectedDepartmentPillar) {
       return {
         assignedKpis: [],
         unassignedKpis: selectedPillar.kpi_templates,
       };
     }
-
-    // Map department KPIs to template KPI format for display
     const assigned = departmentPillarKPIs.map((dk) => ({
       id: dk.template_id,
-      // Map to the field names expected by AssignKpiTable component
+      departmentKpiId: dk.id,
       kpiNo: dk.kpi_number,
       kpi_number: dk.kpi_number,
       metric: dk.kpi_metric_name,
@@ -122,16 +122,12 @@ export default function AssignKpiToDepartmentPage() {
       kpi_description: dk.kpi_description,
       dataProvidedBy: dk.data_provided_by,
       data_provided_by: dk.data_provided_by,
-      target: dk.kpi_value,
-      target2025: dk.kpi_value,
       kpi_value: dk.kpi_value,
-      value: dk.kpi_value,
       kpi_data: dk.kpi_data,
       kpi_calculated_metrics: dk.kpi_calculated_metrics,
       academic_year: dk.academic_year,
       created_at: dk.assigned_date,
       updated_at: dk.assigned_date,
-      // Add additional fields that might be needed for display
       percentage_target_achieved: dk.percentage_target_achieved,
       performance: dk.performance,
       kpi_status: dk.kpi_status,
@@ -143,13 +139,10 @@ export default function AssignKpiToDepartmentPage() {
       user_ids: dk.user_ids,
       assigned_users: dk.assigned_users,
     }));
-
-    // Find unassigned KPIs (template KPIs not in assigned list)
     const assignedTemplateIds = assigned.map((k) => k.id);
     const unassigned = selectedPillar.kpi_templates.filter(
       (kt) => !assignedTemplateIds.includes(kt.id),
     );
-
     return { assignedKpis: assigned, unassignedKpis: unassigned };
   }, [
     selectedPillarId,
@@ -158,22 +151,18 @@ export default function AssignKpiToDepartmentPage() {
     departmentPillarKPIs,
   ]);
 
-  // Handle department change
   const handleDepartmentChange = (deptId: string) => {
     setSelectedDepartmentId(deptId);
     setSelectedPillarId(null);
   };
 
-  // Handle pillar selection
   const handlePillarSelect = (pillarId: string) => {
     setSelectedPillarId(pillarId);
-    // Scroll to KPIs section
     setTimeout(() => {
       kpiSectionRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
-  // Handle assigning a pillar to a department
   const handleAssignPillar = (pillar: {
     id: string;
     weight?: number;
@@ -183,7 +172,6 @@ export default function AssignKpiToDepartmentPage() {
       toast.error("Please select a department first");
       return;
     }
-
     assignPillarMutation.mutate({
       departmentId: selectedDepartmentId,
       payload: {
@@ -193,30 +181,38 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  // Handle unassigning a pillar from a department
-  const handleUnassignPillar = (pillar: { id: string }) => {
+  const handleUnassignPillar = (pillar: PillarData) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department first");
       return;
     }
-
-    // Find the department pillar ID
-    const departmentPillar = selectedDepartmentPillars.find(
-      (dp: any) => dp.template_id === pillar.id,
-    );
-    if (!departmentPillar) {
+    if (!pillar.departmentPillarId) {
       toast.error("Pillar not found in department");
       return;
     }
-
     unassignPillarMutation.mutate({
-      departmentPillarId: departmentPillar.id,
+      departmentPillarId: pillar.departmentPillarId,
       departmentId: selectedDepartmentId,
     });
   };
 
-  // Handle assigning a KPI to a pillar
-  const handleAssignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
+  const handleUpdatePillar = (pillar: PillarData, weight: number) => {
+    if (!selectedDepartmentId) {
+      toast.error("Please select a department");
+      return;
+    }
+    if (!pillar.departmentPillarId) {
+      toast.error("Cannot find the assigned pillar to update.");
+      return;
+    }
+    updatePillarMutation.mutate({
+      departmentPillarId: pillar.departmentPillarId,
+      pillarWeight: weight,
+      departmentId: selectedDepartmentId,
+    });
+  };
+
+  const handleAssignKpi = (kpi: KpiData, weightage: number) => {
     if (!selectedDepartmentPillar) {
       toast.error("No department pillar selected");
       return;
@@ -224,16 +220,15 @@ export default function AssignKpiToDepartmentPage() {
     assignKpiMutation.mutate({
       departmentPillarId: selectedDepartmentPillar.id,
       kpiTemplateId: kpi.id,
+      kpiValue: weightage,
     });
   };
 
-  // Handle unassigning a KPI from a pillar
-  const handleUnassignKpi = (kpi: { id: string; kpi_metric_name: string }) => {
+  const handleUnassignKpi = (kpi: KpiData) => {
     if (!selectedDepartmentPillar) {
       toast.error("No department pillar selected");
       return;
     }
-    // Find the DepartmentKpi object for this KPI template
     const departmentKpi = departmentPillarKPIs.find(
       (dk) => dk.template_id === kpi.id,
     );
@@ -247,7 +242,22 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  // Loading states
+  const handleUpdateKpi = (kpi: KpiData, weightage: number) => {
+    if (!selectedDepartmentPillar) {
+      toast.error("No department pillar selected");
+      return;
+    }
+    if (!kpi.departmentKpiId) {
+      toast.error("Cannot find the assigned KPI to update.");
+      return;
+    }
+    updateKpiMutation.mutate({
+      departmentKpiId: kpi.departmentKpiId,
+      kpiValue: weightage,
+      departmentPillarId: selectedDepartmentPillar.id,
+    });
+  };
+
   const isLoading =
     departmentsLoading ||
     pillarTemplatesLoading ||
@@ -274,11 +284,9 @@ export default function AssignKpiToDepartmentPage() {
         Assign Pillar and KPI to Department
       </h1>
 
-      {/* Department Cards View */}
       {!selectedDepartmentId ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {departments.map((dept) => {
-            // Get department pillars for this department
             const deptPillars = allDepartmentPillars.filter(
               (dp: { dept_id: string }) => dp.dept_id === dept.id,
             );
@@ -287,7 +295,6 @@ export default function AssignKpiToDepartmentPage() {
                 sum + (pillar.department_kpis?.length || 0),
               0,
             );
-
             return (
               <Card
                 key={dept.id}
@@ -311,9 +318,7 @@ export default function AssignKpiToDepartmentPage() {
                     </Badge>
                   </div>
                 </CardHeader>
-
                 <CardContent className="space-y-4">
-                  {/* Metadata Stats */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
@@ -323,14 +328,12 @@ export default function AssignKpiToDepartmentPage() {
                         {deptPillars.length}
                       </span>
                     </div>
-
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
                         Total KPIs:
                       </span>
                       <span className="text-sm font-medium">{totalKPIs}</span>
                     </div>
-
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
                         Status:
@@ -344,10 +347,7 @@ export default function AssignKpiToDepartmentPage() {
                       </Badge>
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Action Button */}
                   <Button className="w-full" variant="default">
                     Manage Pillars & KPIs
                   </Button>
@@ -357,9 +357,7 @@ export default function AssignKpiToDepartmentPage() {
           })}
         </div>
       ) : (
-        /* Detailed View for Selected Department */
         <div className="space-y-6">
-          {/* Back Button */}
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -387,7 +385,6 @@ export default function AssignKpiToDepartmentPage() {
             <Separator className="flex-1" />
           </div>
 
-          {/* Department Header */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -414,7 +411,6 @@ export default function AssignKpiToDepartmentPage() {
             </CardContent>
           </Card>
 
-          {/* Assign Pillar Section */}
           <Card>
             <CardHeader>
               <CardTitle>Assign Pillar</CardTitle>
@@ -425,12 +421,12 @@ export default function AssignKpiToDepartmentPage() {
                 unassignedPillars={unassignedPillars}
                 onAssign={handleAssignPillar}
                 onUnassign={handleUnassignPillar}
+                onUpdate={handleUpdatePillar}
                 onView={handlePillarSelect}
               />
             </CardContent>
           </Card>
 
-          {/* KPIs for Selected Pillar */}
           {selectedPillarId && (
             <Card ref={kpiSectionRef}>
               <CardHeader>
@@ -439,13 +435,13 @@ export default function AssignKpiToDepartmentPage() {
                     ?.pillar_name || "KPIs for Pillar"}
                 </CardTitle>
               </CardHeader>
-
               <CardContent>
                 <AssignKpiTable
                   assignedKpis={assignedKpis}
                   unassignedKpis={unassignedKpis}
                   onAssign={handleAssignKpi}
                   onUnassign={handleUnassignKpi}
+                  onUpdate={handleUpdateKpi}
                 />
               </CardContent>
             </Card>

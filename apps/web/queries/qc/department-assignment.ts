@@ -6,10 +6,12 @@ import {
   getDepartmentPillars,
   getAllDepartmentPillars,
   assignPillarToDepartment,
+  updateDepartmentPillar,
   unassignPillarFromDepartment,
   getDepartmentPillarKPIs,
   assignKpiToDepartmentPillar,
   unassignKpiFromDepartmentPillar,
+  updateDepartmentKpi,
   Department,
   PillarTemplate,
   DepartmentPillar,
@@ -17,10 +19,6 @@ import {
   AssignPillarPayload,
 } from "@/services/qc/department-assignment.service";
 
-/**
- * React Query hook for fetching all departments
- * @returns Query result with departments data
- */
 export function useGetDepartments() {
   return useQuery({
     queryKey: ["qc-departments"],
@@ -32,10 +30,6 @@ export function useGetDepartments() {
   });
 }
 
-/**
- * React Query hook for fetching pillar templates created by QAC
- * @returns Query result with pillar templates data
- */
 export function useGetPillarTemplates() {
   return useQuery({
     queryKey: ["qc-pillar-templates"],
@@ -47,11 +41,6 @@ export function useGetPillarTemplates() {
   });
 }
 
-/**
- * React Query hook for fetching pillars assigned to a department
- * @param departmentId - The department ID
- * @returns Query result with department pillars data
- */
 export function useGetDepartmentPillars(departmentId: string | null) {
   return useQuery({
     queryKey: ["qc-department-pillars", departmentId],
@@ -67,10 +56,6 @@ export function useGetDepartmentPillars(departmentId: string | null) {
   });
 }
 
-/**
- * React Query hook for fetching all department pillars for overview
- * @returns Query result with all department pillars data
- */
 export function useGetAllDepartmentPillars() {
   return useQuery({
     queryKey: ["qc-all-department-pillars"],
@@ -84,11 +69,6 @@ export function useGetAllDepartmentPillars() {
   });
 }
 
-/**
- * React Query hook for fetching KPIs for a specific department pillar
- * @param departmentPillarId - The department pillar ID
- * @returns Query result with department KPIs data
- */
 export function useGetDepartmentPillarKPIs(departmentPillarId: string | null) {
   return useQuery({
     queryKey: ["qc-department-pillar-kpis", departmentPillarId],
@@ -105,13 +85,8 @@ export function useGetDepartmentPillarKPIs(departmentPillarId: string | null) {
   });
 }
 
-/**
- * React Query mutation hook for assigning pillar to department
- * @returns Mutation object with assign pillar functionality
- */
 export function useAssignPillarToDepartment() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       departmentId,
@@ -127,15 +102,12 @@ export function useAssignPillarToDepartment() {
       );
     },
     onSuccess: (data, variables) => {
-      // Invalidate and refetch department pillars
       queryClient.invalidateQueries({
         queryKey: ["qc-department-pillars", variables.departmentId],
       });
-      // Invalidate all department pillars for cards view
       queryClient.invalidateQueries({
         queryKey: ["qc-all-department-pillars"],
       });
-      // Invalidate pillar templates to refresh counts
       queryClient.invalidateQueries({ queryKey: ["qc-pillar-templates"] });
       toast.success(data.message);
     },
@@ -148,12 +120,46 @@ export function useAssignPillarToDepartment() {
 }
 
 /**
- * React Query mutation hook for unassigning pillar from department
- * @returns Mutation object with unassign pillar functionality
+ * React Query mutation hook for updating a department pillar's weight
+ * @returns Mutation object with update pillar functionality
  */
+export function useUpdateDepartmentPillar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      departmentPillarId,
+      pillarWeight,
+      departmentId,
+    }: {
+      departmentPillarId: string;
+      pillarWeight: number;
+      departmentId: string;
+    }) => {
+      const res = await updateDepartmentPillar(departmentPillarId, {
+        pillarWeight,
+      });
+      if (res.data) return res.data;
+      throw new Error(res.error?.message || "Failed to update pillar weight");
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillars", variables.departmentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-all-department-pillars"],
+      });
+      toast.success(data.message || "Pillar weight updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to update pillar weight", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
 export function useUnassignPillarFromDepartment() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       departmentPillarId,
@@ -169,15 +175,12 @@ export function useUnassignPillarFromDepartment() {
       );
     },
     onSuccess: (data, variables) => {
-      // Invalidate and refetch department pillars
       queryClient.invalidateQueries({
         queryKey: ["qc-department-pillars", variables.departmentId],
       });
-      // Invalidate all department pillars for cards view
       queryClient.invalidateQueries({
         queryKey: ["qc-all-department-pillars"],
       });
-      // Invalidate pillar templates to refresh counts
       queryClient.invalidateQueries({ queryKey: ["qc-pillar-templates"] });
       toast.success(data.message);
     },
@@ -189,23 +192,22 @@ export function useUnassignPillarFromDepartment() {
   });
 }
 
-/**
- * React Query mutation hook for assigning KPI to department pillar
- * @returns Mutation object with assign KPI functionality
- */
 export function useAssignKpiToDepartmentPillar() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       departmentPillarId,
       kpiTemplateId,
+      kpiValue,
     }: {
       departmentPillarId: string;
       kpiTemplateId: string;
+      kpiValue: number;
     }) => {
       const res = await assignKpiToDepartmentPillar(
         departmentPillarId,
         kpiTemplateId,
+        kpiValue,
       );
       if (res.data) return res.data;
       throw new Error(
@@ -213,7 +215,6 @@ export function useAssignKpiToDepartmentPillar() {
       );
     },
     onSuccess: (data, variables) => {
-      // Invalidate and refetch KPIs for the department pillar
       queryClient.invalidateQueries({
         queryKey: ["qc-department-pillar-kpis", variables.departmentPillarId],
       });
@@ -227,10 +228,36 @@ export function useAssignKpiToDepartmentPillar() {
   });
 }
 
-/**
- * React Query mutation hook for unassigning KPI from department pillar
- * @returns Mutation object with unassign KPI functionality
- */
+export function useUpdateDepartmentKpi() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      departmentKpiId,
+      kpiValue,
+      departmentPillarId,
+    }: {
+      departmentKpiId: string;
+      kpiValue: number;
+      departmentPillarId: string;
+    }) => {
+      const res = await updateDepartmentKpi(departmentKpiId, { kpiValue });
+      if (res.data) return res.data;
+      throw new Error(res.error?.message || "Failed to update KPI");
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillar-kpis", variables.departmentPillarId],
+      });
+      toast.success(data.message || "KPI updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to update KPI", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
 export function useUnassignKpiFromDepartmentPillar() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -248,7 +275,6 @@ export function useUnassignKpiFromDepartmentPillar() {
       );
     },
     onSuccess: (data, variables) => {
-      // Invalidate and refetch KPIs for the department pillar
       queryClient.invalidateQueries({
         queryKey: ["qc-department-pillar-kpis", variables.departmentPillarId],
       });
