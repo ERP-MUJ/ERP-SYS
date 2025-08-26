@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, UseGuards, Patch } from '@nestjs/common';
 import { DepartmentAssignmentService } from './department-assignment.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
@@ -47,6 +47,24 @@ export class DepartmentAssignmentController {
     );
   }
 
+  /**
+   * Update a DepartmentPillar, e.g., its weightage
+   * PATCH /qc/department-assignment/department-pillars/:departmentPillarId
+   */
+  @Patch('department-pillars/:departmentPillarId')
+  updateDepartmentPillar(
+    @CurrentUser() user: RequestUser,
+    @Param('departmentPillarId') departmentPillarId: string,
+    @Body() body: { pillarWeight: number },
+  ) {
+    return this.departmentAssignmentService.updateDepartmentPillar(
+      user.id,
+      user.role,
+      departmentPillarId,
+      body.pillarWeight,
+    );
+  }
+
   @Delete('department-pillars/:departmentPillarId')
   unassignPillarFromDepartment(
     @CurrentUser() user: RequestUser,
@@ -60,29 +78,30 @@ export class DepartmentAssignmentController {
     return this.departmentAssignmentService.getDepartmentPillarKPIs(user.id, user.role, departmentPillarId);
   }
 
-  /**
-   * Assign a KPI template to a department pillar
-   * POST /qc/department-assignment/department-pillars/:departmentPillarId/kpis
-   * Body: { kpiTemplateId: string }
-   */
   @Post('department-pillars/:departmentPillarId/kpis')
   assignKpiToDepartmentPillar(
     @CurrentUser() user: RequestUser,
     @Param('departmentPillarId') departmentPillarId: string,
-    @Body() body: { kpiTemplateId: string },
+    @Body() body: { kpiTemplateId: string; kpiValue: number },
   ) {
     return this.departmentAssignmentService.assignKpiToDepartmentPillar(
       user.id,
       user.role,
       departmentPillarId,
       body.kpiTemplateId,
+      body.kpiValue,
     );
   }
 
-  /**
-   * Unassign a KPI from a department pillar
-   * DELETE /qc/department-assignment/department-kpis/:departmentKpiId
-   */
+  @Patch('department-kpis/:departmentKpiId')
+  updateDepartmentKpi(
+    @CurrentUser() user: RequestUser,
+    @Param('departmentKpiId') departmentKpiId: string,
+    @Body() body: { kpiValue: number },
+  ) {
+    return this.departmentAssignmentService.updateDepartmentKpi(user.id, user.role, departmentKpiId, body.kpiValue);
+  }
+
   @Delete('department-kpis/:departmentKpiId')
   unassignKpiFromDepartmentPillar(@CurrentUser() user: RequestUser, @Param('departmentKpiId') departmentKpiId: string) {
     return this.departmentAssignmentService.unassignKpiFromDepartmentPillar(user.id, user.role, departmentKpiId);

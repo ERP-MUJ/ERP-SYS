@@ -11,11 +11,19 @@ import { Card } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import React from "react";
 
+interface PillarData {
+  id: string;
+  pillar_name: string;
+  pillar_weight?: number | null;
+  departmentPillarId?: string;
+}
+
 interface AssignPillarTableProps {
-  assignedPillars: any[];
-  unassignedPillars: any[];
+  assignedPillars: PillarData[];
+  unassignedPillars: PillarData[];
   onAssign: (pillar: any) => void;
-  onUnassign: (pillar: any) => void;
+  onUnassign: (pillar: PillarData) => void;
+  onUpdate: (pillar: PillarData, weight: number) => void;
   onView: (pillarId: string) => void;
 }
 
@@ -24,74 +32,51 @@ export function AssignPillarTable({
   unassignedPillars,
   onAssign,
   onUnassign,
+  onUpdate,
   onView,
 }: AssignPillarTableProps) {
-  // State for editable weights
-  const [assigned, setAssigned] = React.useState(assignedPillars);
-  const [unassigned, setUnassigned] = React.useState(unassignedPillars);
+  const [pillarWeights, setPillarWeights] = React.useState<
+    Record<string, string>
+  >({});
+  const [totalWeightError, setTotalWeightError] = React.useState(false);
 
   React.useEffect(() => {
-    setAssigned(assignedPillars);
-  }, [assignedPillars]);
-  React.useEffect(() => {
-    setUnassigned(unassignedPillars);
-  }, [unassignedPillars]);
+    const initialWeights: Record<string, string> = {};
+    [...assignedPillars, ...unassignedPillars].forEach((p) => {
+      initialWeights[p.id] = p.pillar_weight?.toString() ?? "0";
+    });
+    setPillarWeights(initialWeights);
+  }, [assignedPillars, unassignedPillars]);
 
-  const handleWeightChange = (
-    type: "assigned" | "unassigned",
-    idx: number,
-    newValue: string,
-  ) => {
-    if (type === "assigned") {
-      setAssigned((prev) =>
-        prev.map((pillar, i) =>
-          i === idx ? { ...pillar, weightA: newValue } : pillar,
-        ),
+  const handleWeightChange = (pillarId: string, newValue: string) => {
+    setPillarWeights((prev) => {
+      const updated = { ...prev, [pillarId]: newValue };
+      const totalWeight = [...assignedPillars, ...unassignedPillars].reduce(
+        (sum, pillar) =>
+          sum + Number(updated[pillar.id] || pillar.pillar_weight || 0),
+        0,
       );
-    } else {
-      setUnassigned((prev) =>
-        prev.map((pillar, i) =>
-          i === idx ? { ...pillar, weightA: newValue } : pillar,
-        ),
-      );
-    }
+      setTotalWeightError(totalWeight > 1);
+      return updated;
+    });
   };
 
-  const totalAssignedWeight = assigned.reduce(
-    (sum, pillar) => sum + Number(pillar.weightA ?? pillar.weight ?? 0),
+  const totalAssignedWeight = assignedPillars.reduce(
+    (sum, pillar) =>
+      sum + Number(pillarWeights[pillar.id] ?? pillar.pillar_weight ?? 0),
     0,
   );
 
   return (
     <Card className="p-4">
-      <div className="flex justify-end gap-2 mb-2">
-        <Button
-          size="sm"
-          variant="default"
-          onClick={() => {
-            unassigned.forEach(onAssign);
-          }}
-        >
-          Assign All
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => {
-            assigned.forEach(onUnassign);
-          }}
-        >
-          Unassign All
-        </Button>
-      </div>
       <Table className="min-w-full table-fixed border-separate border-spacing-0">
         <TableHeader>
           <TableRow>
             <TableHead className="text-left align-middle w-1/2">
               Pillar Name
             </TableHead>
-            <TableHead className="text-center align-middle w-32">
-              Weight (A)
+            <TableHead className="text-left align-middle pl-10 w-32">
+              Weight
             </TableHead>
             <TableHead className="text-center align-middle w-32">
               Action
@@ -102,24 +87,37 @@ export function AssignPillarTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* Assigned Pillars */}
-          {assigned.map((pillar, idx) => (
+          {assignedPillars.map((pillar) => (
             <TableRow key={pillar.id}>
               <TableCell className="text-left align-middle">
                 {pillar.pillar_name}
               </TableCell>
-              <TableCell className="text-center align-middle">
+              <TableCell className="text-left align-middle pl-4">
                 <Input
-                  className="w-24 text-center"
-                  value={pillar.weightA ?? pillar.weight ?? ""}
+                  type="number"
+                  className="w-24 text-cent"
+                  value={pillarWeights[pillar.id] ?? ""}
                   onChange={(e) =>
-                    handleWeightChange("assigned", idx, e.target.value)
+                    handleWeightChange(pillar.id, e.target.value)
                   }
+                  onBlur={(e) => {
+                    const newWeight = parseFloat(e.target.value);
+                    if (
+                      !isNaN(newWeight) &&
+                      newWeight !== pillar.pillar_weight
+                    ) {
+                      onUpdate(pillar, newWeight);
+                    }
+                  }}
+                  min="0"
+                  max="1"
+                  step="0.01"
                 />
               </TableCell>
               <TableCell className="text-center align-middle">
                 <Button
                   size="sm"
+                  variant="destructive"
                   className="text-xs px-2 py-1"
                   onClick={() => onUnassign(pillar)}
                 >
@@ -129,34 +127,41 @@ export function AssignPillarTable({
               <TableCell className="text-center align-middle">
                 <Button
                   size="sm"
+                  variant="default"
                   className="text-xs px-2 py-1"
                   onClick={() => onView(pillar.id)}
                 >
-                  View Pillar
+                  View KPIs
                 </Button>
               </TableCell>
             </TableRow>
           ))}
-          {/* Unassigned Pillars */}
-          {unassigned.map((pillar, idx) => (
+          {unassignedPillars.map((pillar) => (
             <TableRow key={pillar.id}>
               <TableCell className="text-left align-middle">
                 {pillar.pillar_name}
               </TableCell>
-              <TableCell className="text-center align-middle">
+              <TableCell className="text-left align-middle pl-4">
                 <Input
-                  className="w-24 text-center"
-                  value={pillar.weightA ?? pillar.weight ?? ""}
+                  type="number"
+                  className="w-24"
+                  value={pillarWeights[pillar.id] ?? ""}
                   onChange={(e) =>
-                    handleWeightChange("unassigned", idx, e.target.value)
+                    handleWeightChange(pillar.id, e.target.value)
                   }
                 />
               </TableCell>
               <TableCell className="text-center align-middle">
                 <Button
                   size="sm"
+                  variant="default"
                   className="text-xs px-2 py-1"
-                  onClick={() => onAssign(pillar)}
+                  onClick={() =>
+                    onAssign({
+                      ...pillar,
+                      weightA: parseFloat(pillarWeights[pillar.id] ?? "0"),
+                    })
+                  }
                 >
                   Assign
                 </Button>
@@ -164,22 +169,31 @@ export function AssignPillarTable({
               <TableCell className="text-center align-middle">
                 <Button
                   size="sm"
+                  variant="outline"
                   className="text-xs px-2 py-1"
-                  onClick={() => onView(pillar.id)}
+                  disabled
                 >
-                  View Pillar
+                  View KPIs
                 </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
         <tfoot>
-          {assigned.length > 0 && (
+          {assignedPillars.length > 0 && (
             <tr>
-              <td className="font-bold text-right" colSpan={2}>
-                Total Weight (A)
+              <td className="font-bold text-right pr-4" colSpan={1}>
+                Total Weight:
               </td>
-              <td className="font-bold text-center">{totalAssignedWeight}</td>
+              <td className="font-bold text-left pl-10">
+                {totalAssignedWeight.toFixed(2)}
+                {totalWeightError && (
+                  <div className="text-red-500 text-xs">
+                    Total weight cannot exceed 1
+                  </div>
+                )}
+              </td>
+              <td />
               <td />
             </tr>
           )}
