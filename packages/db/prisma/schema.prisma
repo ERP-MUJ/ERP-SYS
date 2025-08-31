@@ -144,6 +144,7 @@ model DepartmentPillar {
   pillar_name                String
   description                String?
   pillar_weight              Float?
+  pillar_target              Float?
   percentage_target_achieved Float?
   performance                Float?
   academic_year              Int
@@ -165,6 +166,7 @@ model DepartmentKpi {
   kpi_metric_name            String
   kpi_description            String?
   kpi_value                  Float?
+  kpi_target                 Float?
   percentage_target_achieved Float?
   performance                Float?
   data_provided_by           String?
