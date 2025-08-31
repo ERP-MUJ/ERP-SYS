@@ -105,6 +105,7 @@ export class DepartmentAssignmentService {
     departmentId: string,
     pillarTemplateId: string,
     pillarWeight?: number,
+    pillarTarget?: number,
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
@@ -141,6 +142,7 @@ export class DepartmentAssignmentService {
         pillar_name: pillarTemplate.pillar_name,
         description: pillarTemplate.description,
         pillar_weight: pillarWeight || pillarTemplate.pillar_value || 0,
+        pillar_target: pillarTarget,
         academic_year: new Date().getFullYear(),
       },
       include: {
@@ -184,7 +186,7 @@ export class DepartmentAssignmentService {
    * @param pillarWeight - The new value for the pillar weight
    * @returns The updated DepartmentPillar
    */
-  async updateDepartmentPillar(userId: string, userRole: UserRole, departmentPillarId: string, pillarWeight: number) {
+  async updateDepartmentPillar(userId: string, userRole: UserRole, departmentPillarId: string, pillarWeight?: number, pillarTarget?: number) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
 
@@ -195,17 +197,27 @@ export class DepartmentAssignmentService {
       throw new NotFoundException('Department pillar not found');
     }
 
-    if (pillarWeight < 0) {
-      throw new ForbiddenException('Pillar weight cannot be negative');
+    const updateData: any = {};
+    if (pillarWeight !== undefined) {
+      if (pillarWeight < 0) {
+        throw new ForbiddenException('Pillar weight cannot be negative');
+      }
+      updateData.pillar_weight = pillarWeight;
+    }
+    if (pillarTarget !== undefined) {
+      if (pillarTarget < 0) {
+        throw new ForbiddenException('Pillar target cannot be negative');
+      }
+      updateData.pillar_target = pillarTarget;
     }
 
     const updatedPillar = await this.prisma.departmentPillar.update({
       where: { id: departmentPillarId },
-      data: { pillar_weight: pillarWeight },
+      data: updateData,
     });
 
     return {
-      message: 'Pillar weight updated successfully',
+      message: 'Pillar updated successfully',
       departmentPillar: updatedPillar,
     };
   }
@@ -263,6 +275,7 @@ export class DepartmentAssignmentService {
     departmentPillarId: string,
     kpiTemplateId: string,
     kpiValue: number,
+    kpiTarget?: number,
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
@@ -302,6 +315,7 @@ export class DepartmentAssignmentService {
         kpi_metric_name: kpiTemplate.kpi_metric_name,
         kpi_description: kpiTemplate.kpi_description,
         kpi_value: kpiValue,
+        kpi_target: kpiTarget,
         data_provided_by: kpiTemplate.data_provided_by,
         kpi_data: kpiDataJson ?? undefined,
         kpi_calculated_metrics: metricsJson ?? undefined,
@@ -314,7 +328,7 @@ export class DepartmentAssignmentService {
     };
   }
 
-  async updateDepartmentKpi(userId: string, userRole: UserRole, departmentKpiId: string, kpiValue: number) {
+  async updateDepartmentKpi(userId: string, userRole: UserRole, departmentKpiId: string, kpiValue?: number, kpiTarget?: number) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
     const departmentKpi = await this.prisma.departmentKpi.findUnique({
@@ -323,15 +337,25 @@ export class DepartmentAssignmentService {
     if (!departmentKpi) {
       throw new NotFoundException('Department KPI not found');
     }
-    if (kpiValue < 0 || kpiValue > 1) {
-      throw new ForbiddenException('KPI value must be between 0 and 1');
+    const updateData: any = {};
+    if (kpiValue !== undefined) {
+      if (kpiValue < 0 || kpiValue > 1) {
+        throw new ForbiddenException('KPI value must be between 0 and 1');
+      }
+      updateData.kpi_value = kpiValue;
+    }
+    if (kpiTarget !== undefined) {
+      if (kpiTarget < 0) {
+        throw new ForbiddenException('KPI target cannot be negative');
+      }
+      updateData.kpi_target = kpiTarget;
     }
     const updatedKpi = await this.prisma.departmentKpi.update({
       where: { id: departmentKpiId },
-      data: { kpi_value: kpiValue },
+      data: updateData,
     });
     return {
-      message: 'KPI weightage updated successfully',
+      message: 'KPI updated successfully',
       departmentKpi: updatedKpi,
     };
   }

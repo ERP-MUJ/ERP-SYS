@@ -2,7 +2,8 @@ import { ApiClient } from "@/lib/api-client";
 import { ApiError } from "@/types/error";
 
 export interface UpdatePillarWeightPayload {
-  pillarWeight: number;
+  pillarWeight?: number;
+  pillarTarget?: number;
 }
 
 /**
@@ -70,6 +71,7 @@ export interface DepartmentKpi {
   kpi_metric_name: string;
   kpi_description: string | null;
   kpi_value: number | null;
+  kpi_target: number | null;
   percentage_target_achieved: number | null;
   performance: number | null;
   data_provided_by: string | null;
@@ -96,6 +98,7 @@ export interface DepartmentPillar {
   pillar_name: string;
   description: string | null;
   pillar_weight: number | null;
+  pillar_target: number | null;
   percentage_target_achieved: number | null;
   performance: number | null;
   academic_year: number;
@@ -110,6 +113,7 @@ export interface DepartmentPillar {
 export interface AssignPillarPayload {
   pillarTemplateId: string;
   pillarWeight?: number;
+  pillarTarget?: number;
 }
 
 /**
@@ -253,6 +257,7 @@ export const assignKpiToDepartmentPillar = async (
   departmentPillarId: string,
   kpiTemplateId: string,
   kpiValue: number,
+  kpiTarget?: number,
 ) => {
   try {
     const response = await ApiClient.post<{
@@ -260,7 +265,7 @@ export const assignKpiToDepartmentPillar = async (
       departmentKpi: DepartmentKpi;
     }>(
       `/qc/department-assignment/department-pillars/${departmentPillarId}/kpis`,
-      { kpiTemplateId },
+      { kpiTemplateId, kpiValue, kpiTarget },
     );
     return response;
   } catch (error: unknown) {
@@ -296,7 +301,7 @@ export const unassignKpiFromDepartmentPillar = async (
  */
 export const updateDepartmentKpi = async (
   departmentKpiId: string,
-  payload: { kpiValue: number },
+  payload: { kpiValue?: number; kpiTarget?: number },
 ) => {
   try {
     const response = await ApiClient.patch<{

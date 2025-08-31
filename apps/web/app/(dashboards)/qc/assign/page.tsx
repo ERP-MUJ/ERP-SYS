@@ -33,6 +33,7 @@ interface PillarData {
   id: string;
   pillar_name: string;
   pillar_weight?: number | null;
+  pillar_target?: number | null;
   departmentPillarId?: string;
 }
 
@@ -86,6 +87,7 @@ export default function AssignKpiToDepartmentPage() {
           ...pt,
           departmentPillarId: departmentPillar?.id,
           pillar_weight: departmentPillar?.pillar_weight,
+          pillar_target: departmentPillar?.pillar_target,
         };
       });
 
@@ -123,6 +125,7 @@ export default function AssignKpiToDepartmentPage() {
       dataProvidedBy: dk.data_provided_by,
       data_provided_by: dk.data_provided_by,
       kpi_value: dk.kpi_value,
+      kpi_target: dk.kpi_target,
       kpi_data: dk.kpi_data,
       kpi_calculated_metrics: dk.kpi_calculated_metrics,
       academic_year: dk.academic_year,
@@ -167,6 +170,7 @@ export default function AssignKpiToDepartmentPage() {
     id: string;
     weight?: number;
     weightA?: number;
+    target?: number;
   }) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department first");
@@ -177,6 +181,7 @@ export default function AssignKpiToDepartmentPage() {
       payload: {
         pillarTemplateId: pillar.id,
         pillarWeight: pillar.weightA || pillar.weight || 0,
+        pillarTarget: pillar.target,
       },
     });
   };
@@ -196,7 +201,7 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  const handleUpdatePillar = (pillar: PillarData, weight: number) => {
+  const handleUpdatePillar = (pillar: PillarData, weight?: number, target?: number) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department");
       return;
@@ -205,14 +210,20 @@ export default function AssignKpiToDepartmentPage() {
       toast.error("Cannot find the assigned pillar to update.");
       return;
     }
-    updatePillarMutation.mutate({
+    const updateData: any = {
       departmentPillarId: pillar.departmentPillarId,
-      pillarWeight: weight,
       departmentId: selectedDepartmentId,
-    });
+    };
+    if (weight !== undefined) {
+      updateData.pillarWeight = weight;
+    }
+    if (target !== undefined) {
+      updateData.pillarTarget = target;
+    }
+    updatePillarMutation.mutate(updateData);
   };
 
-  const handleAssignKpi = (kpi: KpiData, weightage: number) => {
+  const handleAssignKpi = (kpi: KpiData, weightage: number, target?: number) => {
     if (!selectedDepartmentPillar) {
       toast.error("No department pillar selected");
       return;
@@ -221,6 +232,7 @@ export default function AssignKpiToDepartmentPage() {
       departmentPillarId: selectedDepartmentPillar.id,
       kpiTemplateId: kpi.id,
       kpiValue: weightage,
+      kpiTarget: target,
     });
   };
 
@@ -242,7 +254,7 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  const handleUpdateKpi = (kpi: KpiData, weightage: number) => {
+  const handleUpdateKpi = (kpi: KpiData, weightage?: number, target?: number) => {
     if (!selectedDepartmentPillar) {
       toast.error("No department pillar selected");
       return;
@@ -251,11 +263,17 @@ export default function AssignKpiToDepartmentPage() {
       toast.error("Cannot find the assigned KPI to update.");
       return;
     }
-    updateKpiMutation.mutate({
+    const updateData: any = {
       departmentKpiId: kpi.departmentKpiId,
-      kpiValue: weightage,
       departmentPillarId: selectedDepartmentPillar.id,
-    });
+    };
+    if (weightage !== undefined) {
+      updateData.kpiValue = weightage;
+    }
+    if (target !== undefined) {
+      updateData.kpiTarget = target;
+    }
+    updateKpiMutation.mutate(updateData);
   };
 
   const isLoading =

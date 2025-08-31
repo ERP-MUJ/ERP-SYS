@@ -15,6 +15,7 @@ interface PillarData {
   id: string;
   pillar_name: string;
   pillar_weight?: number | null;
+  pillar_target?: number | null;
   departmentPillarId?: string;
 }
 
@@ -23,7 +24,7 @@ interface AssignPillarTableProps {
   unassignedPillars: PillarData[];
   onAssign: (pillar: any) => void;
   onUnassign: (pillar: PillarData) => void;
-  onUpdate: (pillar: PillarData, weight: number) => void;
+  onUpdate: (pillar: PillarData, weight?: number, target?: number) => void;
   onView: (pillarId: string) => void;
 }
 
@@ -38,14 +39,20 @@ export function AssignPillarTable({
   const [pillarWeights, setPillarWeights] = React.useState<
     Record<string, string>
   >({});
+  const [pillarTargets, setPillarTargets] = React.useState<
+    Record<string, string>
+  >({});
   const [totalWeightError, setTotalWeightError] = React.useState(false);
 
   React.useEffect(() => {
     const initialWeights: Record<string, string> = {};
+    const initialTargets: Record<string, string> = {};
     [...assignedPillars, ...unassignedPillars].forEach((p) => {
       initialWeights[p.id] = p.pillar_weight?.toString() ?? "0";
+      initialTargets[p.id] = p.pillar_target?.toString() ?? "";
     });
     setPillarWeights(initialWeights);
+    setPillarTargets(initialTargets);
   }, [assignedPillars, unassignedPillars]);
 
   const handleWeightChange = (pillarId: string, newValue: string) => {
@@ -59,6 +66,13 @@ export function AssignPillarTable({
       setTotalWeightError(totalWeight > 1);
       return updated;
     });
+  };
+
+  const handleTargetChange = (pillarId: string, newValue: string) => {
+    setPillarTargets((prev) => ({
+      ...prev,
+      [pillarId]: newValue,
+    }));
   };
 
   const totalAssignedWeight = assignedPillars.reduce(
@@ -78,6 +92,9 @@ export function AssignPillarTable({
             <TableHead className="text-left align-middle pl-10 w-32">
               Weight
             </TableHead>
+              <TableHead className="text-left align-middle pl-10 w-32">
+                Target
+              </TableHead>
             <TableHead className="text-center align-middle w-32">
               Action
             </TableHead>
@@ -106,12 +123,31 @@ export function AssignPillarTable({
                       !isNaN(newWeight) &&
                       newWeight !== pillar.pillar_weight
                     ) {
-                      onUpdate(pillar, newWeight);
+                      onUpdate(pillar, newWeight, undefined);
                     }
                   }}
                   min="0"
                   max="1"
                   step="0.01"
+                />
+              </TableCell>
+              <TableCell className="text-left align-middle pl-4">
+                <Input
+                  type="number"
+                  className="w-24 text-cent"
+                  value={pillarTargets[pillar.id] ?? ""}
+                  onChange={(e) => handleTargetChange(pillar.id, e.target.value)}
+                  onBlur={(e) => {
+                    if (pillar.departmentPillarId) {
+                      const newTarget = parseFloat(e.target.value);
+                      const currentTarget = pillar.pillar_target;
+                      if (!isNaN(newTarget) && newTarget !== currentTarget) {
+                        onUpdate(pillar, undefined, newTarget);
+                      }
+                    }
+                  }}
+                  min="0"
+                  step="1"
                 />
               </TableCell>
               <TableCell className="text-center align-middle">
@@ -151,6 +187,16 @@ export function AssignPillarTable({
                   }
                 />
               </TableCell>
+              <TableCell className="text-left align-middle pl-4">
+                <Input
+                  type="number"
+                  className="w-24"
+                  value={pillarTargets[pillar.id] ?? ""}
+                  onChange={(e) => handleTargetChange(pillar.id, e.target.value)}
+                  min="0"
+                  step="1"
+                />
+              </TableCell>
               <TableCell className="text-center align-middle">
                 <Button
                   size="sm"
@@ -160,6 +206,7 @@ export function AssignPillarTable({
                     onAssign({
                       ...pillar,
                       weightA: parseFloat(pillarWeights[pillar.id] ?? "0"),
+                      target: parseFloat(pillarTargets[pillar.id] ?? "0"),
                     })
                   }
                 >
@@ -193,6 +240,7 @@ export function AssignPillarTable({
                   </div>
                 )}
               </td>
+              <td />
               <td />
               <td />
             </tr>
