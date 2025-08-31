@@ -21,7 +21,6 @@ import {
   FileUp,
   FileDown,
   FileText,
-  BarChart3,
 } from "lucide-react";
 import {
   Table as ReactTable,
@@ -52,6 +51,7 @@ import {
 } from "@workspace/ui/components/card";
 import { LineChartIcon as ChartLine } from "lucide-react";
 import { useSaveKpiData } from "@/hooks/faculty";
+import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
 
 interface TableFormRendererProps {
@@ -84,7 +84,6 @@ export default function TableFormRenderer({
   elements,
   id,
   description,
-  onSuccess,
   className = "",
   existingData = [],
   customSaveHook,
@@ -96,6 +95,9 @@ export default function TableFormRenderer({
     ? customSaveHook()
     : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Excel operations
+  const downloadExcelMutation = useDownloadExcelTemplate();
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
   const [activeElement, setActiveElement] =
     useState<FormElementInstance | null>(null);
@@ -372,7 +374,7 @@ export default function TableFormRenderer({
   };
 
   const downloadExcel = () => {
-    toast.success("Excel download functionality will be implemented");
+    downloadExcelMutation.mutate(id);
   };
 
   const downloadPDF = () => {
@@ -485,13 +487,14 @@ export default function TableFormRenderer({
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => {
-                toast.success(
-                  "Excel download functionality will be implemented",
-                );
-              }}
+              onClick={downloadExcel}
+              disabled={downloadExcelMutation.isPending}
             >
-              <FileDown className="mr-2 h-4 w-4" />
+              {downloadExcelMutation.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="mr-2 h-4 w-4" />
+              )}
               Download Excel
             </Button>
             <Button
@@ -590,15 +593,6 @@ export default function TableFormRenderer({
           <Button variant="outline" onClick={addNewRow} disabled={isSubmitting}>
             <Plus className="mr-2 h-4 w-4" />
             Add Row
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              toast.success("Excel upload feature coming soon!");
-            }}
-          >
-            <FileUp className="mr-2 h-4 w-4" />
-            Upload Excel
           </Button>
         </div>
         <div className="flex gap-2">

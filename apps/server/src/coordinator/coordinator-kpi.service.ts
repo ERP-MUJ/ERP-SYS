@@ -1,6 +1,8 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole, Prisma } from '@repo/db/prisma/client';
+import { UserRole } from '@repo/db/prisma/client';
+import { ExcelService } from 'src/services/excel.service';
+import { ExcelTemplateResponseDto } from './dto/excel.dto';
 
 export interface CoordinatorWorkflow {
   assigned_to?: string;
@@ -32,7 +34,10 @@ export interface KpiFormResponsesWithWorkflow {
 
 @Injectable()
 export class CoordinatorKpiService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly excelService: ExcelService,
+  ) {}
 
   /**
    * Ensures only KPI coordinators can perform coordinator operations
@@ -305,5 +310,38 @@ export class CoordinatorKpiService {
     });
 
     return { message: 'KPI form resubmitted successfully after revision' };
+  }
+
+  async downloadKpiTemplate(userId: string, userRole: UserRole, kpiId: string): Promise<ExcelTemplateResponseDto> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertCoordinatorRole(userRole);
+
+    const kpiDetails = await this.getKpiDetails(userId, userRole, kpiId);
+
+    const kpiData = kpiDetails?.kpi_data as Record<string, unknown>;
+    const formElements =
+      (kpiData?.elements as Array<{
+        id: string;
+        attributes: {
+          label: string;
+          required?: boolean;
+          placeholder?: string;
+          options?: Array<{ label: string; value: string }>;
+        };
+        type: string;
+      }>) || [];
+
+    if (!formElements || formElements.length === 0) {
+      throw new BadRequestException('No form structure found for this KPI');
+    }
+
+    const excelBuffer = this.excelService.generateKpiTemplate(formElements);
+    const fileName = `KPI_${kpiId}_Template.xlsx`;
+    const bufferBase64 = excelBuffer.toString('base64');
+
+    return {
+      buffer: bufferBase64,
+      fileName: fileName,
+    };
   }
 }
