@@ -1,11 +1,12 @@
 import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { UserRole } from '@repo/db/prisma/client';
 import { CoordinatorKpiService } from './coordinator-kpi.service';
+import { ExcelTemplateResponseDto } from './dto/excel.dto';
 
 interface RequestUser {
   id: string;
@@ -70,8 +71,27 @@ export class CoordinatorKpiController {
       user.id,
       user.role,
       kpiId,
+
       { entries: body.entries },
       body.comments,
     );
+  }
+
+  @Get('/:kpiId/template')
+  @ApiParam({ name: 'kpiId', description: 'KPI ID to generate template for' })
+  @ApiResponse({
+    status: 200,
+    description: 'Excel template downloaded successfully',
+    type: ExcelTemplateResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'KPI not found',
+  })
+  async downloadKpiTemplate(
+    @Param('kpiId') kpiId: string,
+    @CurrentUser() user: RequestUser,
+  ): Promise<ExcelTemplateResponseDto> {
+    return await this.coordinatorKpiService.downloadKpiTemplate(user.id, user.role, kpiId);
   }
 }
