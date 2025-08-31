@@ -29,4 +29,42 @@ export class ExcelService {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }
+
+  static async uploadExcel(
+    kpiId: string,
+    formData: FormData,
+  ): Promise<{
+    success: boolean;
+    processedRows: number;
+    errorRows: number;
+    totalRows: number;
+    validationErrors?: Array<{
+      row: number;
+      field: string;
+      message: string;
+      value: string;
+    }>;
+    message: string;
+    dataSaved: boolean;
+  }> {
+    const response = await ApiClient.post<{
+      success: boolean;
+      processedRows: number;
+      errorRows: number;
+      totalRows: number;
+      validationErrors?: Array<{
+        row: number;
+        field: string;
+        message: string;
+        value: string;
+      }>;
+      message: string;
+      dataSaved: boolean;
+    }>(`/coordinator/kpi/${kpiId}/upload`, formData);
+
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+    return response.data;
+  }
 }

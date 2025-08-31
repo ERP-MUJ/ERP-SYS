@@ -1,8 +1,10 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from '@repo/db/prisma/client';
-import { ExcelService } from 'src/services/excel.service';
+import { UserRole, Prisma } from '@repo/db/prisma/client';
+import { ExcelService, ExcelValidationService } from 'src/services/excel.service';
 import { ExcelTemplateResponseDto } from './dto/excel.dto';
+import { ExcelUploadResponseDto } from './dto/excel-upload.dto';
+import type { FormElementInstance } from '@workspace/types/types';
 
 export interface CoordinatorWorkflow {
   assigned_to?: string;
@@ -343,5 +345,161 @@ export class CoordinatorKpiService {
       buffer: bufferBase64,
       fileName: fileName,
     };
+  }
+
+  async uploadExcel(
+    userId: string,
+    userRole: UserRole,
+    kpiId: string,
+    file: Express.Multer.File,
+  ): Promise<ExcelUploadResponseDto> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertCoordinatorRole(userRole);
+
+    const departmentId = await this.getCoordinatorDepartmentId(userId);
+
+    // Verify user has access to this KPI
+    const kpi = await this.prisma.departmentKpi.findFirst({
+      where: {
+        id: kpiId,
+        dept_id: departmentId,
+      },
+    });
+
+    if (!kpi) {
+      console.log(`KPI access denied - User: ${userId}, Department: ${departmentId}, KPI: ${kpiId}`);
+      throw new NotFoundException('KPI not found or access denied');
+    }
+
+    console.log(`KPI access granted - User: ${userId}, Department: ${departmentId}, KPI: ${kpiId}`);
+
+    // Validate file
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Validate file type
+    const allowedMimeTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'application/octet-stream', // Some systems send this for Excel files
+    ];
+
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Invalid file type. Please upload an Excel file (.xlsx, .xls)');
+    }
+
+    // Extract data from Excel file
+    const extractionOptions = {
+      includeHeaders: true,
+      skipEmptyRows: true,
+    };
+
+    const extractedData = this.excelService.extractFromBuffer(file.buffer, extractionOptions);
+
+    if (!extractedData.data || extractedData.data.length === 0) {
+      return {
+        success: false,
+        processedRows: 0,
+        errorRows: 0,
+        totalRows: 0,
+        message: 'No data found in Excel file',
+        dataSaved: false,
+      };
+    }
+
+    // Parse form elements from kpi_data
+    let formElements: FormElementInstance[] = [];
+    try {
+      console.log('KPI data type:', typeof kpi.kpi_data);
+      console.log('KPI data:', kpi.kpi_data);
+
+      // Handle both string and object formats
+      if (typeof kpi.kpi_data === 'string') {
+        formElements = JSON.parse(kpi.kpi_data);
+      } else if (typeof kpi.kpi_data === 'object' && kpi.kpi_data !== null) {
+        // If it's already an object, extract the elements
+        const kpiData = kpi.kpi_data as Record<string, unknown>;
+        formElements = (kpiData.elements as FormElementInstance[]) || [];
+      } else {
+        throw new Error('Invalid kpi_data format');
+      }
+
+      console.log('Form elements extracted:', formElements.length);
+    } catch (error) {
+      console.error('Error parsing form elements:', error);
+      return {
+        success: false,
+        processedRows: 0,
+        errorRows: 0,
+        totalRows: extractedData.data.length,
+        message: `Invalid form elements configuration: ${error.message}`,
+        dataSaved: false,
+      };
+    }
+
+    // Validate data against form elements
+    const validationService = new ExcelValidationService();
+    const validationResult = validationService.validateKpiData(
+      extractedData.data,
+      extractedData.headers || [],
+      formElements,
+    );
+
+    // Save valid data to database
+    let dataSaved = false;
+    if (validationResult.processedData.length > 0) {
+      try {
+        // Update the form_responses field with the new data
+        const existingResponses = (kpi.form_responses as Record<string, unknown>[]) || [];
+        const updatedResponses = [...existingResponses, ...validationResult.processedData];
+
+        await this.prisma.departmentKpi.update({
+          where: { id: kpiId },
+          data: {
+            form_responses: updatedResponses as Prisma.InputJsonValue,
+          },
+        });
+        dataSaved = true;
+      } catch (error) {
+        console.error('Error saving form responses:', error);
+        return {
+          success: false,
+          processedRows: 0,
+          errorRows: extractedData.data.length,
+          totalRows: extractedData.data.length,
+          message: 'Error saving data to database',
+          dataSaved: false,
+        };
+      }
+    }
+
+    // Determine success status
+    const success = validationResult.errors.length === 0 || validationResult.processedData.length > 0;
+    const message = this.generateUploadMessage(
+      validationResult.processedData.length,
+      validationResult.errors.length,
+      extractedData.data.length,
+    );
+
+    return {
+      success,
+      processedRows: validationResult.processedData.length,
+      errorRows: validationResult.errors.length,
+      totalRows: extractedData.data.length,
+      validationErrors: validationResult.errors.length > 0 ? validationResult.errors : undefined,
+      message,
+      dataSaved,
+    };
+  }
+
+  private generateUploadMessage(processedRows: number, errorRows: number, totalRows: number): string {
+    if (errorRows === 0) {
+      return `Successfully processed all ${totalRows} rows from Excel file`;
+    } else if (processedRows === 0) {
+      return `Failed to process Excel file: ${errorRows} validation errors found`;
+    } else {
+      return `Partially successful: ${processedRows} rows processed, ${errorRows} rows had validation errors`;
+    }
   }
 }
