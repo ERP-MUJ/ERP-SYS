@@ -102,7 +102,13 @@ export class DepartmentAssignmentController {
     @Param('departmentKpiId') departmentKpiId: string,
     @Body() body: { kpiValue?: number; kpiTarget?: number },
   ) {
-    return this.departmentAssignmentService.updateDepartmentKpi(user.id, user.role, departmentKpiId, body.kpiValue, body.kpiTarget);
+    return this.departmentAssignmentService.updateDepartmentKpi(
+      user.id,
+      user.role,
+      departmentKpiId,
+      body.kpiValue,
+      body.kpiTarget,
+    );
   }
 
   @Delete('department-kpis/:departmentKpiId')

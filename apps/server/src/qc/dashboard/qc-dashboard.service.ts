@@ -19,6 +19,55 @@ export class QcDashboardService {
   /**
    * Get complete dashboard data including submission stats and department status
    */
+  async getScoreSheetData(userId: string, userRole: UserRole, deptId: string, pillarId?: string) {
+    if (!userId) throw new ForbiddenException('User ID is required');
+    this.assertQacRole(userRole);
+
+    const kpis = await this.prisma.departmentKpi.findMany({
+      where: {
+        dept_id: deptId,
+        ...(pillarId && { dept_pillar_id: pillarId }),
+      },
+      select: {
+        kpi_number: true,
+        kpi_metric_name: true,
+        kpi_value: true,
+        data_provided_by: true,
+        kpi_target: true,
+        percentage_target_achieved: true,
+      },
+      orderBy: {
+        kpi_number: 'asc',
+      },
+    });
+
+    return kpis.map((kpi) => ({
+      ...kpi,
+      percentage_target_achieved: kpi.percentage_target_achieved
+        ? Number(kpi.percentage_target_achieved.toFixed(2))
+        : null,
+    }));
+  }
+
+  async getDepartmentPillars(userId: string, userRole: UserRole, deptId: string) {
+    if (!userId) throw new ForbiddenException('User ID is required');
+    this.assertQacRole(userRole);
+
+    return this.prisma.departmentPillar.findMany({
+      where: {
+        dept_id: deptId,
+        status: 'active',
+      },
+      select: {
+        id: true,
+        pillar_name: true,
+      },
+      orderBy: {
+        pillar_name: 'asc',
+      },
+    });
+  }
+
   async getDashboardData(userId: string, userRole: UserRole): Promise<QacDashboardData> {
     if (!userId) throw new ForbiddenException('User ID is required');
     this.assertQacRole(userRole);

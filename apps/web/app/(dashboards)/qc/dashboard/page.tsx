@@ -26,11 +26,30 @@ import {
   Loader2,
 } from "lucide-react";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import { useState } from "react";
+import {
+  useGetScoreSheet,
+  useGetDepartmentPillars,
+} from "@/queries/qc/score-sheet";
+import {
   QacDashboardData,
   DepartmentStatus,
 } from "@workspace/types/types/qc-dashboard.type";
 import { ElementType } from "react";
 import { useGetDashboardData } from "@/queries/qc/dashboard";
+import { ReadOnlyFormTable } from "@/components/qc/readonly-form-table";
 
 // Local type for the StatCard props, as it's a UI-specific component
 interface StatCardProps {
@@ -62,12 +81,16 @@ const StatCard = ({ title, value, icon: Icon, description }: StatCardProps) => (
 );
 
 export default function QACDashboard() {
+  const [selectedDept, setSelectedDept] = useState<string>("");
+  const [selectedPillar, setSelectedPillar] = useState<string>("");
+
   // Fetch real data using React Query
-  const { data, isLoading, error } = useGetDashboardData();
+  const { data: dashboardData, isLoading, error } = useGetDashboardData();
+  const { data: pillarsData } = useGetDepartmentPillars(selectedDept);
 
   if (isLoading) return <LoadingSpinner />;
 
-  if (error) {
+  if (error || !dashboardData) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <p className="text-destructive">Failed to load dashboard data</p>
@@ -75,9 +98,86 @@ export default function QACDashboard() {
     );
   }
 
-  if (!data) return null;
+  const { submissionStats, departmentStatus } = dashboardData;
 
-  const { submissionStats, departmentStatus } = data;
+  interface ScoreSheetProps {
+    selectedDept: string;
+    selectedPillar: string;
+    setSelectedPillar: (value: string) => void;
+  }
+
+  // Score Sheet Component
+  const ScoreSheet = ({
+    selectedDept,
+    selectedPillar,
+    setSelectedPillar,
+  }: ScoreSheetProps) => {
+    const { data: scoreSheetData, isLoading: isScoreSheetLoading } =
+      useGetScoreSheet(selectedDept, selectedPillar);
+
+    if (!selectedDept) {
+      return (
+        <div className="flex h-[200px] items-center justify-center">
+          <p className="text-muted-foreground">
+            Please select a department to view the score sheet
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {isScoreSheetLoading ? (
+          <LoadingSpinner />
+        ) : scoreSheetData && scoreSheetData.length > 0 ? (
+          <ReadOnlyFormTable
+            elements={[
+              {
+                id: "kpi_number",
+                type: "text",
+                attributes: { label: "KPI Number", width: 100 },
+              },
+              {
+                id: "kpi_metric_name",
+                type: "text",
+                attributes: { label: "KPI Metric", width: 250 },
+              },
+              {
+                id: "kpi_value",
+                type: "number",
+                attributes: { label: "Weightage", width: 100 },
+              },
+              {
+                id: "data_provided_by",
+                type: "text",
+                attributes: { label: "Stakeholder", width: 120 },
+              },
+              {
+                id: "kpi_target",
+                type: "text",
+                attributes: { label: "Target", width: 100 },
+              },
+              {
+                id: "percentage_target_achieved",
+                type: "number",
+                attributes: { label: "% Achieved", width: 150 },
+              },
+            ]}
+            entries={scoreSheetData}
+            className="w-full"
+            rowNumbers={true}
+            compact={true}
+          />
+        ) : (
+          <div className="flex h-[200px] items-center justify-center">
+            <p className="text-muted-foreground">
+              No data available for the selected criteria
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
@@ -117,72 +217,139 @@ export default function QACDashboard() {
         />
       </div>
 
-      {/* Enhanced Table Section - now using departmentStatus */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Department Status Details</CardTitle>
-          <CardDescription>
-            Detailed overview of each department's configuration and submission
-            activity.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[250px]">Department</TableHead>
-                <TableHead>HOD</TableHead>
-                <TableHead className="text-center">Pillars Set</TableHead>
-                <TableHead className="text-center">KPIs Set</TableHead>
-                <TableHead className="text-center">Submissions</TableHead>
-                <TableHead>Last Submission</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {departmentStatus.map((dept: DepartmentStatus) => (
-                <TableRow key={dept.id}>
-                  <TableCell className="font-medium">{dept.name}</TableCell>
-                  <TableCell>{dept.hod ?? "N/A"}</TableCell>
-                  <TableCell className="text-center">
-                    {dept.pillarsSet ? (
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200">
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Set
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive">
-                        <XCircle className="mr-1 h-3 w-3" />
-                        Not Set
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {dept.kpisSet ? (
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200">
-                        <CheckCircle2 className="mr-1 h-3 w-3" />
-                        Set
-                      </Badge>
-                    ) : (
-                      <Badge variant="destructive">
-                        <XCircle className="mr-1 h-3 w-3" />
-                        Not Set
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center font-mono">
-                    {dept.totalSubmissions}
-                  </TableCell>
-                  <TableCell>
-                    {dept.lastSubmission
-                      ? new Date(dept.lastSubmission).toLocaleDateString()
-                      : "N/A"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Tabbed Interface */}
+      <Tabs defaultValue="scoresheet" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="scoresheet">Score Sheet</TabsTrigger>
+          <TabsTrigger value="status">Dept. Status</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="scoresheet">
+          <Card>
+            <CardHeader>
+              <CardTitle>Department Score Sheet</CardTitle>
+              <CardDescription>
+                View detailed KPI scores and achievements by department and
+                pillar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4 mb-6">
+                <Select
+                  value={selectedDept}
+                  onValueChange={(value) => {
+                    setSelectedDept(value);
+                    setSelectedPillar(""); // Reset pillar selection when department changes
+                  }}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departmentStatus.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {selectedDept && (
+                  <Select
+                    value={selectedPillar}
+                    onValueChange={setSelectedPillar}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select Pillar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pillarsData?.map((pillar) => (
+                        <SelectItem key={pillar.id} value={pillar.id}>
+                          {pillar.pillar_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <ScoreSheet
+                selectedDept={selectedDept}
+                selectedPillar={selectedPillar}
+                setSelectedPillar={setSelectedPillar}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="status">
+          <Card>
+            <CardHeader>
+              <CardTitle>Department Status Details</CardTitle>
+              <CardDescription>
+                Detailed overview of each department's configuration and
+                submission activity.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">Department</TableHead>
+                    <TableHead>HOD</TableHead>
+                    <TableHead className="text-center">Pillars Set</TableHead>
+                    <TableHead className="text-center">KPIs Set</TableHead>
+                    <TableHead className="text-center">Submissions</TableHead>
+                    <TableHead>Last Submission</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {departmentStatus.map((dept: DepartmentStatus) => (
+                    <TableRow key={dept.id}>
+                      <TableCell className="font-medium">{dept.name}</TableCell>
+                      <TableCell>{dept.hod ?? "N/A"}</TableCell>
+                      <TableCell className="text-center">
+                        {dept.pillarsSet ? (
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200">
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            Set
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            <XCircle className="mr-1 h-3 w-3" />
+                            Not Set
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {dept.kpisSet ? (
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200">
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            Set
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            <XCircle className="mr-1 h-3 w-3" />
+                            Not Set
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center font-mono">
+                        {dept.totalSubmissions}
+                      </TableCell>
+                      <TableCell>
+                        {dept.lastSubmission
+                          ? new Date(dept.lastSubmission).toLocaleDateString()
+                          : "N/A"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
