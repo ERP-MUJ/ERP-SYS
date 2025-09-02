@@ -23,6 +23,7 @@ export interface KpiData {
   data_provided_by?: string | null;
   kpi_description?: string | null;
   kpi_value?: number | null;
+  kpi_target?: number | null;
   kpi_data?: any;
   kpi_calculated_metrics?: any;
   academic_year?: number;
@@ -47,9 +48,9 @@ interface KpiValue {
 interface AssignKpiTableProps {
   assignedKpis: KpiData[];
   unassignedKpis: KpiData[];
-  onAssign: (kpi: KpiData, weightage: number) => void;
+  onAssign: (kpi: KpiData, weightage: number, target?: number) => void;
   onUnassign: (kpi: KpiData) => void;
-  onUpdate: (kpi: KpiData, weightage: number) => void;
+  onUpdate: (kpi: KpiData, weightage?: number, target?: number) => void;
 }
 
 export function AssignKpiTable({
@@ -85,7 +86,7 @@ export function AssignKpiTable({
     allKpis.forEach((kpi) => {
       newValues[kpi.id] = {
         weightage: kpi.kpi_value?.toString() ?? "0", // Use existing kpi_value for weightage
-        value: "",
+        value: kpi.kpi_target?.toString() ?? "", // Use existing kpi_target for target
       };
     });
     setKpiValues(newValues);
@@ -186,7 +187,7 @@ export function AssignKpiTable({
                           !isNaN(newWeightage) &&
                           newWeightage !== originalWeightage
                         ) {
-                          onUpdate(kpi, newWeightage);
+                          onUpdate(kpi, newWeightage, undefined);
                         }
                       }
                     }}
@@ -205,6 +206,7 @@ export function AssignKpiTable({
               </TableCell>
               <TableCell className="text-center align-middle">
                 <Input
+                  type="number"
                   className="w-24 text-center"
                   value={kpiValues[kpi.id]?.value ?? ""}
                   onChange={(e) => {
@@ -215,6 +217,19 @@ export function AssignKpiTable({
                       value: e.target.value,
                     });
                   }}
+                  onBlur={(e) => {
+                    if (kpi.isAssigned) {
+                      const newTarget = parseFloat(e.target.value);
+                      const originalTarget = kpi.kpi_target;
+
+                      // Check if the value is a valid number and has actually changed
+                      if (!isNaN(newTarget) && newTarget !== originalTarget) {
+                        onUpdate(kpi, undefined, newTarget);
+                      }
+                    }
+                  }}
+                  min="0"
+                  step="1"
                 />
               </TableCell>
               <TableCell className="text-center align-middle">
@@ -236,8 +251,11 @@ export function AssignKpiTable({
                       const weightageValue = parseFloat(
                         kpiValues[kpi.id]?.weightage ?? "0",
                       );
+                      const targetValue = parseFloat(
+                        kpiValues[kpi.id]?.value ?? "0",
+                      );
                       if (!isNaN(weightageValue) && !totalWeightError) {
-                        onAssign(kpi, weightageValue);
+                        onAssign(kpi, weightageValue, targetValue);
                       }
                     }}
                     disabled={totalWeightError}

@@ -36,7 +36,7 @@ export class DepartmentAssignmentController {
   assignPillarToDepartment(
     @CurrentUser() user: RequestUser,
     @Param('departmentId') departmentId: string,
-    @Body() body: { pillarTemplateId: string; pillarWeight?: number },
+    @Body() body: { pillarTemplateId: string; pillarWeight?: number; pillarTarget?: number },
   ) {
     return this.departmentAssignmentService.assignPillarToDepartment(
       user.id,
@@ -44,6 +44,7 @@ export class DepartmentAssignmentController {
       departmentId,
       body.pillarTemplateId,
       body.pillarWeight,
+      body.pillarTarget,
     );
   }
 
@@ -55,13 +56,14 @@ export class DepartmentAssignmentController {
   updateDepartmentPillar(
     @CurrentUser() user: RequestUser,
     @Param('departmentPillarId') departmentPillarId: string,
-    @Body() body: { pillarWeight: number },
+    @Body() body: { pillarWeight?: number; pillarTarget?: number },
   ) {
     return this.departmentAssignmentService.updateDepartmentPillar(
       user.id,
       user.role,
       departmentPillarId,
       body.pillarWeight,
+      body.pillarTarget,
     );
   }
 
@@ -82,7 +84,7 @@ export class DepartmentAssignmentController {
   assignKpiToDepartmentPillar(
     @CurrentUser() user: RequestUser,
     @Param('departmentPillarId') departmentPillarId: string,
-    @Body() body: { kpiTemplateId: string; kpiValue: number },
+    @Body() body: { kpiTemplateId: string; kpiValue: number; kpiTarget?: number },
   ) {
     return this.departmentAssignmentService.assignKpiToDepartmentPillar(
       user.id,
@@ -90,6 +92,7 @@ export class DepartmentAssignmentController {
       departmentPillarId,
       body.kpiTemplateId,
       body.kpiValue,
+      body.kpiTarget,
     );
   }
 
@@ -97,9 +100,15 @@ export class DepartmentAssignmentController {
   updateDepartmentKpi(
     @CurrentUser() user: RequestUser,
     @Param('departmentKpiId') departmentKpiId: string,
-    @Body() body: { kpiValue: number },
+    @Body() body: { kpiValue?: number; kpiTarget?: number },
   ) {
-    return this.departmentAssignmentService.updateDepartmentKpi(user.id, user.role, departmentKpiId, body.kpiValue);
+    return this.departmentAssignmentService.updateDepartmentKpi(
+      user.id,
+      user.role,
+      departmentKpiId,
+      body.kpiValue,
+      body.kpiTarget,
+    );
   }
 
   @Delete('department-kpis/:departmentKpiId')

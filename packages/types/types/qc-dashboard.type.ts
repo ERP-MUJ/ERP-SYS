@@ -34,6 +34,20 @@ export interface DepartmentStatus {
  * Represents the complete data payload required for the QAC Dashboard.
  * This is the main interface the API endpoint should return.
  */
+export interface ScoreSheetKpi {
+  kpi_number: number;
+  kpi_metric_name: string;
+  kpi_value: number | null;
+  data_provided_by: string | null;
+  kpi_target: number | null;
+  percentage_target_achieved: number | null;
+}
+
+export interface DepartmentPillar {
+  id: string;
+  pillar_name: string;
+}
+
 export interface QacDashboardData {
   submissionStats: SubmissionStats;
   departmentStatus: DepartmentStatus[];

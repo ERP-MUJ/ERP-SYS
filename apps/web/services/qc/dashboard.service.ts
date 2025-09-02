@@ -1,17 +1,24 @@
 import { ApiClient } from "@/lib/api-client";
-import { QacDashboardData } from "@workspace/types/types/qc-dashboard.type";
+import {
+  QacDashboardData,
+  ScoreSheetKpi,
+  DepartmentPillar,
+} from "@workspace/types/types/qc-dashboard.type";
 import { ApiError } from "@/types/error";
 
-/**
- * Fetches QAC dashboard data including submission stats and department status
- * @returns Promise with dashboard data
- */
-export const getDashboardData = async () => {
-  try {
-    const response = await ApiClient.get<QacDashboardData>("/qc/dashboard");
-    return response;
-  } catch (error: unknown) {
-    const apiError = error as ApiError;
-    throw error;
+export class QcDashboardService {
+  static async getDashboardData() {
+    return ApiClient.get<QacDashboardData>("/qc/dashboard");
   }
-};
+
+  static async getScoreSheet(deptId: string, pillarId?: string) {
+    const url = `/qc/dashboard/score-sheet/${deptId}${pillarId ? `?pillarId=${pillarId}` : ""}`;
+    return ApiClient.get<ScoreSheetKpi[]>(url);
+  }
+
+  static async getDepartmentPillars(deptId: string) {
+    return ApiClient.get<DepartmentPillar[]>(
+      `/qc/dashboard/departments/${deptId}/pillars`,
+    );
+  }
+}

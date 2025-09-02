@@ -129,17 +129,21 @@ export function useUpdateDepartmentPillar() {
     mutationFn: async ({
       departmentPillarId,
       pillarWeight,
+      pillarTarget,
       departmentId,
     }: {
       departmentPillarId: string;
-      pillarWeight: number;
+      pillarWeight?: number;
+      pillarTarget?: number;
       departmentId: string;
     }) => {
-      const res = await updateDepartmentPillar(departmentPillarId, {
-        pillarWeight,
-      });
+      const payload: any = {};
+      if (pillarWeight !== undefined) payload.pillarWeight = pillarWeight;
+      if (pillarTarget !== undefined) payload.pillarTarget = pillarTarget;
+
+      const res = await updateDepartmentPillar(departmentPillarId, payload);
       if (res.data) return res.data;
-      throw new Error(res.error?.message || "Failed to update pillar weight");
+      throw new Error(res.error?.message || "Failed to update pillar");
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
@@ -199,15 +203,18 @@ export function useAssignKpiToDepartmentPillar() {
       departmentPillarId,
       kpiTemplateId,
       kpiValue,
+      kpiTarget,
     }: {
       departmentPillarId: string;
       kpiTemplateId: string;
       kpiValue: number;
+      kpiTarget?: number;
     }) => {
       const res = await assignKpiToDepartmentPillar(
         departmentPillarId,
         kpiTemplateId,
         kpiValue,
+        kpiTarget,
       );
       if (res.data) return res.data;
       throw new Error(
@@ -234,13 +241,19 @@ export function useUpdateDepartmentKpi() {
     mutationFn: async ({
       departmentKpiId,
       kpiValue,
+      kpiTarget,
       departmentPillarId,
     }: {
       departmentKpiId: string;
-      kpiValue: number;
+      kpiValue?: number;
+      kpiTarget?: number;
       departmentPillarId: string;
     }) => {
-      const res = await updateDepartmentKpi(departmentKpiId, { kpiValue });
+      const payload: any = {};
+      if (kpiValue !== undefined) payload.kpiValue = kpiValue;
+      if (kpiTarget !== undefined) payload.kpiTarget = kpiTarget;
+
+      const res = await updateDepartmentKpi(departmentKpiId, payload);
       if (res.data) return res.data;
       throw new Error(res.error?.message || "Failed to update KPI");
     },

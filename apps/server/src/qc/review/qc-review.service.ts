@@ -118,13 +118,35 @@ export class QcReviewService {
       updatedMetrics,
     });
 
+    interface DepartmentKpiReviewData {
+      kpi_status: KpiStatus;
+      comments: string;
+      kpi_calculated_metrics: object;
+      percentage_target_achieved?: number;
+    }
+
+    // Calculate percentage_target_achieved when approving
+    const updateData: DepartmentKpiReviewData = {
+      kpi_status: target,
+      comments: remark,
+      kpi_calculated_metrics: updatedMetrics as object,
+    };
+
+    if (action === 'APPROVE' && kpi.kpi_target) {
+      const entriesCount = entries.length;
+      const percentageAchieved = (entriesCount / kpi.kpi_target) * 100;
+      updateData.percentage_target_achieved = percentageAchieved;
+
+      console.log('Calculated percentage achieved:', {
+        entriesCount,
+        kpiTarget: kpi.kpi_target,
+        percentageAchieved,
+      });
+    }
+
     const updated = await this.prisma.departmentKpi.update({
       where: { id: kpiId },
-      data: {
-        kpi_status: target,
-        comments: remark,
-        kpi_calculated_metrics: updatedMetrics,
-      },
+      data: updateData,
       include: {
         department_pillar: { select: { pillar_name: true } },
         department: { select: { dept_name: true } },
