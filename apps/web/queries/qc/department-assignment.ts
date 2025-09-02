@@ -140,7 +140,7 @@ export function useUpdateDepartmentPillar() {
       const payload: any = {};
       if (pillarWeight !== undefined) payload.pillarWeight = pillarWeight;
       if (pillarTarget !== undefined) payload.pillarTarget = pillarTarget;
-      
+
       const res = await updateDepartmentPillar(departmentPillarId, payload);
       if (res.data) return res.data;
       throw new Error(res.error?.message || "Failed to update pillar");
@@ -252,7 +252,7 @@ export function useUpdateDepartmentKpi() {
       const payload: any = {};
       if (kpiValue !== undefined) payload.kpiValue = kpiValue;
       if (kpiTarget !== undefined) payload.kpiTarget = kpiTarget;
-      
+
       const res = await updateDepartmentKpi(departmentKpiId, payload);
       if (res.data) return res.data;
       throw new Error(res.error?.message || "Failed to update KPI");

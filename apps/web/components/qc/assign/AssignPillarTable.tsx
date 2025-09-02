@@ -92,9 +92,9 @@ export function AssignPillarTable({
             <TableHead className="text-left align-middle pl-10 w-32">
               Weight
             </TableHead>
-              <TableHead className="text-left align-middle pl-10 w-32">
-                Target
-              </TableHead>
+            <TableHead className="text-left align-middle pl-10 w-32">
+              Target
+            </TableHead>
             <TableHead className="text-center align-middle w-32">
               Action
             </TableHead>
@@ -136,7 +136,9 @@ export function AssignPillarTable({
                   type="number"
                   className="w-24 text-cent"
                   value={pillarTargets[pillar.id] ?? ""}
-                  onChange={(e) => handleTargetChange(pillar.id, e.target.value)}
+                  onChange={(e) =>
+                    handleTargetChange(pillar.id, e.target.value)
+                  }
                   onBlur={(e) => {
                     if (pillar.departmentPillarId) {
                       const newTarget = parseFloat(e.target.value);
@@ -192,7 +194,9 @@ export function AssignPillarTable({
                   type="number"
                   className="w-24"
                   value={pillarTargets[pillar.id] ?? ""}
-                  onChange={(e) => handleTargetChange(pillar.id, e.target.value)}
+                  onChange={(e) =>
+                    handleTargetChange(pillar.id, e.target.value)
+                  }
                   min="0"
                   step="1"
                 />

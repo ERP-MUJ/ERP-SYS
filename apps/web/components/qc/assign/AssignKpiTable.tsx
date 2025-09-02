@@ -221,12 +221,9 @@ export function AssignKpiTable({
                     if (kpi.isAssigned) {
                       const newTarget = parseFloat(e.target.value);
                       const originalTarget = kpi.kpi_target;
-                      
+
                       // Check if the value is a valid number and has actually changed
-                      if (
-                        !isNaN(newTarget) &&
-                        newTarget !== originalTarget
-                      ) {
+                      if (!isNaN(newTarget) && newTarget !== originalTarget) {
                         onUpdate(kpi, undefined, newTarget);
                       }
                     }

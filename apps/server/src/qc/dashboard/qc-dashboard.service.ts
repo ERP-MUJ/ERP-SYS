@@ -53,7 +53,7 @@ export class QcDashboardService {
     if (!userId) throw new ForbiddenException('User ID is required');
     this.assertQacRole(userRole);
 
-    return this.prisma.departmentPillar.findMany({
+    return await this.prisma.departmentPillar.findMany({
       where: {
         dept_id: deptId,
         status: 'active',

@@ -1,6 +1,11 @@
 "use client";
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { MessageSquare, AlertCircle } from "lucide-react";
 
@@ -59,9 +64,11 @@ export function ReviewStatusDisplay({
   title = "Review Status",
   latestReviewComments,
 }: ReviewStatusDisplayProps) {
-  const latestReview = reviewHistory.length > 0 ? reviewHistory[reviewHistory.length - 1] : null;
+  const latestReview =
+    reviewHistory.length > 0 ? reviewHistory[reviewHistory.length - 1] : null;
   const displayStatus = latestReview?.action || status;
-  const comments = latestReview?.comments || latestReview?.remark || latestReviewComments;
+  const comments =
+    latestReview?.comments || latestReview?.remark || latestReviewComments;
 
   if (!displayStatus && reviewHistory.length === 0) {
     return null;

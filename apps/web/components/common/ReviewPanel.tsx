@@ -65,14 +65,17 @@ export function ReviewPanel({
 
   const handleAction = (action: ReviewAction) => {
     const trimmedRemark = remark.trim();
-    
+
     // Check if this specific action requires a remark
-    const actionRequiresRemark = action.requiresRemark !== undefined 
-      ? action.requiresRemark 
-      : remarkRequired;
-    
+    const actionRequiresRemark =
+      action.requiresRemark !== undefined
+        ? action.requiresRemark
+        : remarkRequired;
+
     if (actionRequiresRemark && !trimmedRemark) {
-      toast.error(`Please provide a ${remarkLabel.toLowerCase()} before submitting your review`);
+      toast.error(
+        `Please provide a ${remarkLabel.toLowerCase()} before submitting your review`,
+      );
       return;
     }
 
@@ -125,9 +128,10 @@ export function ReviewPanel({
                     onClick={() => handleAction(action)}
                     disabled={
                       isUpdating ||
-                      ((action.requiresRemark !== undefined 
-                        ? action.requiresRemark 
-                        : remarkRequired) && remark.trim().length === 0)
+                      ((action.requiresRemark !== undefined
+                        ? action.requiresRemark
+                        : remarkRequired) &&
+                        remark.trim().length === 0)
                     }
                   >
                     {action.label}

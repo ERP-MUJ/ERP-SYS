@@ -201,7 +201,11 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  const handleUpdatePillar = (pillar: PillarData, weight?: number, target?: number) => {
+  const handleUpdatePillar = (
+    pillar: PillarData,
+    weight?: number,
+    target?: number,
+  ) => {
     if (!selectedDepartmentId) {
       toast.error("Please select a department");
       return;
@@ -223,7 +227,11 @@ export default function AssignKpiToDepartmentPage() {
     updatePillarMutation.mutate(updateData);
   };
 
-  const handleAssignKpi = (kpi: KpiData, weightage: number, target?: number) => {
+  const handleAssignKpi = (
+    kpi: KpiData,
+    weightage: number,
+    target?: number,
+  ) => {
     if (!selectedDepartmentPillar) {
       toast.error("No department pillar selected");
       return;
@@ -254,7 +262,11 @@ export default function AssignKpiToDepartmentPage() {
     });
   };
 
-  const handleUpdateKpi = (kpi: KpiData, weightage?: number, target?: number) => {
+  const handleUpdateKpi = (
+    kpi: KpiData,
+    weightage?: number,
+    target?: number,
+  ) => {
     if (!selectedDepartmentPillar) {
       toast.error("No department pillar selected");
       return;
