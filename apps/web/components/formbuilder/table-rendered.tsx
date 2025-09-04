@@ -53,6 +53,7 @@ import { LineChartIcon as ChartLine } from "lucide-react";
 import { useSaveKpiData } from "@/hooks/faculty";
 import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
+import { ExcelUploadDialog } from "./ExcelUploadDialog";
 
 interface TableFormRendererProps {
   name: string;
@@ -497,6 +498,7 @@ export default function TableFormRenderer({
               )}
               Download Excel
             </Button>
+            <ExcelUploadDialog kpiId={id} />
             <Button
               variant="outline"
               onClick={() => {

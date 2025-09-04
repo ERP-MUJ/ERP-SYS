@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiParam, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -7,18 +8,18 @@ import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { UserRole } from '@repo/db/prisma/client';
 import { CoordinatorKpiService } from './coordinator-kpi.service';
 import { ExcelTemplateResponseDto } from './dto/excel.dto';
+import { ExcelUploadResponseDto } from './dto/excel-upload.dto';
 
 interface RequestUser {
   id: string;
-  email: string;
   role: UserRole;
 }
 
-@ApiTags('KPI Coordinator')
+@ApiTags('Coordinator KPI Management')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.KPI_COORDINATOR)
-@Controller('/coordinator/kpi')
+@Controller('coordinator/kpi')
 export class CoordinatorKpiController {
   constructor(private readonly coordinatorKpiService: CoordinatorKpiService) {}
 
@@ -93,5 +94,43 @@ export class CoordinatorKpiController {
     @CurrentUser() user: RequestUser,
   ): Promise<ExcelTemplateResponseDto> {
     return await this.coordinatorKpiService.downloadKpiTemplate(user.id, user.role, kpiId);
+  }
+
+  @Post('/:kpiId/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiParam({ name: 'kpiId', description: 'KPI ID to upload data for' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Upload Excel file with KPI data',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Excel file (.xlsx, .xls) with KPI data',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Excel file uploaded and processed successfully',
+    type: ExcelUploadResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid file format or validation errors',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'KPI not found',
+  })
+  async uploadExcel(
+    @Param('kpiId') kpiId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: RequestUser,
+  ): Promise<ExcelUploadResponseDto> {
+    return await this.coordinatorKpiService.uploadExcel(user.id, user.role, kpiId, file);
   }
 }

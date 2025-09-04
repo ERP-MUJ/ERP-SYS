@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ExcelService } from './excel.service';
+import { ExcelService, ExcelValidationService } from './excel.service';
 
 @Module({
-  providers: [ExcelService],
-  exports: [ExcelService],
+  providers: [ExcelService, ExcelValidationService],
+  exports: [ExcelService, ExcelValidationService],
 })
 export class ServicesModule {}
