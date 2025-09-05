@@ -16,7 +16,6 @@ import {
 import { Badge } from "@workspace/ui/components/badge";
 import { AlertCircle, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
-
 // Define type for API response
 interface KpiData {
   kpi_name?: string;
@@ -55,7 +54,6 @@ interface KpiData {
     [key: string]: any;
   };
 }
-
 // Helper function to get status badge variant
 function getStatusBadgeVariant(status?: string) {
   switch (status) {
@@ -73,7 +71,6 @@ function getStatusBadgeVariant(status?: string) {
       return "secondary";
   }
 }
-
 // Helper function to get status display text
 function getStatusDisplayText(status?: string) {
   switch (status) {
@@ -91,7 +88,6 @@ function getStatusDisplayText(status?: string) {
       return status || "Unknown";
   }
 }
-
 export default function HodKpiPage({
   params,
 }: {
@@ -101,28 +97,22 @@ export default function HodKpiPage({
   const { data, isLoading, error } = useGetKpiDetails(id);
   const submitToQc = useSubmitKpiToQc();
   console.log("HOD KPI Data:", data);
-
   if (isLoading) {
     return <div className="text-center">Loading KPI details...</div>;
   }
-
   if (error) {
     return <div>Error: {String(error)}</div>;
   }
-
   if (!data) {
     return <div>No KPI data found</div>;
   }
-
   // Use proper typing for the API response
   const kpiData = data as KpiData;
   const kpi = kpiData.kpi_name || kpiData.kpi_metric_name || "Untitled KPI";
   const description = kpiData.kpi_description || "No description available";
-
   // Extract elements from kpi_data if available, or from elements field
   const rawElements =
     kpiData.elements || (kpiData.kpi_data?.elements as any[]) || [];
-
   // Transform elements to match FormElementInstance interface
   const elements = rawElements.map((el) => {
     // Handle elements that might come in different formats
@@ -142,25 +132,21 @@ export default function HodKpiPage({
       } as FormElementInstance;
     }
   });
-
   // Load existing form responses if available
   const existingData =
     kpiData.existingData || kpiData.form_responses?.entries || [];
-
   // Check if there are QC review comments or status changes
   const hasQcReview =
     kpiData.kpi_status &&
     ["REVISION", "APPROVED", "REJECTED"].includes(kpiData.kpi_status);
   const reviewHistory = kpiData.kpi_calculated_metrics?.review_history || [];
   const latestComment = kpiData.comments;
-
   // Check if KPI is editable
   const isEditable =
     !kpiData.kpi_status || ["PENDING", "REVISION"].includes(kpiData.kpi_status);
   const isLocked = ["APPROVED", "REJECTED", "OVERDUE"].includes(
     kpiData.kpi_status || "",
   );
-
   // Handle submit to QC action
   const handleSubmitToQc = async (entries: Record<string, any>[]) => {
     if (!entries || entries.length === 0) {
@@ -169,7 +155,6 @@ export default function HodKpiPage({
       );
       return;
     }
-
     try {
       await submitToQc.mutateAsync({
         kpiId: id,
@@ -183,7 +168,6 @@ export default function HodKpiPage({
       console.error("Submit to QC failed:", error);
     }
   };
-
   return (
     <div className="space-y-6 p-6">
       {/* Status Information */}
@@ -224,7 +208,6 @@ export default function HodKpiPage({
           )}
         </Card>
       )}
-
       {/* QC Review Status and Comments Section */}
       {hasQcReview && (
         <Card className="border-l-4 border-l-amber-400">
@@ -260,7 +243,6 @@ export default function HodKpiPage({
                 </div>
               </div>
             )}
-
             {/* Review History */}
             {reviewHistory.length > 0 && (
               <div>
@@ -309,7 +291,6 @@ export default function HodKpiPage({
           </CardContent>
         </Card>
       )}
-
       {/* KPI Form */}
       {isEditable ? (
         <TableFormRenderer

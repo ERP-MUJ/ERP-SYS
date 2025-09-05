@@ -8,7 +8,6 @@ import { HodKpiService } from './kpi-management/kpi-management.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { HodCoordinatorWorkflowController } from './coordinator-workflow.controller';
 import { HodCoordinatorWorkflowService } from './hod-coordinator-workflow.service';
-
 @Module({
   controllers: [DepartmentInfoController, CoordinatorController, HodKpiController, HodCoordinatorWorkflowController],
   providers: [DepartmentInfoService, CoordinatorService, HodKpiService, HodCoordinatorWorkflowService],

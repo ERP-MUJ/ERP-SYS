@@ -169,6 +169,8 @@ model DepartmentKpi {
   kpi_target                 Float?
   percentage_target_achieved Float?
   performance                Float?
+  hod_percentage_target_achieved Float?
+  hod_performance Float?
   data_provided_by           String?
   kpi_data                   Json
   academic_year              Int
