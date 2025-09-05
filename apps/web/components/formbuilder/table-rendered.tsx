@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import type { FormElementInstance } from "@/lib/types";
 import { Button } from "@workspace/ui/components/button";
@@ -54,7 +53,6 @@ import { useSaveKpiData } from "@/hooks/faculty";
 import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { ExcelUploadDialog } from "./ExcelUploadDialog";
-
 interface TableFormRendererProps {
   name: string;
   elements: FormElementInstance[];
@@ -77,9 +75,7 @@ interface TableFormRendererProps {
     variant?: "default" | "outline";
   };
 }
-
 type FormEntry = Record<string, any>;
-
 export default function TableFormRenderer({
   name,
   elements,
@@ -96,7 +92,6 @@ export default function TableFormRenderer({
     ? customSaveHook()
     : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   // Excel operations
   const downloadExcelMutation = useDownloadExcelTemplate();
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
@@ -104,10 +99,8 @@ export default function TableFormRenderer({
     useState<FormElementInstance | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [complexValue, setComplexValue] = useState<any>(null);
-
   // Local storage key for draft data
   const localStorageKey = `kpi-form-draft-${id}`;
-
   // Load existing data or draft data on component mount
   useEffect(() => {
     // First try to load from props (server data)
@@ -115,7 +108,6 @@ export default function TableFormRenderer({
       setEntries(existingData);
       return;
     }
-
     // If no server data, try to load from local storage
     try {
       const savedDraft = localStorage.getItem(localStorageKey);
@@ -130,7 +122,6 @@ export default function TableFormRenderer({
       console.error("Error loading draft data:", error);
     }
   }, [existingData, id, localStorageKey]);
-
   // Save to local storage when entries change (debounced)
   useEffect(() => {
     // Only save non-empty entries
@@ -146,20 +137,16 @@ export default function TableFormRenderer({
           console.error("Error saving draft data:", error);
         }
       }, 1000); // 1 second debounce
-
       return () => clearTimeout(saveTimeout);
     }
   }, [entries, localStorageKey]);
-
   // Autosave to server periodically (every 30 seconds) if there are changes
   const [lastSavedEntries, setLastSavedEntries] = useState<string>("");
-
   useEffect(() => {
     // Only consider filled entries
     const filledEntries = entries.filter(
       (entry) => Object.keys(entry).length > 0,
     );
-
     // If we have data and it's different from last saved data
     const currentEntriesString = JSON.stringify(filledEntries);
     if (filledEntries.length > 0 && currentEntriesString !== lastSavedEntries) {
@@ -167,14 +154,12 @@ export default function TableFormRenderer({
         // Don't autosave if actively submitting
         if (!isSubmitting && filledEntries.length > 0) {
           console.log("Auto-saving to server...");
-
           const formDataToSubmit = {
             id: id,
             formData: {
               entries: filledEntries,
             },
           };
-
           // Silent autosave with no UI feedback unless it fails
           saveKpiData(formDataToSubmit, {
             onSuccess: () => {
@@ -191,27 +176,22 @@ export default function TableFormRenderer({
           });
         }
       }, 30000); // 30 seconds
-
       return () => clearTimeout(autoSaveTimeout);
     }
   }, [entries, id, saveKpiData, isSubmitting, lastSavedEntries]);
-
   // Filter elements that can be displayed in a table (simple inputs)
   const tableElements = elements.filter((element) =>
     ["text", "number", "email", "date", "select", "checkbox"].includes(
       element.type,
     ),
   );
-
   // Complex elements that need a dialog
   const complexElements = elements.filter((element) =>
     ["textarea", "radio", "file"].includes(element.type),
   );
-
   const addNewRow = () => {
     setEntries([...entries, {}]);
   };
-
   const removeRow = (index: number) => {
     if (entries.length === 1) {
       // If it's the last row, just clear it instead of removing
@@ -222,7 +202,6 @@ export default function TableFormRenderer({
       setEntries(newEntries);
     }
   };
-
   const updateEntry = (rowIndex: number, elementId: string, value: any) => {
     const newEntries = [...entries];
     newEntries[rowIndex] = {
@@ -231,7 +210,6 @@ export default function TableFormRenderer({
     };
     setEntries(newEntries);
   };
-
   const openComplexEditor = (
     rowIndex: number,
     element: FormElementInstance,
@@ -241,45 +219,37 @@ export default function TableFormRenderer({
     setComplexValue(entries[rowIndex]?.[element.id] || null);
     setDialogOpen(true);
   };
-
   const saveComplexValue = () => {
     if (activeRowIndex !== null && activeElement) {
       updateEntry(activeRowIndex, activeElement.id, complexValue);
     }
     setDialogOpen(false);
   };
-
   const validateEntries = () => {
     const invalidRows: number[] = [];
-
     entries.forEach((entry, index) => {
       // Skip validation for empty rows (except if it's the only row)
       if (Object.keys(entry).length === 0 && entries.length > 1) {
         return;
       }
-
       elements.forEach((element) => {
         if (element.attributes.required && !entry[element.id]) {
           invalidRows.push(index + 1); // +1 for human-readable row numbers
         }
       });
     });
-
     return invalidRows;
   };
-
   const handleSubmit = async () => {
     const filledEntries = entries.filter(
       (entry) => Object.keys(entry).length > 0,
     );
-
     if (filledEntries.length === 0) {
       toast.warning("No data to submit", {
         description: "Please add at least one entry to the table",
       });
       return;
     }
-
     const invalidRows = validateEntries();
     if (invalidRows.length > 0) {
       toast.error("Missing required fields", {
@@ -287,22 +257,18 @@ export default function TableFormRenderer({
       });
       return;
     }
-
     setIsSubmitting(true);
-
     const formDataToSubmit = {
       id: id,
       formData: {
         entries: filledEntries,
       },
     };
-
     // Perform save without persistent loading toast (only spinner on button)
     saveKpiData(formDataToSubmit, {
       onSuccess: () => {
         setIsSubmitting(false);
         toast.success("Data saved successfully!");
-
         // Clear draft from local storage after successful save
         try {
           localStorage.removeItem(`kpi-form-draft-${id}`);
@@ -317,7 +283,6 @@ export default function TableFormRenderer({
             error.message || "Please check your connection and try again",
           duration: 5000,
         });
-
         // Implement retry logic
         setTimeout(() => {
           if (!document.hidden) {
@@ -346,7 +311,6 @@ export default function TableFormRenderer({
       },
     });
   };
-
   const handleSecondaryAction = async () => {
     if (!secondaryAction) return;
     const filledEntries = entries.filter(
@@ -373,24 +337,18 @@ export default function TableFormRenderer({
       });
     }
   };
-
   const downloadExcel = () => {
     downloadExcelMutation.mutate(id);
   };
-
   const downloadPDF = () => {
     toast.success("PDF download functionality will be implemented");
   };
-
   const generateReport = () => {
     toast.success("Report generation functionality will be implemented");
   };
-
   const renderComplexElementEditor = () => {
     if (!activeElement) return null;
-
     const { id: elementId, type, attributes } = activeElement;
-
     switch (type) {
       case "textarea":
         return (
@@ -469,9 +427,7 @@ export default function TableFormRenderer({
         return <div>Unsupported element type</div>;
     }
   };
-
   const hasComplexElements = complexElements.length > 0;
-
   return (
     <Card className={className}>
       <CardHeader>
@@ -539,7 +495,6 @@ export default function TableFormRenderer({
                       )}
                     </TableCell>
                   ))}
-
                   {hasComplexElements && (
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
@@ -566,7 +521,6 @@ export default function TableFormRenderer({
                       </div>
                     </TableCell>
                   )}
-
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -582,14 +536,12 @@ export default function TableFormRenderer({
             </TableBody>
           </ReactTable>
         </div>
-
         {entries.length === 0 && (
           <div className="text-center py-4 text-gray-500">
             No entries yet. Add your first entry.
           </div>
         )}
       </CardContent>
-
       <CardFooter className="flex justify-between">
         <div className="flex gap-2">
           <Button variant="outline" onClick={addNewRow} disabled={isSubmitting}>
@@ -632,16 +584,13 @@ export default function TableFormRenderer({
           </Button>
         </div>
       </CardFooter>
-
       {/* Dialog for complex elements */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{activeElement?.attributes.label}</DialogTitle>
           </DialogHeader>
-
           <div className="py-4">{renderComplexElementEditor()}</div>
-
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
@@ -653,7 +602,6 @@ export default function TableFormRenderer({
     </Card>
   );
 }
-
 function renderTableCellInput(
   element: FormElementInstance,
   entry: Record<string, any>,
@@ -662,7 +610,6 @@ function renderTableCellInput(
 ) {
   const { id, type, attributes } = element;
   const value = entry[id];
-
   switch (type) {
     case "text":
     case "email":
