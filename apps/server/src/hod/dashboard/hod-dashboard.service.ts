@@ -80,6 +80,9 @@ export class HodDashboardService {
       select: {
         id: true,
         pillar_name: true,
+        pillar_weight: true,
+        hod_percentage_target_achieved: true,
+        hod_performance: true,
       },
       orderBy: {
         pillar_name: 'asc',

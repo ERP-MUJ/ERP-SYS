@@ -123,6 +123,7 @@ export class QcReviewService {
       comments: string;
       kpi_calculated_metrics: object;
       percentage_target_achieved?: number;
+      performance?: number;
     }
 
     // Calculate percentage_target_achieved when approving
@@ -133,26 +134,84 @@ export class QcReviewService {
     };
 
     if (action === 'APPROVE' && kpi.kpi_target) {
+      if (kpi.kpi_target <= 0) {
+        throw new BadRequestException('KPI target must be greater than 0');
+      }
+
       const entriesCount = entries.length;
-      const percentageAchieved = (entriesCount / kpi.kpi_target) * 100;
+      const percentageAchieved = Number(((entriesCount / kpi.kpi_target) * 100).toFixed(2));
       updateData.percentage_target_achieved = percentageAchieved;
 
-      console.log('Calculated percentage achieved:', {
+      // Calculate performance as percentage_target_achieved * kpi_value
+      if (kpi.kpi_value !== undefined && kpi.kpi_value !== null) {
+        updateData.performance = Number((percentageAchieved * kpi.kpi_value).toFixed(2));
+      }
+
+      console.log('Calculated percentage achieved and performance:', {
         entriesCount,
         kpiTarget: kpi.kpi_target,
         percentageAchieved,
+        kpiValue: kpi.kpi_value,
+        calculatedPerformance: updateData.performance,
       });
     }
 
+    // First update the KPI
     const updated = await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: updateData,
       include: {
-        department_pillar: { select: { pillar_name: true } },
+        department_pillar: { select: { pillar_name: true, id: true } },
         department: { select: { dept_name: true } },
         assigned_users: { select: { id: true, user_name: true, user_email: true, user_role: true } },
       },
     });
+
+    // If we've updated the performance, recalculate the pillar's percentage_target_achieved
+    if (updateData.performance !== undefined && updated.department_pillar) {
+      // Get all KPIs for this pillar and the pillar details
+      const [pillarKpis, pillarDetails] = await Promise.all([
+        this.prisma.departmentKpi.findMany({
+          where: {
+            dept_pillar_id: updated.department_pillar.id,
+            kpi_status: KpiStatus.APPROVED, // Only consider approved KPIs
+          },
+          select: { performance: true },
+        }),
+        this.prisma.departmentPillar.findUnique({
+          where: { id: updated.department_pillar.id },
+          select: { pillar_weight: true },
+        }),
+      ]);
+
+      // Calculate total performance for the pillar
+      const totalPerformance = pillarKpis.reduce((sum, kpi) => {
+        return sum + (kpi.performance || 0);
+      }, 0);
+
+      // Calculate pillar's percentage_target_achieved and performance
+      const percentageTargetAchieved = Number(totalPerformance.toFixed(2));
+      const pillarPerformance = pillarDetails?.pillar_weight
+        ? Number((percentageTargetAchieved * pillarDetails.pillar_weight).toFixed(2))
+        : null;
+
+      // Update both percentage_target_achieved and performance
+      await this.prisma.departmentPillar.update({
+        where: { id: updated.department_pillar.id },
+        data: {
+          percentage_target_achieved: percentageTargetAchieved,
+          performance: pillarPerformance,
+        },
+      });
+
+      console.log('Updated pillar metrics:', {
+        pillarId: updated.department_pillar.id,
+        totalKpiPerformance: totalPerformance,
+        percentageTargetAchieved,
+        pillarWeight: pillarDetails?.pillar_weight,
+        calculatedPillarPerformance: pillarPerformance,
+      });
+    }
 
     return { message: 'KPI status updated', data: updated };
   }
