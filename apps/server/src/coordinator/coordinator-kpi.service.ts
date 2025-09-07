@@ -259,7 +259,7 @@ export class CoordinatorKpiService {
 
       return { message: 'Draft saved' };
     } catch (error) {
-      console.error(`Draft save error for KPI ${kpiId}:`, error);
+      console.error(`Draft save error for KPI ${kpiId}:`, error instanceof Error ? error.message : 'Unknown error');
       // Return success message instead of throwing error to prevent UI toasts
       return { message: 'Draft save skipped due to concurrent update' };
     }
