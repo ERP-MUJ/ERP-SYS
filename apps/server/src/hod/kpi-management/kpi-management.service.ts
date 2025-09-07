@@ -120,10 +120,21 @@ export class HodKpiService {
     // Calculate HOD performance based on kpi_value and hod_percentage_target_achieved
     const hodPerformance = Number(((Number(kpi.kpi_value) || 0) * hodPercentageAchieved).toFixed(2));
     // Update the KPI first
+
+    // Get existing form responses to preserve coordinator workflow
+    const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
+
+    // Prepare updated form responses preserving coordinator workflow
+    const updatedFormResponses = {
+      ...formResponses,
+      // Preserve coordinator workflow if it exists
+      coordinator_workflow: existingFormResponses.coordinator_workflow || null,
+    };
+      
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: JSON.parse(JSON.stringify(formResponses)),
+        form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
         kpi_status: newStatus,
         completed_date: new Date(),
         hod_performance: hodPerformance,
@@ -198,10 +209,22 @@ export class HodKpiService {
     const entriesCount = formResponses.entries?.length || 0;
     const kpiTarget = kpi.kpi_target || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? (entriesCount / kpiTarget) * 100 : 0;
-    // Calculate HOD performance based on kpi_value and hod_percentage_target_achieved
+
+      // Calculate HOD performance based on kpi_value and hod_percentage_target_achieved
     const hodPerformance = Number(((Number(kpi.kpi_value) || 0) * hodPercentageAchieved).toFixed(2));
+
+    // Get existing form responses to preserve coordinator workflow
+    const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
+
+    // Prepare updated form responses preserving coordinator workflow
+    const updatedFormResponses = {
+      ...formResponses,
+      // Preserve coordinator workflow if it exists
+      coordinator_workflow: existingFormResponses.coordinator_workflow || null,
+    };
+      
     const updateData = {
-      form_responses: JSON.parse(JSON.stringify(formResponses)),
+      form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
       kpi_status: KpiStatus.PENDING, // Stays PENDING but marked as submitted for QC review
       completed_date: new Date(),
       hod_performance: hodPerformance,

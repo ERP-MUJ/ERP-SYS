@@ -6,6 +6,7 @@ import {
   useSaveHodKpiData,
   useSubmitKpiToQc,
 } from "@/queries/hod/kpi";
+import { useReviewCoordinatorSubmission } from "@/queries/hod/coordinator-workflow";
 import { FormElementType, FormElementInstance } from "@/lib/types";
 import {
   Card,
@@ -16,6 +17,9 @@ import {
 import { Badge } from "@workspace/ui/components/badge";
 import { AlertCircle, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useMemo, useState } from "react";
+import { Textarea } from "@workspace/ui/components/textarea";
+import { Button } from "@workspace/ui/components/button";
 // Define type for API response
 interface KpiData {
   kpi_name?: string;
@@ -94,8 +98,41 @@ export default function HodKpiPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = React.use(params);
+
+  // State for coordinator review - must be before early returns
+  const [coordinatorRemark, setCoordinatorRemark] = useState("");
+  const [showCoordinatorReviewPanel, setShowCoordinatorReviewPanel] =
+    useState(false);
+
   const { data, isLoading, error } = useGetKpiDetails(id);
   const submitToQc = useSubmitKpiToQc();
+  const reviewCoordinatorSubmission = useReviewCoordinatorSubmission();
+
+  // All data processing and memoization must be before early returns
+  const coordinatorReviewHistory = useMemo(() => {
+    if (!data || typeof data !== "object" || !("form_responses" in data))
+      return [];
+    const formResponses = (data as any).form_responses;
+    const coordinatorWorkflow = formResponses?.coordinator_workflow;
+    if (!coordinatorWorkflow) return [];
+
+    const history = [];
+
+    // Add HOD review if exists
+    if (coordinatorWorkflow.hod_review) {
+      history.push({
+        action: coordinatorWorkflow.hod_review.action,
+        at: coordinatorWorkflow.hod_review.reviewed_at,
+        remark: coordinatorWorkflow.hod_review.comments,
+        by: "HOD",
+      });
+    }
+
+    return history.sort(
+      (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+    );
+  }, [data]);
+
   console.log("HOD KPI Data:", data);
   if (isLoading) {
     return <div className="text-center">Loading KPI details...</div>;
@@ -134,7 +171,19 @@ export default function HodKpiPage({
   });
   // Load existing form responses if available
   const existingData =
-    kpiData.existingData || kpiData.form_responses?.entries || [];
+    kpiData.existingData || (kpiData as any).form_responses?.entries || [];
+
+  // Check for coordinator workflow data
+  const formResponses = (kpiData as any).form_responses;
+  const coordinatorWorkflow = formResponses?.coordinator_workflow;
+
+  // Show coordinator section if there's any coordinator workflow data (not just SUBMITTED)
+  const hasCoordinatorWorkflow =
+    coordinatorWorkflow &&
+    (coordinatorWorkflow.coordinator_status === "SUBMITTED" ||
+      coordinatorWorkflow.hod_review ||
+      coordinatorWorkflow.coordinator_submission);
+
   // Check if there are QC review comments or status changes
   const hasQcReview =
     kpiData.kpi_status &&
@@ -167,6 +216,30 @@ export default function HodKpiPage({
       // Error handled by the hook
       console.error("Submit to QC failed:", error);
     }
+  };
+
+  // Handle coordinator review action
+  const handleCoordinatorReview = (action: string, remark: string) => {
+    console.log("Submitting coordinator review:", {
+      kpiId: id,
+      action,
+      comments: remark,
+    });
+    reviewCoordinatorSubmission.mutate(
+      {
+        kpiId: id,
+        action: action as "APPROVE" | "REJECT" | "REQUEST_REVISION",
+        comments: remark,
+      },
+      {
+        onSuccess: (data) => {
+          console.log("Review submitted successfully:", data);
+        },
+        onError: (error) => {
+          console.error("Review submission failed:", error);
+        },
+      },
+    );
   };
   return (
     <div className="space-y-6 p-6">
@@ -208,6 +281,245 @@ export default function HodKpiPage({
           )}
         </Card>
       )}
+
+      {/* Coordinator Review Section */}
+      {hasCoordinatorWorkflow && (
+        <Card className="border-l-4 border-l-purple-400">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                Coordinator Workflow
+              </CardTitle>
+              <Badge
+                variant={
+                  coordinatorWorkflow?.coordinator_status === "SUBMITTED"
+                    ? "secondary"
+                    : coordinatorWorkflow?.coordinator_status ===
+                        "APPROVED_BY_HOD"
+                      ? "default"
+                      : coordinatorWorkflow?.coordinator_status ===
+                          "REJECTED_BY_HOD"
+                        ? "destructive"
+                        : coordinatorWorkflow?.coordinator_status ===
+                            "REVISION_REQUESTED"
+                          ? "secondary"
+                          : "outline"
+                }
+              >
+                {coordinatorWorkflow?.coordinator_status === "SUBMITTED"
+                  ? "Awaiting HOD Review"
+                  : coordinatorWorkflow?.coordinator_status ===
+                      "APPROVED_BY_HOD"
+                    ? "Approved by HOD"
+                    : coordinatorWorkflow?.coordinator_status ===
+                        "REJECTED_BY_HOD"
+                      ? "Rejected by HOD"
+                      : coordinatorWorkflow?.coordinator_status ===
+                          "REVISION_REQUESTED"
+                        ? "Revision Requested"
+                        : "Unknown Status"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-sm mb-1 text-purple-800">
+                      {coordinatorWorkflow?.coordinator_status === "SUBMITTED"
+                        ? "Coordinator Submission Ready"
+                        : "Coordinator Workflow Status"}
+                    </h4>
+                    <p className="text-sm text-purple-700">
+                      {coordinatorWorkflow?.coordinator_status === "SUBMITTED"
+                        ? "A coordinator has submitted KPI data for your review. Please review and approve/reject the submission."
+                        : coordinatorWorkflow?.coordinator_status ===
+                            "APPROVED_BY_HOD"
+                          ? "You have approved this coordinator submission."
+                          : coordinatorWorkflow?.coordinator_status ===
+                              "REJECTED_BY_HOD"
+                            ? "You have rejected this coordinator submission."
+                            : coordinatorWorkflow?.coordinator_status ===
+                                "REVISION_REQUESTED"
+                              ? "You have requested revisions for this coordinator submission."
+                              : "Coordinator workflow is active for this KPI."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {coordinatorWorkflow?.coordinator_status === "SUBMITTED" && (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium">Review Actions</h3>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setShowCoordinatorReviewPanel(
+                            !showCoordinatorReviewPanel,
+                          )
+                        }
+                      >
+                        {showCoordinatorReviewPanel
+                          ? "Hide Review Panel"
+                          : "Open Review Panel"}
+                      </Button>
+                    </div>
+
+                    {showCoordinatorReviewPanel && (
+                      <div className="border rounded-md p-4 space-y-4 bg-background/60">
+                        <div className="space-y-3">
+                          <Textarea
+                            placeholder="Remark (required)"
+                            value={coordinatorRemark}
+                            onChange={(e) =>
+                              setCoordinatorRemark(e.target.value)
+                            }
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              onClick={() => {
+                                if (!coordinatorRemark.trim()) {
+                                  toast.error(
+                                    "Please provide a remark before submitting your review",
+                                  );
+                                  return;
+                                }
+                                handleCoordinatorReview(
+                                  "APPROVE",
+                                  coordinatorRemark,
+                                );
+                                setCoordinatorRemark("");
+                                setShowCoordinatorReviewPanel(false);
+                              }}
+                              disabled={
+                                reviewCoordinatorSubmission.isPending ||
+                                coordinatorRemark.trim().length === 0
+                              }
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              onClick={() => {
+                                if (!coordinatorRemark.trim()) {
+                                  toast.error(
+                                    "Please provide a remark before submitting your review",
+                                  );
+                                  return;
+                                }
+                                handleCoordinatorReview(
+                                  "REQUEST_REVISION",
+                                  coordinatorRemark,
+                                );
+                                setCoordinatorRemark("");
+                                setShowCoordinatorReviewPanel(false);
+                              }}
+                              disabled={
+                                reviewCoordinatorSubmission.isPending ||
+                                coordinatorRemark.trim().length === 0
+                              }
+                            >
+                              Request Revision
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => {
+                                if (!coordinatorRemark.trim()) {
+                                  toast.error(
+                                    "Please provide a remark before submitting your review",
+                                  );
+                                  return;
+                                }
+                                handleCoordinatorReview(
+                                  "REJECT",
+                                  coordinatorRemark,
+                                );
+                                setCoordinatorRemark("");
+                                setShowCoordinatorReviewPanel(false);
+                              }}
+                              disabled={
+                                reviewCoordinatorSubmission.isPending ||
+                                coordinatorRemark.trim().length === 0
+                              }
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div>
+                  <h4 className="font-medium mb-2 text-sm">
+                    Coordinator Review History
+                  </h4>
+                  {coordinatorReviewHistory.length > 0 ? (
+                    <ul className="space-y-2 text-xs max-h-56 overflow-auto pr-1">
+                      {coordinatorReviewHistory.map(
+                        (review: any, i: number) => (
+                          <li
+                            key={i}
+                            className="p-2 rounded border bg-background/50"
+                          >
+                            <div className="flex justify-between mb-1">
+                              <Badge
+                                variant={
+                                  review.action === "REVISION"
+                                    ? "secondary"
+                                    : review.action === "APPROVE"
+                                      ? "default"
+                                      : review.action === "REJECT"
+                                        ? "destructive"
+                                        : "outline"
+                                }
+                                className="text-xs"
+                              >
+                                {review.action === "REVISION"
+                                  ? "Revision Requested"
+                                  : review.action === "APPROVE"
+                                    ? "Approved"
+                                    : review.action === "REJECT"
+                                      ? "Rejected"
+                                      : review.action}
+                              </Badge>
+                              <span className="text-muted-foreground">
+                                {new Date(review.at).toLocaleString()}
+                              </span>
+                            </div>
+                            {review.remark && (
+                              <div className="italic mb-1 bg-muted/30 p-2 rounded">
+                                "{review.remark}"
+                              </div>
+                            )}
+                            {review.by && (
+                              <div className="text-muted-foreground">
+                                By: {review.by}
+                              </div>
+                            )}
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      No coordinator review actions yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* QC Review Status and Comments Section */}
       {hasQcReview && (
         <Card className="border-l-4 border-l-amber-400">
