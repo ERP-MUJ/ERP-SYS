@@ -8,6 +8,14 @@ import {
   useResubmitCoordinatorKpi,
 } from "@/queries/coordinator/kpi";
 import { useSession } from "next-auth/react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
+import { AlertCircle, MessageSquare } from "lucide-react";
 
 // Reuse HOD KPI detail fetching so coordinator/faculty see same structure
 export default function FacultyKpiPage({
@@ -51,7 +59,7 @@ export default function FacultyKpiPage({
     return { id: elId, type, attributes: { ...rest } };
   });
   const existingData =
-    kpiData.existingData || kpiData.form_responses?.entries || [];
+    kpiData.existingData || (kpiData as any).form_responses?.entries || [];
 
   const coordinatorWorkflow = (kpiData as any).form_responses
     ?.coordinator_workflow;
@@ -100,43 +108,102 @@ export default function FacultyKpiPage({
 
     const submitting = submitMutation.isPending || resubmitMutation.isPending;
     const isRevision = coordinatorStatus === "REVISION_REQUESTED";
+    const hodReview = coordinatorWorkflow?.hod_review;
+
     return (
-      <TableFormRenderer
-        id={id}
-        description={description}
-        name={kpi}
-        elements={elements}
-        existingData={existingData}
-        customSaveHook={customSaveHook}
-        secondaryAction={{
-          label: submitting
-            ? isRevision
-              ? "Resubmitting..."
-              : "Submitting..."
-            : isRevision
-              ? "Resubmit to HOD"
-              : "Submit to HOD",
-          disabled:
-            submitting ||
-            coordinatorStatus === "SUBMITTED" ||
-            coordinatorStatus === "APPROVED_BY_HOD",
-          loading: submitting,
-          onAction: async (entries) => {
-            if (isRevision) {
-              await resubmitMutation.mutateAsync({
-                kpiId: id,
-                formData: { entries },
-              });
-            } else {
-              await submitMutation.mutateAsync({
-                kpiId: id,
-                formData: { entries },
-              });
-            }
-          },
-          variant: "default",
-        }}
-      />
+      <div className="space-y-6 p-6">
+        {/* HOD Review Section for Coordinators */}
+        {hodReview && (
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  HOD Review
+                </CardTitle>
+                <Badge
+                  variant={
+                    hodReview.action === "APPROVE"
+                      ? "default"
+                      : hodReview.action === "REJECT"
+                        ? "destructive"
+                        : hodReview.action === "REQUEST_REVISION"
+                          ? "secondary"
+                          : "outline"
+                  }
+                >
+                  {hodReview.action === "APPROVE"
+                    ? "Approved"
+                    : hodReview.action === "REJECT"
+                      ? "Rejected"
+                      : hodReview.action === "REQUEST_REVISION"
+                        ? "Revision Requested"
+                        : hodReview.action}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-muted/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-sm mb-1 text-blue-800">
+                        HOD Feedback
+                      </h4>
+                      <p className="text-sm italic bg-background/60 p-3 rounded border">
+                        "{hodReview.comments}"
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Reviewed on{" "}
+                        {new Date(hodReview.reviewed_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* KPI Form */}
+        <TableFormRenderer
+          id={id}
+          description={description}
+          name={kpi}
+          elements={elements}
+          existingData={existingData}
+          customSaveHook={customSaveHook}
+          secondaryAction={{
+            label: submitting
+              ? isRevision
+                ? "Resubmitting..."
+                : "Submitting..."
+              : isRevision
+                ? "Resubmit to HOD"
+                : "Submit to HOD",
+            disabled:
+              submitting ||
+              coordinatorStatus === "SUBMITTED" ||
+              coordinatorStatus === "APPROVED_BY_HOD",
+            loading: submitting,
+            onAction: async (entries) => {
+              if (isRevision) {
+                await resubmitMutation.mutateAsync({
+                  kpiId: id,
+                  formData: { entries },
+                });
+              } else {
+                await submitMutation.mutateAsync({
+                  kpiId: id,
+                  formData: { entries },
+                });
+              }
+            },
+            variant: "default",
+          }}
+        />
+      </div>
     );
   }
 

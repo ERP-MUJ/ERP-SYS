@@ -57,3 +57,5 @@ npm-debug.log*
 packages/db/prisma/migrations/migration_lock.toml
 packages/db/prisma/migrations/20250806054443_new/migration.sql
 packages/db/prisma/migrations/migration_lock.toml
+
+CONTEXT.md
