@@ -36,7 +36,7 @@ export default function QcKpiReviewPage() {
     const isSubmittedToQc = metrics?.is_submitted_to_qc === true;
     return deriveDisplayStatus({
       status: data.kpi_status,
-      hasFormResponses: Boolean(data.form_responses?.entries?.length),
+      hasFormResponses: Boolean((data as any).form_responses?.entries?.length),
       isSubmittedToQc,
     });
   }, [data]);

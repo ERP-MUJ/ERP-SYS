@@ -133,14 +133,27 @@ export function useSaveCoordinatorDraft() {
       if (res.data) return res.data;
       throw new Error(res.error?.message || "Failed to save draft");
     },
-    onSuccess: (_data, variables) => {
-      toast.success("Draft saved");
+    onSuccess: (data, variables) => {
+      // Only show success toast for actual saves, not when skipped
+      if ((data as any)?.message === "Draft saved") {
+        toast.success("Draft saved");
+      }
+      // Always invalidate to refresh data
       queryClient.invalidateQueries({
         queryKey: ["coordinator", "kpi-details", variables.kpiId],
       });
     },
     onError: (error: any) => {
-      toast.error("Failed to save draft", { description: error.message });
+      // Only show error toast for real errors, not graceful failures
+      const message = error.message;
+      if (
+        !message.includes("already submitted") &&
+        !message.includes("Under HOD review") &&
+        !message.includes("concurrent update")
+      ) {
+        toast.error("Failed to save draft", { description: error.message });
+      }
+      console.log("Draft save handled gracefully:", message);
     },
   });
 }

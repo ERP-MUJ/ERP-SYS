@@ -117,10 +117,20 @@ export class HodKpiService {
     const entriesCount = formResponses.entries?.length || 0;
     const kpiTarget = Number(kpi.kpi_target) || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? Number(((entriesCount / kpiTarget) * 100).toFixed(2)) : 0;
+    // Get existing form responses to preserve coordinator workflow
+    const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
+
+    // Prepare updated form responses preserving coordinator workflow
+    const updatedFormResponses = {
+      ...formResponses,
+      // Preserve coordinator workflow if it exists
+      coordinator_workflow: existingFormResponses.coordinator_workflow || null,
+    };
+
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: JSON.parse(JSON.stringify(formResponses)),
+        form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
         kpi_status: newStatus,
         completed_date: new Date(),
         kpi_calculated_metrics: JSON.parse(JSON.stringify(updatedMetrics)),
@@ -170,8 +180,18 @@ export class HodKpiService {
     const entriesCount = formResponses.entries?.length || 0;
     const kpiTarget = kpi.kpi_target || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? (entriesCount / kpiTarget) * 100 : 0;
+    // Get existing form responses to preserve coordinator workflow
+    const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
+
+    // Prepare updated form responses preserving coordinator workflow
+    const updatedFormResponses = {
+      ...formResponses,
+      // Preserve coordinator workflow if it exists
+      coordinator_workflow: existingFormResponses.coordinator_workflow || null,
+    };
+
     const updateData = {
-      form_responses: JSON.parse(JSON.stringify(formResponses)),
+      form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
       kpi_status: KpiStatus.PENDING, // Stays PENDING but marked as submitted for QC review
       completed_date: new Date(),
       hod_percentage_target_achieved: hodPercentageAchieved,

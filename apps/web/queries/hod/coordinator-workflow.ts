@@ -57,12 +57,18 @@ export function useReviewCoordinatorSubmission() {
       action: "APPROVE" | "REJECT" | "REQUEST_REVISION";
       comments: string;
     }) => {
+      console.log("Calling reviewCoordinatorSubmission API with:", {
+        kpiId,
+        action,
+        comments,
+      });
       const res =
         await HodCoordinatorWorkflowService.reviewCoordinatorSubmission(
           kpiId,
           action,
           comments,
         );
+      console.log("API response:", res);
       if (res.data) return res.data;
       throw new Error(res.error?.message || "Failed to review submission");
     },
@@ -78,6 +84,15 @@ export function useReviewCoordinatorSubmission() {
         queryKey: ["hod", "coordinator-workflow", "review"],
       });
       queryClient.invalidateQueries({ queryKey: ["hod", "pillars"] });
+      // Invalidate the specific KPI details query
+      queryClient.invalidateQueries({
+        queryKey: ["hod", "kpi-details", variables.kpiId],
+      });
+      // Invalidate faculty KPI queries to refresh coordinator status
+      queryClient.invalidateQueries({
+        queryKey: ["faculty", "kpi-details", variables.kpiId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["faculty", "kpis"] });
     },
     onError: (error: any) => {
       toast.error("Failed to review submission", {

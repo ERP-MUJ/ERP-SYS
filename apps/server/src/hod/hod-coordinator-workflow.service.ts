@@ -67,14 +67,29 @@ export class HodCoordinatorWorkflowService {
     action: 'APPROVE' | 'REJECT' | 'REQUEST_REVISION',
     comments: string,
   ) {
+    console.log('reviewCoordinatorSubmission called:', { userId, userRole, kpiId, action, comments });
+
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(userRole);
+
     const departmentId = await this.getHodDepartmentId(userId);
+    console.log('HOD department ID:', departmentId);
+
     const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: departmentId } });
-    if (!kpi) throw new NotFoundException('KPI not found or not accessible');
+    if (!kpi) {
+      console.log('KPI not found for:', { kpiId, departmentId });
+      throw new NotFoundException('KPI not found or not accessible');
+    }
+
     const existingFormResponses = (kpi.form_responses as KpiFormResponsesWithWorkflow) || {};
     const existingWorkflow = existingFormResponses.coordinator_workflow;
+    console.log('Existing workflow:', existingWorkflow);
+
     if (!existingWorkflow || existingWorkflow.coordinator_status !== 'SUBMITTED') {
+      console.log('Invalid workflow state:', {
+        hasWorkflow: !!existingWorkflow,
+        status: existingWorkflow?.coordinator_status,
+      });
       throw new BadRequestException('No coordinator submission to review');
     }
     let newCoordinatorStatus: CoordinatorWorkflow['coordinator_status'];
