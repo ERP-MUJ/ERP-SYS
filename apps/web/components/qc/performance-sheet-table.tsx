@@ -230,141 +230,106 @@ export const PillarKpiTable: React.FC<
 };
 
 // Add back the original performance sheet table and dummy data exports
-export type PerformanceParameter = {
+export interface PerformanceParameter {
   slNo: number;
   parameter: string;
-  weight: number;
-  targetAchieved: number | string;
-  performance: number | string;
-};
-
-export const dummyPerformanceData: PerformanceParameter[] = [
-  {
-    slNo: 1,
-    parameter: "Academic Excellence",
-    weight: 0.3,
-    targetAchieved: 0,
-    performance: 0,
-  },
-  {
-    slNo: 2,
-    parameter: "Research Progression",
-    weight: 0.2,
-    targetAchieved: 0,
-    performance: 0,
-  },
-  {
-    slNo: 3,
-    parameter: "Industry and Academic Collaboration",
-    weight: 0.2,
-    targetAchieved: 0,
-    performance: 0,
-  },
-  {
-    slNo: 4,
-    parameter: "Faculty Excellence",
-    weight: 0.05,
-    targetAchieved: 0,
-    performance: 0,
-  },
-  {
-    slNo: 5,
-    parameter: "Student Quality and Strength",
-    weight: 0.15,
-    targetAchieved: 0,
-    performance: 0,
-  },
-  {
-    slNo: 6,
-    parameter: "Branding and Visibility",
-    weight: 0.05,
-    targetAchieved: "0",
-    performance: "0",
-  },
-  {
-    slNo: 7,
-    parameter: "Governance",
-    weight: 0.05,
-    targetAchieved: 0,
-    performance: 0,
-  },
-];
+  weight: number | null;
+  targetAchieved: number | null;
+  performance: number | null;
+}
 
 export const PerformanceSheetTable: React.FC<{
   data: PerformanceParameter[];
   totalKpis?: number;
-}> = ({ data, totalKpis }) => (
-  <Card className="shadow-md px-2 border rounded-lg">
-    <CardHeader className="bg-muted/50 rounded-t-lg">
-      <CardTitle className="text-lg font-bold tracking-tight">
-        Performance Sheet
-      </CardTitle>
-      <CardDescription className="text-sm text-muted-foreground">
-        Departmental KPI performance summary for the current goal period
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="p-0">
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                Sl. No.
-              </TableHead>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                {`Parameter (${typeof totalKpis === "number" ? totalKpis : 0} KPIs)`}
-              </TableHead>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                Weight (A)
-              </TableHead>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                % of Target Achieved (B)
-              </TableHead>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                Performance (A x B) = C
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((row, idx) => (
-              <TableRow
-                key={row.slNo}
-                className={idx % 2 === 1 ? "bg-muted/20" : ""}
-              >
-                <TableCell className="font-medium text-center">
-                  {row.slNo}
-                </TableCell>
-                <TableCell className="font-medium">{row.parameter}</TableCell>
-                <TableCell className="text-center">{row.weight}</TableCell>
-                <TableCell className="text-center">
-                  {row.targetAchieved}
-                </TableCell>
-                <TableCell className="text-center">{row.performance}</TableCell>
+}> = ({ data, totalKpis }) => {
+  // Helper function to format numbers with 2 decimal places
+  const formatNumber = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return "-";
+    return Number(value).toFixed(2);
+  };
+
+  // Calculate totals
+  const totalWeight = data.reduce((sum, row) => sum + (row.weight || 0), 0);
+  const totalTargetAchieved = data.reduce(
+    (sum, row) => sum + (row.targetAchieved || 0),
+    0,
+  );
+  const totalPerformance = data.reduce(
+    (sum, row) => sum + (row.performance || 0),
+    0,
+  );
+
+  return (
+    <Card className="shadow-md px-2 border rounded-lg">
+      <CardHeader className="bg-muted/50 rounded-t-lg">
+        <CardTitle className="text-lg font-bold tracking-tight">
+          Performance Sheet
+        </CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          Departmental KPI performance summary for the current goal period
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-center w-[80px]">
+                  Sl. No.
+                </TableHead>
+                <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
+                  {`Parameter (${typeof totalKpis === "number" ? totalKpis : 0} KPIs)`}
+                </TableHead>
+                <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-center w-[120px]">
+                  Weight (A)
+                </TableHead>
+                <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-center w-[150px]">
+                  % of Target Achieved (B)
+                </TableHead>
+                <TableHead className="bg-muted/50 text-xs font-semibold uppercase text-center w-[150px]">
+                  Performance (A × B)
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell className="font-bold text-left" colSpan={2}>
-                Overall Performance = Average of all parameter’s performance in
-                %
-              </TableCell>
-              <TableCell className="font-bold text-center">
-                {/* Total of weight */}
-                {data.reduce((sum, row) => sum + Number(row.weight), 0)}
-              </TableCell>
-              <TableCell className="font-bold text-center">
-                {/* Total of % target achieved */}
-                {data.reduce((sum, row) => sum + Number(row.targetAchieved), 0)}
-              </TableCell>
-              <TableCell className="font-bold text-center">
-                {/* Total of performance */}
-                {data.reduce((sum, row) => sum + Number(row.performance), 0)}
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </div>
-    </CardContent>
-  </Card>
-);
+            </TableHeader>
+            <TableBody>
+              {data.map((row, idx) => (
+                <TableRow
+                  key={row.slNo}
+                  className={idx % 2 === 1 ? "bg-muted/20" : ""}
+                >
+                  <TableCell className="font-medium text-center w-[80px]">
+                    {row.slNo}
+                  </TableCell>
+                  <TableCell className="font-medium">{row.parameter}</TableCell>
+                  <TableCell className="text-center w-[120px]">
+                    {formatNumber(row.weight)}
+                  </TableCell>
+                  <TableCell className="text-center w-[150px]">
+                    {formatNumber(row.targetAchieved)} %
+                  </TableCell>
+                  <TableCell className="text-center w-[150px]">
+                    {formatNumber(row.performance)} %
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell className="font-bold text-right" colSpan={2}>
+                  Overall Performance
+                </TableCell>
+                <TableCell className="font-bold text-center w-[120px]">
+                  {formatNumber(totalWeight)}
+                </TableCell>
+                <TableCell className="font-bold text-center w-[150px]"></TableCell>
+                <TableCell className="font-bold text-center w-[150px]">
+                  {formatNumber(totalPerformance)} %
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

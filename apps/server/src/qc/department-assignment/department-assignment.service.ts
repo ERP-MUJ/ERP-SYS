@@ -355,6 +355,7 @@ export class DepartmentAssignmentService {
     interface DepartmentKpiUpdateData {
       kpi_value?: number;
       kpi_target?: number;
+      hod_performance?: number;
     }
 
     const updateData: DepartmentKpiUpdateData = {};
@@ -367,10 +368,49 @@ export class DepartmentAssignmentService {
     if (kpiTarget !== undefined) {
       updateData.kpi_target = kpiTarget;
     }
+
+    // Get the current KPI to recalculate hod_performance if kpi_value is updated
+    if (kpiValue !== undefined) {
+      const currentKpi = await this.prisma.departmentKpi.findUnique({
+        where: { id: departmentKpiId },
+        select: { hod_percentage_target_achieved: true },
+      });
+
+      if (currentKpi && currentKpi.hod_percentage_target_achieved !== null) {
+        // Calculate HOD performance based on new kpi_value and existing hod_percentage_target_achieved
+        updateData.hod_performance = Number((kpiValue * Number(currentKpi.hod_percentage_target_achieved)).toFixed(2));
+      }
+    }
+
+    // Update the KPI first
     const updatedKpi = await this.prisma.departmentKpi.update({
       where: { id: departmentKpiId },
       data: updateData,
     });
+
+    // Calculate sum of hod_performance for all KPIs in this pillar
+    const allPillarKpis = await this.prisma.departmentKpi.findMany({
+      where: { dept_pillar_id: updatedKpi.dept_pillar_id },
+      select: { hod_performance: true },
+    });
+
+    const totalHodPerformance = allPillarKpis.reduce((sum, kpi) => sum + (kpi.hod_performance || 0), 0);
+
+    // Get current pillar data to calculate hod_performance
+    const pillar = await this.prisma.departmentPillar.findUnique({
+      where: { id: updatedKpi.dept_pillar_id },
+      select: { pillar_weight: true },
+    });
+
+    // Update the pillar's hod_percentage_target_achieved and hod_performance
+    await this.prisma.departmentPillar.update({
+      where: { id: updatedKpi.dept_pillar_id },
+      data: {
+        hod_percentage_target_achieved: totalHodPerformance,
+        hod_performance: Number((totalHodPerformance * (pillar?.pillar_weight || 0)).toFixed(2)),
+      },
+    });
+
     return {
       message: 'KPI updated successfully',
       departmentKpi: updatedKpi,

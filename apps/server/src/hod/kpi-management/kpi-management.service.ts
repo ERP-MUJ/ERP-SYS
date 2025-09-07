@@ -117,6 +117,10 @@ export class HodKpiService {
     const entriesCount = formResponses.entries?.length || 0;
     const kpiTarget = Number(kpi.kpi_target) || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? Number(((entriesCount / kpiTarget) * 100).toFixed(2)) : 0;
+    // Calculate HOD performance based on kpi_value and hod_percentage_target_achieved
+    const hodPerformance = Number(((Number(kpi.kpi_value) || 0) * hodPercentageAchieved).toFixed(2));
+    // Update the KPI first
+
     // Get existing form responses to preserve coordinator workflow
     const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
 
@@ -126,19 +130,44 @@ export class HodKpiService {
       // Preserve coordinator workflow if it exists
       coordinator_workflow: existingFormResponses.coordinator_workflow || null,
     };
-
+      
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
         form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
         kpi_status: newStatus,
         completed_date: new Date(),
+        hod_performance: hodPerformance,
         kpi_calculated_metrics: JSON.parse(JSON.stringify(updatedMetrics)),
         hod_percentage_target_achieved: hodPercentageAchieved,
         // Preserve QC review data if in revision status
         ...(preserveComments !== null && { comments: preserveComments }),
       },
     });
+
+    // Calculate sum of hod_performance for all KPIs in this pillar
+    const allPillarKpis = await this.prisma.departmentKpi.findMany({
+      where: { dept_pillar_id: kpi.dept_pillar_id },
+      select: { hod_performance: true },
+    });
+
+    const totalHodPerformance = allPillarKpis.reduce((sum, kpi) => sum + (kpi.hod_performance || 0), 0);
+
+    // Get current pillar data to calculate hod_performance
+    const pillar = await this.prisma.departmentPillar.findUnique({
+      where: { id: kpi.dept_pillar_id },
+      select: { pillar_weight: true },
+    });
+
+    // Update the pillar's hod_percentage_target_achieved and hod_performance
+    await this.prisma.departmentPillar.update({
+      where: { id: kpi.dept_pillar_id },
+      data: {
+        hod_percentage_target_achieved: totalHodPerformance,
+        hod_performance: Number((totalHodPerformance * (pillar?.pillar_weight || 0)).toFixed(2)),
+      },
+    });
+
     return { message: 'KPI draft saved successfully' };
   }
   async submitKpiToQc(
@@ -180,6 +209,10 @@ export class HodKpiService {
     const entriesCount = formResponses.entries?.length || 0;
     const kpiTarget = kpi.kpi_target || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? (entriesCount / kpiTarget) * 100 : 0;
+
+      // Calculate HOD performance based on kpi_value and hod_percentage_target_achieved
+    const hodPerformance = Number(((Number(kpi.kpi_value) || 0) * hodPercentageAchieved).toFixed(2));
+
     // Get existing form responses to preserve coordinator workflow
     const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
 
@@ -189,11 +222,12 @@ export class HodKpiService {
       // Preserve coordinator workflow if it exists
       coordinator_workflow: existingFormResponses.coordinator_workflow || null,
     };
-
+      
     const updateData = {
       form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
       kpi_status: KpiStatus.PENDING, // Stays PENDING but marked as submitted for QC review
       completed_date: new Date(),
+      hod_performance: hodPerformance,
       hod_percentage_target_achieved: hodPercentageAchieved,
       kpi_calculated_metrics: JSON.parse(
         JSON.stringify({
@@ -209,10 +243,35 @@ export class HodKpiService {
     if (kpi.kpi_status === KpiStatus.REVISION) {
       Object.assign(updateData, { comments: null });
     }
+    // Update the KPI first
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: updateData,
     });
+
+    // Calculate sum of hod_performance for all KPIs in this pillar
+    const allPillarKpis = await this.prisma.departmentKpi.findMany({
+      where: { dept_pillar_id: kpi.dept_pillar_id },
+      select: { hod_performance: true },
+    });
+
+    const totalHodPerformance = allPillarKpis.reduce((sum, kpi) => sum + (kpi.hod_performance || 0), 0);
+
+    // Get current pillar data to calculate hod_performance
+    const pillar = await this.prisma.departmentPillar.findUnique({
+      where: { id: kpi.dept_pillar_id },
+      select: { pillar_weight: true },
+    });
+
+    // Update the pillar's hod_percentage_target_achieved and hod_performance
+    await this.prisma.departmentPillar.update({
+      where: { id: kpi.dept_pillar_id },
+      data: {
+        hod_percentage_target_achieved: totalHodPerformance,
+        hod_performance: Number((totalHodPerformance * (pillar?.pillar_weight || 0)).toFixed(2)),
+      },
+    });
+
     return { message: 'KPI submitted to QC successfully' };
   }
 }
