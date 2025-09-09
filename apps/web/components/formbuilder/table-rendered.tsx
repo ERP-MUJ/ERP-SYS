@@ -67,6 +67,13 @@ interface TableFormRendererProps {
     { id: string; formData: { entries: Record<string, any>[] } },
     unknown
   >;
+  customExcelHooks?: {
+    downloadHook: () => any;
+    uploadComponent: React.ComponentType<{
+      kpiId: string;
+      trigger?: React.ReactNode;
+    }>;
+  };
   secondaryAction?: {
     label: string;
     onAction: (entries: Record<string, any>[]) => Promise<void> | void;
@@ -84,6 +91,7 @@ export default function TableFormRenderer({
   className = "",
   existingData = [],
   customSaveHook,
+  customExcelHooks,
   secondaryAction,
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
@@ -93,7 +101,9 @@ export default function TableFormRenderer({
     : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Excel operations
-  const downloadExcelMutation = useDownloadExcelTemplate();
+  const defaultDownloadHook = useDownloadExcelTemplate();
+  const downloadExcelMutation =
+    customExcelHooks?.downloadHook() || defaultDownloadHook;
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
   const [activeElement, setActiveElement] =
     useState<FormElementInstance | null>(null);
@@ -454,7 +464,11 @@ export default function TableFormRenderer({
               )}
               Download Excel
             </Button>
-            <ExcelUploadDialog kpiId={id} />
+            {customExcelHooks?.uploadComponent ? (
+              <customExcelHooks.uploadComponent kpiId={id} />
+            ) : (
+              <ExcelUploadDialog kpiId={id} />
+            )}
             <Button
               variant="outline"
               onClick={() => {

@@ -9,10 +9,11 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { HodCoordinatorWorkflowController } from './coordinator-workflow.controller';
 import { HodCoordinatorWorkflowService } from './hod-coordinator-workflow.service';
 import { HodDashboardModule } from './dashboard/hod-dashboard.module';
+import { ExcelService } from 'src/services/excel.service';
 
 @Module({
   controllers: [DepartmentInfoController, CoordinatorController, HodKpiController, HodCoordinatorWorkflowController],
-  providers: [DepartmentInfoService, CoordinatorService, HodKpiService, HodCoordinatorWorkflowService],
+  providers: [DepartmentInfoService, CoordinatorService, HodKpiService, HodCoordinatorWorkflowService, ExcelService],
   imports: [PrismaModule, HodDashboardModule],
 })
 export class HodModule {}

@@ -1,9 +1,12 @@
-import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Put, Param, Body, UseGuards, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { RequestUser } from 'src/auth/dto/request-user.dto';
 import { HodKpiService } from './kpi-management.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ExcelTemplateResponseDto } from 'src/coordinator/dto/excel.dto';
+import { ExcelUploadResponseDto } from 'src/coordinator/dto/excel-upload.dto';
 @ApiTags('HOD - KPI Management')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -58,5 +61,62 @@ export class HodKpiController {
     @Body() formResponses: { entries: Record<string, unknown>[] },
   ) {
     return this.hodKpiService.submitKpiToQc(user.id, user.role, kpiId, formResponses);
+  }
+
+  @Get('/kpi/:kpiId/template')
+  @ApiOperation({ summary: 'Download Excel template for KPI data entry' })
+  @ApiParam({ name: 'kpiId', description: 'KPI ID to download template for' })
+  @ApiResponse({
+    status: 200,
+    description: 'Excel template downloaded successfully',
+    type: ExcelTemplateResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'KPI not found',
+  })
+  async downloadKpiTemplate(
+    @Param('kpiId') kpiId: string,
+    @CurrentUser() user: RequestUser,
+  ): Promise<ExcelTemplateResponseDto> {
+    return await this.hodKpiService.downloadKpiTemplate(user.id, user.role, kpiId);
+  }
+
+  @Post('/kpi/:kpiId/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiParam({ name: 'kpiId', description: 'KPI ID to upload data for' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Upload Excel file with KPI data',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Excel file (.xlsx, .xls) with KPI data',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Excel file uploaded and processed successfully',
+    type: ExcelUploadResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid file format or validation errors',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'KPI not found',
+  })
+  async uploadExcel(
+    @Param('kpiId') kpiId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: RequestUser,
+  ): Promise<ExcelUploadResponseDto> {
+    return await this.hodKpiService.uploadExcel(user.id, user.role, kpiId, file);
   }
 }
