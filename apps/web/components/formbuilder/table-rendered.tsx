@@ -53,6 +53,7 @@ import { useSaveKpiData } from "@/hooks/faculty";
 import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { ExcelUploadDialog } from "./ExcelUploadDialog";
+import { FrontendExcelUploadDialog } from "../hod/FrontendExcelUploadDialog";
 interface TableFormRendererProps {
   name: string;
   elements: FormElementInstance[];
@@ -74,6 +75,7 @@ interface TableFormRendererProps {
       trigger?: React.ReactNode;
     }>;
   };
+  useFrontendExcelUpload?: boolean;
   secondaryAction?: {
     label: string;
     onAction: (entries: Record<string, any>[]) => Promise<void> | void;
@@ -92,6 +94,7 @@ export default function TableFormRenderer({
   existingData = [],
   customSaveHook,
   customExcelHooks,
+  useFrontendExcelUpload = false,
   secondaryAction,
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
@@ -219,6 +222,51 @@ export default function TableFormRenderer({
       [elementId]: value,
     };
     setEntries(newEntries);
+  };
+
+  /**
+   * Handle appending data from Excel upload
+   * Maps Excel column headers to element IDs and appends to existing entries
+   */
+  const handleExcelDataAppend = (excelData: Record<string, any>[]) => {
+    // Get table headers (element labels)
+    const tableHeaders = tableElements.map(
+      (element) => element.attributes.label,
+    );
+
+    // Transform Excel data to match element structure
+    const transformedData = excelData.map((row) => {
+      const transformedRow: Record<string, any> = {};
+
+      // Map each Excel column to the corresponding element ID
+      tableElements.forEach((element) => {
+        const elementLabel = element.attributes.label;
+        // Find matching column in Excel data (case-insensitive)
+        const matchingKey = Object.keys(row).find(
+          (key) =>
+            key.toLowerCase().trim() === elementLabel.toLowerCase().trim(),
+        );
+
+        if (
+          matchingKey &&
+          row[matchingKey] !== undefined &&
+          row[matchingKey] !== null &&
+          row[matchingKey] !== ""
+        ) {
+          transformedRow[element.id] = row[matchingKey];
+        }
+      });
+
+      return transformedRow;
+    });
+
+    // Append to existing entries (remove empty first entry if it exists)
+    const currentEntries =
+      entries.length === 1 && Object.keys(entries[0]).length === 0
+        ? []
+        : entries;
+
+    setEntries([...currentEntries, ...transformedData]);
   };
   const openComplexEditor = (
     rowIndex: number,
@@ -464,7 +512,15 @@ export default function TableFormRenderer({
               )}
               Download Excel
             </Button>
-            {customExcelHooks?.uploadComponent ? (
+            {useFrontendExcelUpload ? (
+              <FrontendExcelUploadDialog
+                kpiId={id}
+                onDataParsed={handleExcelDataAppend}
+                tableHeaders={tableElements.map(
+                  (element) => element.attributes.label,
+                )}
+              />
+            ) : customExcelHooks?.uploadComponent ? (
               <customExcelHooks.uploadComponent kpiId={id} />
             ) : (
               <ExcelUploadDialog kpiId={id} />
