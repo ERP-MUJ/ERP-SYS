@@ -618,6 +618,7 @@ export default function HodKpiPage({
             downloadHook: useDownloadHodExcelTemplate,
             uploadComponent: HodExcelUploadDialog,
           }}
+          useFrontendExcelUpload={true}
           secondaryAction={{
             label: "Submit to QC",
             variant: "default",

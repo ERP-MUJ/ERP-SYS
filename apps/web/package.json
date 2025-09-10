@@ -23,8 +23,8 @@
     "@hookform/resolvers": "^4.1.3",
     "@tanstack/react-query": "^5.72.0",
     "@tanstack/react-table": "^8.21.3",
-    "@workspace/ui": "workspace:*",
     "@workspace/types": "workspace:*",
+    "@workspace/ui": "workspace:*",
     "axios": "^1.8.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -40,6 +40,7 @@
     "react-hook-form": "^7.55.0",
     "sonner": "^2.0.2",
     "tailwind-merge": "^3.0.1",
+    "xlsx": "^0.18.5",
     "yup": "^1.6.1",
     "zod": "^3.24.2"
   },
@@ -48,6 +49,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/xlsx": "^0.0.36",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
     "typescript": "^5.7.3"
