@@ -262,7 +262,7 @@ export default function TableFormRenderer({
 
     // Append to existing entries (remove empty first entry if it exists)
     const currentEntries =
-      entries.length === 1 && Object.keys(entries[0]).length === 0
+      entries.length === 1 && entries[0] && Object.keys(entries[0]).length === 0
         ? []
         : entries;
 
