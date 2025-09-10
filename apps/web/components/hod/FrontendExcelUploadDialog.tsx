@@ -84,7 +84,7 @@ export function FrontendExcelUploadDialog({
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const files = event.dataTransfer.files;
-    if (files.length > 0) {
+    if (files.length > 0 && files[0]) {
       const file = files[0];
       console.log("File dropped:", file.name, file.type);
       handleFileParse(file);
