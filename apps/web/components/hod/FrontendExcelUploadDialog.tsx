@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@workspace/ui/components/dialog";
 import {
   Table,
@@ -25,13 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import {
-  FileUp,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { FileUp, Loader2, CheckCircle, XCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
@@ -56,7 +49,6 @@ interface ParsedData {
  * First row should contain column headers that match the frontend table headers
  */
 export function FrontendExcelUploadDialog({
-  kpiId,
   trigger,
   onDataParsed,
   tableHeaders,
@@ -113,7 +105,15 @@ export function FrontendExcelUploadDialog({
 
       // Get the first worksheet
       const firstSheetName = workbook.SheetNames[0];
+      if (!firstSheetName) {
+        throw new Error("Excel file does not contain any worksheets");
+      }
       const worksheet = workbook.Sheets[firstSheetName];
+      if (!worksheet) {
+        throw new Error(
+          "Could not access the first worksheet in the Excel file",
+        );
+      }
 
       // Convert to JSON (first row as headers)
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -148,9 +148,8 @@ export function FrontendExcelUploadDialog({
 
       // Convert data rows to objects
       const processedData: Record<string, any>[] = [];
-      const errors: string[] = [];
 
-      dataRows.forEach((row, index) => {
+      dataRows.forEach((row) => {
         if (
           row.every(
             (cell) => cell === undefined || cell === null || cell === "",
