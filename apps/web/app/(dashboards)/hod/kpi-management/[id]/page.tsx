@@ -7,6 +7,8 @@ import {
   useSubmitKpiToQc,
 } from "@/queries/hod/kpi";
 import { useReviewCoordinatorSubmission } from "@/queries/hod/coordinator-workflow";
+import { useDownloadHodExcelTemplate } from "@/queries/hod/excel";
+import { HodExcelUploadDialog } from "@/components/hod/ExcelUploadDialog";
 import { FormElementType, FormElementInstance } from "@/lib/types";
 import {
   Card,
@@ -612,6 +614,10 @@ export default function HodKpiPage({
           elements={elements}
           existingData={existingData}
           customSaveHook={useSaveHodKpiData}
+          customExcelHooks={{
+            downloadHook: useDownloadHodExcelTemplate,
+            uploadComponent: HodExcelUploadDialog,
+          }}
           secondaryAction={{
             label: "Submit to QC",
             variant: "default",
