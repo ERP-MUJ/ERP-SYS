@@ -1,15 +1,20 @@
 "use client";
 
 import {
+  AlertCircle,
   BarChart3,
   BookOpen,
   CalendarIcon,
+  CheckCircle,
   FileText,
   LineChart,
   PieChart,
   Users,
 } from "lucide-react";
-import { KpiCoordinatorNotification } from "@/components/faculty/KpiCoordinatorNotification";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useGetAssignedKpis } from "@/queries/coordinator/kpi";
+import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -37,282 +42,104 @@ import {
 } from "@workspace/ui/components/table";
 
 export function DashboardContent() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { data: kpis } = useGetAssignedKpis();
+
+  const pendingKpis =
+    kpis?.filter(
+      (kpi) => kpi.kpi_status === "PENDING" || kpi.kpi_status === "REVISION",
+    ) || [];
+
+  // Only show coordinator info if user is a KPI coordinator
+  if (session?.user?.role !== "KPI_COORDINATOR") {
+    return null;
+  }
+
   return (
     <div className="mx-auto max-w-7xl">
-      <KpiCoordinatorNotification />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Faculty Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <FileText className="mr-2 h-6 w-6" />
-            Export Report
-          </Button>
-          <Button size="sm">
-            <CalendarIcon className="mr-2 h-6 w-6" />
-            Current Session
-          </Button>
-        </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-card text-card-foreground">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-medium">
-                  Total KPI 3 Entries
-                </CardTitle>
-                <LineChart className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">24</div>
-                <p className="text-xs text-muted-foreground">
-                  +4 from last month
-                </p>
-                <Progress className="mt-2" value={75} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card text-card-foreground">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-medium">
-                  Total KPI 4 Entries
-                </CardTitle>
-                <BarChart3 className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">18</div>
-                <p className="text-xs text-muted-foreground">
-                  +2 from last month
-                </p>
-                <Progress className="mt-2" value={60} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card text-card-foreground">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-medium">
-                  Pending Verification
-                </CardTitle>
-                <PieChart className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">7</div>
-                <p className="text-xs text-muted-foreground">
-                  -3 since last week
-                </p>
-                <Progress className="mt-2" value={30} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card text-card-foreground">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-medium">
-                  Completion Rate
-                </CardTitle>
-                <Users className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">92%</div>
-                <p className="text-xs text-muted-foreground">
-                  +5% from last month
-                </p>
-                <Progress className="mt-2" value={92} />
-              </CardContent>
-            </Card>
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>KPI Coordinator Assignment</CardTitle>
           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>
+                You are assigned as a KPI Coordinator for your department
+              </span>
+            </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 bg-card text-card-foreground">
-              <CardHeader>
-                <CardTitle>Recent Submissions</CardTitle>
-                <CardDescription>
-                  Latest KPI entries submitted across departments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableCaption>A list of recent KPI submissions.</TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Department</TableHead>
-                      <TableHead>KPI Type</TableHead>
-                      <TableHead>Course Name</TableHead>
-                      <TableHead className="text-right">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        Computer Science
-                      </TableCell>
-                      <TableCell>KPI 3</TableCell>
-                      <TableCell>Web Development</TableCell>
-                      <TableCell className="text-right">Verified</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        Electrical Engineering
-                      </TableCell>
-                      <TableCell>KPI 4</TableCell>
-                      <TableCell>Power Systems</TableCell>
-                      <TableCell className="text-right">Pending</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        Mechanical Engineering
-                      </TableCell>
-                      <TableCell>KPI 3</TableCell>
-                      <TableCell>CAD/CAM</TableCell>
-                      <TableCell className="text-right">Verified</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        Civil Engineering
-                      </TableCell>
-                      <TableCell>KPI 4</TableCell>
-                      <TableCell>Structural Analysis</TableCell>
-                      <TableCell className="text-right">Pending</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        Electronics & Communication
-                      </TableCell>
-                      <TableCell>KPI 3</TableCell>
-                      <TableCell>VLSI Design</TableCell>
-                      <TableCell className="text-right">Verified</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" size="sm">
-                  View All
-                </Button>
-              </CardFooter>
-            </Card>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Your Responsibilities:</p>
+              <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                <li>Fill KPI forms for your department</li>
+                <li>Submit completed forms for HOD review</li>
+                <li>Respond to revision requests promptly</li>
+                <li>Monitor KPI status and deadlines</li>
+              </ul>
+            </div>
 
-            <Card className="col-span-3 bg-card text-card-foreground">
-              <CardHeader>
-                <CardTitle>Department Participation</CardTitle>
-                <CardDescription>
-                  KPI submission rates by department
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+            <div className="border rounded-lg p-4">
+              <h3 className="text-sm font-semibold mb-3">Pending KPIs</h3>
+              <div className="space-y-3">
+                {pendingKpis.length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-4">
+                    No pending KPIs to fill
+                  </div>
+                ) : (
+                  pendingKpis.map((kpi) => (
+                    <div
+                      key={kpi.id}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                        <span className="text-base font-medium">
-                          Computer Science
+                        <FileText
+                          className={`h-4 w-4 ${
+                            kpi.kpi_status === "REVISION"
+                              ? "text-red-500"
+                              : "text-orange-500"
+                          }`}
+                        />
+                        <span className="text-sm">
+                          {`KPI ${kpi.kpi_number} - ${kpi.kpi_metric_name}`}
                         </span>
                       </div>
-                      <span className="text-sm font-medium">95%</span>
+                      <Badge
+                        variant="outline"
+                        className={
+                          kpi.kpi_status === "REVISION"
+                            ? "text-red-500"
+                            : "text-orange-500"
+                        }
+                      >
+                        {kpi.kpi_status === "REVISION"
+                          ? "Revision Required"
+                          : "Pending"}
+                      </Badge>
                     </div>
-                    <Progress value={95} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                        <span className="text-base font-medium">
-                          Electrical Engineering
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium">85%</span>
-                    </div>
-                    <Progress value={85} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                        <span className="text-base font-medium">
-                          Mechanical Engineering
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium">78%</span>
-                    </div>
-                    <Progress value={78} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                        <span className="text-base font-medium">
-                          Civil Engineering
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium">65%</span>
-                    </div>
-                    <Progress value={65} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                        <span className="text-base font-medium">
-                          Electronics & Communication
-                        </span>
-                      </div>
-                      <span className="text-sm font-medium">90%</span>
-                    </div>
-                    <Progress value={90} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  ))
+                )}
+              </div>
+              <Button
+                className="w-full mt-4"
+                onClick={() => router.push("/faculty/kpi-management")}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Go to KPI Management
+              </Button>
+            </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <Card className="bg-card text-card-foreground">
-            <CardHeader>
-              <CardTitle>KPI Analytics</CardTitle>
-              <CardDescription>
-                Detailed analysis of KPI submissions and verification rates
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px] w-full rounded-md border border-dashed flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  Analytics Dashboard Placeholder
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="reports" className="space-y-4">
-          <Card className="bg-card text-card-foreground">
-            <CardHeader>
-              <CardTitle>Generated Reports</CardTitle>
-              <CardDescription>
-                Download and view generated reports
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px] w-full rounded-md border border-dashed flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  Reports Dashboard Placeholder
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
