@@ -37,10 +37,12 @@ export interface DepartmentStatus {
 export interface ScoreSheetKpi {
   kpi_number: number;
   kpi_metric_name: string;
-  kpi_value: number | null;
-  data_provided_by: string | null;
-  kpi_target: number | null;
-  percentage_target_achieved: number | null;
+  kpi_value: number;
+  data_provided_by: string;
+  kpi_target: number;
+  percentage_target_achieved: number;
+  dept_pillar_id: string;
+  total_entries?: number;
 }
 
 export interface HodScoreSheetKpi extends ScoreSheetKpi {
@@ -52,6 +54,7 @@ export interface HodScoreSheetKpi extends ScoreSheetKpi {
 export interface DepartmentPillar {
   id: string;
   pillar_name: string;
+  pillar_weight?: number;
 }
 
 export interface QacDashboardData {

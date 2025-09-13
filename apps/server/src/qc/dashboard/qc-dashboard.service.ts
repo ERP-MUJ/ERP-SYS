@@ -35,18 +35,52 @@ export class QcDashboardService {
         data_provided_by: true,
         kpi_target: true,
         percentage_target_achieved: true,
+        dept_pillar_id: true,
+        kpi_status: true,
+        form_responses: true,
+        department_pillar: {
+          select: {
+            pillar_weight: true,
+          },
+        },
       },
       orderBy: {
         kpi_number: 'asc',
       },
     });
 
-    return kpis.map((kpi) => ({
-      ...kpi,
-      percentage_target_achieved: kpi.percentage_target_achieved
-        ? Number(kpi.percentage_target_achieved.toFixed(2))
-        : null,
-    }));
+    return kpis.map((kpi) => {
+      // Count entries from form_responses for approved KPIs
+      let totalEntries = 0;
+      if (kpi.kpi_status === 'APPROVED' && kpi.form_responses) {
+        try {
+          const responses =
+            typeof kpi.form_responses === 'string' ? JSON.parse(kpi.form_responses) : kpi.form_responses;
+
+          // Count objects inside the entries array
+          if (responses && Array.isArray(responses.entries)) {
+            totalEntries = responses.entries.length;
+          }
+        } catch (error) {
+          console.error('Error parsing form_responses:', error);
+          totalEntries = 0;
+        }
+      }
+
+      return {
+        kpi_number: kpi.kpi_number,
+        kpi_metric_name: kpi.kpi_metric_name,
+        kpi_value: kpi.kpi_value,
+        data_provided_by: kpi.data_provided_by,
+        kpi_target: kpi.kpi_target,
+        percentage_target_achieved: kpi.percentage_target_achieved
+          ? Number(kpi.percentage_target_achieved.toFixed(2))
+          : null,
+        dept_pillar_id: kpi.dept_pillar_id,
+        pillar_weight: kpi.department_pillar?.pillar_weight,
+        total_entries: totalEntries,
+      };
+    });
   }
 
   async getDepartmentPillars(userId: string, userRole: UserRole, deptId: string) {
@@ -61,6 +95,7 @@ export class QcDashboardService {
       select: {
         id: true,
         pillar_name: true,
+        pillar_weight: true,
       },
       orderBy: {
         pillar_name: 'asc',
