@@ -46,6 +46,7 @@ export interface ScoreSheetKpi {
 export interface HodScoreSheetKpi extends ScoreSheetKpi {
   hod_percentage_target_achieved: number | null;
   dept_pillar_id: string;
+  total_entries: number;
 }
 
 export interface DepartmentPillar {

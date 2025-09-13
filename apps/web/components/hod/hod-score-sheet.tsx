@@ -47,7 +47,7 @@ export function HodScoreSheet({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableCell colSpan={6} className="font-medium text-lg py-4">
+                  <TableCell colSpan={7} className="font-medium text-lg py-4">
                     {pillar.pillar_name}{" "}
                     <span className="text-muted-foreground ml-2">
                       (Weight: {pillar.pillar_weight || 0})
@@ -72,6 +72,9 @@ export function HodScoreSheet({
                   </TableCell>
                   <TableCell className="w-[150px] text-center font-medium">
                     % Target Achieved
+                  </TableCell>
+                  <TableCell className="w-[100px] text-center font-medium">
+                    Total Entries
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -101,12 +104,15 @@ export function HodScoreSheet({
                           ? `${kpi.hod_percentage_target_achieved}%`
                           : "-"}
                       </TableCell>
+                      <TableCell className="text-center">
+                        {kpi.total_entries || 0}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="text-center text-muted-foreground"
                     >
                       No KPIs found for this pillar
