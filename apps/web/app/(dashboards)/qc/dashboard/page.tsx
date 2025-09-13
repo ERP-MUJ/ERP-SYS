@@ -114,6 +114,7 @@ export default function QACDashboard() {
   }: ScoreSheetProps) => {
     const { data: scoreSheetData, isLoading: isScoreSheetLoading } =
       useGetScoreSheet(selectedDept, selectedPillar);
+    const { data: pillarsData } = useGetDepartmentPillars(selectedDept);
 
     if (!selectedDept) {
       return (
@@ -125,56 +126,100 @@ export default function QACDashboard() {
       );
     }
 
+    if (isScoreSheetLoading || !pillarsData) {
+      return <LoadingSpinner />;
+    }
+
     return (
       <div className="space-y-4">
-        {isScoreSheetLoading ? (
-          <LoadingSpinner />
-        ) : scoreSheetData && scoreSheetData.length > 0 ? (
-          <ReadOnlyFormTable
-            elements={[
-              {
-                id: "kpi_number",
-                type: "text",
-                attributes: { label: "KPI Number", width: 100 },
-              },
-              {
-                id: "kpi_metric_name",
-                type: "text",
-                attributes: { label: "KPI Metric", width: 250 },
-              },
-              {
-                id: "kpi_value",
-                type: "number",
-                attributes: { label: "Weightage", width: 100 },
-              },
-              {
-                id: "data_provided_by",
-                type: "text",
-                attributes: { label: "Stakeholder", width: 120 },
-              },
-              {
-                id: "kpi_target",
-                type: "text",
-                attributes: { label: "Target", width: 100 },
-              },
-              {
-                id: "percentage_target_achieved",
-                type: "number",
-                attributes: { label: "% Achieved", width: 150 },
-              },
-            ]}
-            entries={scoreSheetData}
-            className="w-full"
-            rowNumbers={true}
-            compact={true}
-          />
-        ) : (
-          <div className="flex h-[200px] items-center justify-center">
-            <p className="text-muted-foreground">
-              No data available for the selected criteria
-            </p>
-          </div>
-        )}
+        {pillarsData.map((pillar) => {
+          const pillarScores =
+            scoreSheetData?.filter(
+              (score) => score.dept_pillar_id === pillar.id,
+            ) || [];
+
+          return (
+            <div key={pillar.id} className="space-y-2">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableCell colSpan={7} className="font-medium text-lg py-4">
+                      {pillar.pillar_name}{" "}
+                      <span className="text-muted-foreground ml-2">
+                        (Weight: {pillar.pillar_weight || 0})
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow className="bg-muted/20 hover:bg-muted/20">
+                    <TableCell className="w-[100px] text-center font-medium">
+                      KPI Number
+                    </TableCell>
+                    <TableCell className="w-[250px] font-medium whitespace-normal">
+                      KPI Metric
+                    </TableCell>
+                    <TableCell className="w-[100px] text-center font-medium">
+                      Weightage
+                    </TableCell>
+                    <TableCell className="w-[120px] text-center font-medium">
+                      Stakeholder
+                    </TableCell>
+                    <TableCell className="w-[100px] text-center font-medium">
+                      Target
+                    </TableCell>
+                    <TableCell className="w-[150px] text-center font-medium">
+                      % Target Achieved
+                    </TableCell>
+                    <TableCell className="w-[100px] text-center font-medium">
+                      Total Entries
+                    </TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pillarScores.length > 0 ? (
+                    pillarScores.map((kpi, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="text-center">
+                          {kpi.kpi_number}
+                        </TableCell>
+                        <TableCell className="whitespace-pre-line">
+                          {kpi.kpi_metric_name.length > 40
+                            ? `${kpi.kpi_metric_name.slice(0, 40)}\n${kpi.kpi_metric_name.slice(40)}`
+                            : kpi.kpi_metric_name}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {kpi.kpi_value}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {kpi.data_provided_by}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {kpi.kpi_target}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {kpi.percentage_target_achieved !== null
+                            ? `${kpi.percentage_target_achieved}%`
+                            : "-"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {kpi.total_entries || 0}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center text-muted-foreground"
+                      >
+                        No KPIs found for this pillar
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -239,7 +284,6 @@ export default function QACDashboard() {
                   value={selectedDept}
                   onValueChange={(value) => {
                     setSelectedDept(value);
-                    setSelectedPillar(""); // Reset pillar selection when department changes
                   }}
                 >
                   <SelectTrigger className="w-[200px]">
@@ -253,24 +297,6 @@ export default function QACDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
-
-                {selectedDept && (
-                  <Select
-                    value={selectedPillar}
-                    onValueChange={setSelectedPillar}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select Pillar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pillarsData?.map((pillar) => (
-                        <SelectItem key={pillar.id} value={pillar.id}>
-                          {pillar.pillar_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
               </div>
 
               <ScoreSheet
