@@ -118,7 +118,11 @@ export class CoordinatorKpiService {
     const departmentId = await this.getCoordinatorDepartmentId(userId);
 
     const kpi = await this.prisma.departmentKpi.findFirst({
-      where: { id: kpiId, dept_id: departmentId },
+      where: {
+        id: kpiId,
+        dept_id: departmentId,
+        assigned_users: { some: { id: userId } },
+      },
       include: {
         department_pillar: { select: { pillar_name: true } },
         assigned_users: {
@@ -221,7 +225,13 @@ export class CoordinatorKpiService {
     this.assertCoordinatorRole(userRole);
     const departmentId = await this.getCoordinatorDepartmentId(userId);
 
-    const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: departmentId } });
+    const kpi = await this.prisma.departmentKpi.findFirst({
+      where: {
+        id: kpiId,
+        dept_id: departmentId,
+        assigned_users: { some: { id: userId } },
+      },
+    });
     if (!kpi) throw new NotFoundException('KPI not found or not accessible');
 
     const existingFormResponses = (kpi.form_responses as KpiFormResponsesWithWorkflow) || {};
@@ -290,7 +300,11 @@ export class CoordinatorKpiService {
     const departmentId = await this.getCoordinatorDepartmentId(userId);
 
     const kpi = await this.prisma.departmentKpi.findFirst({
-      where: { id: kpiId, dept_id: departmentId },
+      where: {
+        id: kpiId,
+        dept_id: departmentId,
+        assigned_users: { some: { id: userId } },
+      },
     });
 
     if (!kpi) {
@@ -388,6 +402,7 @@ export class CoordinatorKpiService {
       where: {
         id: kpiId,
         dept_id: departmentId,
+        assigned_users: { some: { id: userId } },
       },
     });
 

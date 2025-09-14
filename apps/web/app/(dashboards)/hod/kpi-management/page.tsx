@@ -104,9 +104,12 @@ export default function KpiManagementPage() {
         kpi_no: kpi.kpi_number,
         metric: kpi.kpi_metric_name,
         dataProvidedBy: kpi.data_provided_by || "N/A",
-        target: kpi.kpi_value?.toString() || "0",
-        actual: kpi.percentage_target_achieved?.toString() || "0",
-        percentAchieved: kpi.percentage_target_achieved?.toString() || "0%",
+        target: kpi.kpi_target?.toString() || "0",
+        actual: kpi.kpi_value?.toString() || "0",
+        percentAchieved:
+          kpi.percentage_target_achieved != null
+            ? `${kpi.percentage_target_achieved}%`
+            : "0%",
         value: kpi.kpi_value?.toString() || "0",
         status: kpi.kpi_status?.toLowerCase() || "pending",
         kpiId: kpi.id,

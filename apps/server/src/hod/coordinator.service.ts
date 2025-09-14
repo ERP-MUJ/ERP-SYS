@@ -1,7 +1,19 @@
-import { Injectable, ForbiddenException, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+  Logger,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole } from '@repo/db/prisma/client';
+import { UserRole, Prisma } from '@repo/db/prisma/client';
 import { AssignCoordinatorDto } from './dto/assign-coordinator.dto';
+
+type UserWithDepartment = Prisma.UserGetPayload<{ include: { department: true } }>;
+type UserWithDepartmentStrict = Omit<UserWithDepartment, 'department'> & {
+  department: NonNullable<UserWithDepartment['department']>;
+};
 
 /**
  * Service for HOD operations related to faculty and coordinator assignments
@@ -31,7 +43,7 @@ export class CoordinatorService {
    */
   private validateAuthentication(userId: string): void {
     if (!userId) {
-      throw new ForbiddenException('User not authenticated');
+      throw new UnauthorizedException('User not authenticated');
     }
   }
 
@@ -41,7 +53,7 @@ export class CoordinatorService {
    * @returns HOD user with department information
    * @throws NotFoundException if HOD or department not found
    */
-  private async getHodDepartment(userId: string) {
+  private async getHodDepartment(userId: string): Promise<UserWithDepartmentStrict> {
     const hod = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { department: true },
@@ -52,7 +64,8 @@ export class CoordinatorService {
       throw new NotFoundException('HOD department not found');
     }
 
-    return hod;
+    // Narrow department to non-null after the runtime check
+    return { ...hod, department: hod.department } as UserWithDepartmentStrict;
   }
 
   /**
@@ -209,11 +222,11 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     // Validate faculty exists and belongs to department
-    const faculty = await this.validateFacultyInDepartment(payload.faculty_id, hod.department!.id);
+    const faculty = await this.validateFacultyInDepartment(payload.faculty_id, hod.department.id);
 
     // Handle role change from COORDINATOR to FACULTY - remove KPI assignments
     if (payload.new_role === 'FACULTY' && faculty.user_role === 'KPI_COORDINATOR') {
-      await this.removeCoordinatorKpiAssignments(payload.faculty_id, hod.department!.id);
+      await this.removeCoordinatorKpiAssignments(payload.faculty_id, hod.department.id);
     }
 
     // Update user role
@@ -253,7 +266,7 @@ export class CoordinatorService {
 
     return this.prisma.user.findMany({
       where: {
-        dept_id: hod.department!.id,
+        dept_id: hod.department.id,
         user_role: { in: [UserRole.FACULTY, UserRole.KPI_COORDINATOR] },
       },
       select: {
@@ -282,7 +295,7 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     return this.prisma.departmentKpi.findMany({
-      where: { dept_id: hod.department!.id },
+      where: { dept_id: hod.department.id },
       include: {
         department_pillar: { select: { pillar_name: true } },
         assigned_users: {
@@ -315,8 +328,8 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     // Validate KPI and coordinator belong to HOD's department
-    await this.validateKpiInDepartment(kpiId, hod.department!.id);
-    const coordinator = await this.validateCoordinatorInDepartment(coordinatorId, hod.department!.id);
+    await this.validateKpiInDepartment(kpiId, hod.department.id);
+    const coordinator = await this.validateCoordinatorInDepartment(coordinatorId, hod.department.id);
 
     // Add coordinator to KPI's assigned_users
     await this.prisma.departmentKpi.update({
@@ -352,7 +365,7 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     // Validate KPI belongs to HOD's department
-    await this.validateKpiInDepartment(kpiId, hod.department!.id);
+    await this.validateKpiInDepartment(kpiId, hod.department.id);
 
     // Remove coordinator from KPI's assigned_users
     await this.prisma.departmentKpi.update({

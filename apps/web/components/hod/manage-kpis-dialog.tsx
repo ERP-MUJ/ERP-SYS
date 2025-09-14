@@ -97,7 +97,12 @@ const ManageKpisDialog: React.FC<ManageKpisDialogProps> = ({
   const hasChanges = changes.toAdd.length > 0 || changes.toRemove.length > 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Manage KPI Assignments - {coordinatorName}</DialogTitle>
