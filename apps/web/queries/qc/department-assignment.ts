@@ -6,6 +6,7 @@ import {
   getDepartmentPillars,
   getAllDepartmentPillars,
   assignPillarToDepartment,
+  assignPillarAndKpiToAllDepartments,
   updateDepartmentPillar,
   unassignPillarFromDepartment,
   getDepartmentPillarKPIs,
@@ -17,6 +18,7 @@ import {
   DepartmentPillar,
   DepartmentKpi,
   AssignPillarPayload,
+  BulkAssignmentResponse,
 } from "@/services/qc/department-assignment.service";
 
 export function useGetDepartments() {
@@ -113,6 +115,58 @@ export function useAssignPillarToDepartment() {
     },
     onError: (error: any) => {
       toast.error("Failed to assign pillar to department", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
+export function useAssignPillarAndKpiToAllDepartments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await assignPillarAndKpiToAllDepartments();
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message ||
+          "Failed to assign pillars and KPIs to all departments",
+      );
+    },
+    onSuccess: (data) => {
+      // Invalidate all related queries since we've assigned to all departments
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0] as string;
+          return (
+            key.startsWith("qc-") &&
+            (key.includes("department-pillars") ||
+              key.includes("pillar-templates"))
+          );
+        },
+      });
+
+      // Show detailed success message
+      const { summary } = data;
+
+      if (summary.successCount === 0 && summary.errorCount === 0) {
+        // Everything was already assigned
+        toast.info(data.message, {
+          description: `No new assignments needed - all ${summary.totalPillars} pillars already assigned to all departments`,
+        });
+      } else if (summary.errorCount > 0) {
+        // Some errors occurred
+        toast.warning(data.message, {
+          description: `${summary.successCount} successful, ${summary.skipCount} skipped, ${summary.errorCount} errors`,
+        });
+      } else {
+        // Some assignments were made
+        toast.success(data.message, {
+          description: `${summary.totalPillars} pillars processed across ${summary.totalDepartments} departments`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast.error("Failed to assign pillars and KPIs to all departments", {
         description: error.message || "An error occurred",
       });
     },

@@ -3,7 +3,7 @@ import { DepartmentAssignmentService } from './department-assignment.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { RequestUser } from 'src/auth/dto/request-user.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('QAC Department Assignment')
 @ApiBearerAuth()
@@ -46,6 +46,14 @@ export class DepartmentAssignmentController {
       body.pillarWeight,
       body.pillarTarget,
     );
+  }
+
+  @Post('assign-all')
+  @ApiOperation({
+    summary: 'Assign all pillar templates and KPIs to all departments',
+  })
+  assignPillarAndKpiToAllDepartments(@CurrentUser() user: RequestUser) {
+    return this.departmentAssignmentService.assignPillarAndKpiToAllDepartments(user.id, user.role);
   }
 
   /**

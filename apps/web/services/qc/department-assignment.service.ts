@@ -1,6 +1,31 @@
 import { ApiClient } from "@/lib/api-client";
 import { ApiError } from "@/types/error";
 
+/**
+ * Interface for assignment result
+ */
+export interface AssignmentResult {
+  departmentId: string;
+  departmentName: string;
+  status: "success" | "skipped" | "error";
+  message: string;
+}
+
+/**
+ * Interface for bulk assignment response
+ */
+export interface BulkAssignmentResponse {
+  message: string;
+  summary: {
+    totalDepartments: number;
+    totalPillars: number;
+    successCount: number;
+    skipCount: number;
+    errorCount: number;
+  };
+  results: AssignmentResult[];
+}
+
 export interface UpdatePillarWeightPayload {
   pillarWeight?: number;
   pillarTarget?: number;
@@ -125,6 +150,26 @@ export interface AssignPillarResponse {
 }
 
 /**
+ * Interface for assign-all response
+ */
+export interface AssignAllResponse {
+  message: string;
+  summary: {
+    totalDepartments: number;
+    totalPillars: number;
+    successCount: number;
+    skipCount: number;
+    errorCount: number;
+  };
+  results: {
+    departmentId: string;
+    departmentName: string;
+    status: "success" | "skipped" | "error";
+    message: string;
+  }[];
+}
+
+/**
  * Fetches all departments
  * @returns Promise with departments data
  */
@@ -210,6 +255,21 @@ export const assignPillarToDepartment = async (
     throw error;
   }
 };
+
+/**
+ * Assigns all pillar templates and their KPIs to all departments
+ * @returns Promise with assignment response
+ */
+export async function assignPillarAndKpiToAllDepartments(): Promise<{
+  data?: BulkAssignmentResponse;
+  error?: ApiError;
+}> {
+  return ApiClient.post<BulkAssignmentResponse>(
+    "/qc/department-assignment/assign-all",
+    undefined,
+    { timeout: 60000 }, // 60 seconds for bulk operation
+  );
+}
 
 /**
  * Unassigns a pillar from a department

@@ -15,6 +15,7 @@ import {
   AssignKpiTable,
   type KpiData,
 } from "@/components/qc/assign/AssignKpiTable";
+import { AssignAllButton } from "@/components/qc/assign-all-button";
 import {
   useGetDepartments,
   useGetPillarTemplates,
@@ -310,9 +311,13 @@ export default function AssignKpiToDepartmentPage() {
 
   return (
     <main className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">
-        Assign Pillar and KPI to Department
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">
+          Assign Pillar and KPI to Department
+        </h1>
+
+        <AssignAllButton />
+      </div>
 
       {!selectedDepartmentId ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
