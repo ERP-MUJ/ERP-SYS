@@ -3,7 +3,7 @@ import { DepartmentAssignmentService } from './department-assignment.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
 import { RequestUser } from 'src/auth/dto/request-user.dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('QAC Department Assignment')
 @ApiBearerAuth()
@@ -49,6 +49,45 @@ export class DepartmentAssignmentController {
   }
 
   @Post('assign-all')
+  @ApiOperation({
+    summary: 'Assign all pillar templates and KPIs to all departments',
+    description:
+      'Bulk assigns all pillar templates created by the QAC user to all departments. Only assigns pillars/KPIs that do not already exist. This is a potentially long-running operation.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assignment completed with summary of results',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Assignment completed. 45 assignments created/updated, 12 skipped.' },
+        summary: {
+          type: 'object',
+          properties: {
+            totalDepartments: { type: 'number', example: 25 },
+            totalPillars: { type: 'number', example: 3 },
+            successCount: { type: 'number', example: 45 },
+            skipCount: { type: 'number', example: 12 },
+            errorCount: { type: 'number', example: 0 },
+          },
+        },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              departmentId: { type: 'string' },
+              departmentName: { type: 'string' },
+              status: { type: 'string', enum: ['success', 'skipped', 'error'] },
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'No pillar templates or departments found' })
+  @ApiResponse({ status: 403, description: 'User not authorized (QAC role required)' })
   assignPillarAndKpiToAllDepartments(@CurrentUser() user: RequestUser) {
     return this.departmentAssignmentService.assignPillarAndKpiToAllDepartments(user.id, user.role);
   }

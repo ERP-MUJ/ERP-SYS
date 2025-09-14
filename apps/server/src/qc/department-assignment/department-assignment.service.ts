@@ -214,32 +214,63 @@ export class DepartmentAssignmentService {
       throw new NotFoundException('No departments found');
     }
 
+    // Early check: Count existing assignments to see if everything is already assigned
+    const totalPossibleAssignments = departments.length * pillarTemplates.length;
+    const existingAssignmentsCount = await this.prisma.departmentPillar.count({
+      where: {
+        template_id: { in: pillarTemplates.map((pt) => pt.id) },
+        dept_id: { in: departments.map((d) => d.id) },
+      },
+    });
+
+    // If all possible assignments exist, we can return early with a specific message
+    if (existingAssignmentsCount === totalPossibleAssignments) {
+      return {
+        message: 'All pillars and KPIs are already assigned to all departments.',
+        summary: {
+          totalDepartments: departments.length,
+          totalPillars: pillarTemplates.length,
+          successCount: 0,
+          skipCount: existingAssignmentsCount,
+          errorCount: 0,
+        },
+        results: departments.flatMap((dept) =>
+          pillarTemplates.map((pillar) => ({
+            departmentId: dept.id,
+            departmentName: dept.dept_name,
+            status: 'skipped' as const,
+            message: `${pillar.pillar_name}: Already assigned`,
+          })),
+        ),
+      };
+    }
+
     const results: AssignmentResult[] = [];
     let totalSuccessCount = 0;
     let totalSkipCount = 0;
     let totalErrorCount = 0;
 
-    // Use transaction to ensure all assignments are atomic
-    await this.prisma.$transaction(async (tx) => {
-      for (const department of departments) {
-        for (const pillarTemplate of pillarTemplates) {
-          try {
-            // Check if pillar already exists for this department
-            const existingDepartmentPillar = await tx.departmentPillar.findUnique({
-              where: {
-                dept_id_template_id: {
-                  dept_id: department.id,
-                  template_id: pillarTemplate.id,
-                },
+    // Process each department-pillar combination without wrapping in a large transaction
+    for (const department of departments) {
+      for (const pillarTemplate of pillarTemplates) {
+        try {
+          // Check if pillar already exists for this department
+          const existingDepartmentPillar = await this.prisma.departmentPillar.findUnique({
+            where: {
+              dept_id_template_id: {
+                dept_id: department.id,
+                template_id: pillarTemplate.id,
               },
-            });
+            },
+          });
 
-            let departmentPillar = existingDepartmentPillar;
-            let pillarAction = '';
+          let departmentPillar = existingDepartmentPillar;
+          let pillarAction = '';
 
-            // If pillar doesn't exist, create it
-            if (!existingDepartmentPillar) {
-              departmentPillar = await tx.departmentPillar.create({
+          // If pillar doesn't exist, create it in a scoped transaction
+          if (!existingDepartmentPillar) {
+            departmentPillar = await this.prisma.$transaction(async (tx) => {
+              return await tx.departmentPillar.create({
                 data: {
                   dept_id: department.id,
                   template_id: pillarTemplate.id,
@@ -250,31 +281,33 @@ export class DepartmentAssignmentService {
                   academic_year: new Date().getFullYear(),
                 },
               });
-              pillarAction = 'Pillar created';
-            } else {
-              pillarAction = 'Pillar exists';
-            }
-
-            // Now handle KPIs - check which ones are missing
-            if (!departmentPillar) {
-              throw new Error('Failed to create or find department pillar');
-            }
-
-            const existingKpis = await tx.departmentKpi.findMany({
-              where: {
-                dept_pillar_id: departmentPillar.id,
-              },
-              select: { template_id: true },
             });
+            pillarAction = 'Pillar created';
+          } else {
+            pillarAction = 'Pillar exists';
+          }
 
-            const existingKpiTemplateIds = new Set(existingKpis.map((k) => k.template_id));
-            const missingKpiTemplates = pillarTemplate.kpi_templates.filter((kt) => !existingKpiTemplateIds.has(kt.id));
+          // Now handle KPIs - check which ones are missing
+          if (!departmentPillar) {
+            throw new Error('Failed to create or find department pillar');
+          }
 
-            let kpiAction = '';
-            let assignedKpiCount = 0;
+          const existingKpis = await this.prisma.departmentKpi.findMany({
+            where: {
+              dept_pillar_id: departmentPillar.id,
+            },
+            select: { template_id: true },
+          });
 
-            // Assign missing KPIs
-            if (missingKpiTemplates.length > 0) {
+          const existingKpiTemplateIds = new Set(existingKpis.map((k) => k.template_id));
+          const missingKpiTemplates = pillarTemplate.kpi_templates.filter((kt) => !existingKpiTemplateIds.has(kt.id));
+
+          let kpiAction = '';
+          let assignedKpiCount = 0;
+
+          // Assign missing KPIs in a scoped transaction if there are any
+          if (missingKpiTemplates.length > 0) {
+            await this.prisma.$transaction(async (tx) => {
               for (const kt of missingKpiTemplates) {
                 const kpiDataJson = kt.kpi_data ? JSON.parse(JSON.stringify(kt.kpi_data)) : null;
                 const metricsJson = kt.kpi_calculated_metrics
@@ -298,55 +331,58 @@ export class DepartmentAssignmentService {
                 });
                 assignedKpiCount++;
               }
-              kpiAction = `${assignedKpiCount} KPIs assigned`;
-            } else {
-              kpiAction = 'All KPIs already exist';
-            }
+            });
+            kpiAction = `${assignedKpiCount} KPIs assigned`;
+          } else {
+            kpiAction = 'All KPIs already exist';
+          }
 
-            // Determine the overall status and message
-            if (!existingDepartmentPillar && assignedKpiCount > 0) {
-              // New pillar with all KPIs
-              results.push({
-                departmentId: department.id,
-                departmentName: department.dept_name,
-                status: 'success',
-                message: `${pillarTemplate.pillar_name}: ${pillarAction}, ${kpiAction}`,
-              });
-              totalSuccessCount++;
-            } else if (existingDepartmentPillar && assignedKpiCount > 0) {
-              // Existing pillar with some new KPIs
-              results.push({
-                departmentId: department.id,
-                departmentName: department.dept_name,
-                status: 'success',
-                message: `${pillarTemplate.pillar_name}: ${pillarAction}, ${kpiAction}`,
-              });
-              totalSuccessCount++;
-            } else {
-              // Everything already exists
-              results.push({
-                departmentId: department.id,
-                departmentName: department.dept_name,
-                status: 'skipped',
-                message: `${pillarTemplate.pillar_name}: ${pillarAction}, ${kpiAction}`,
-              });
-              totalSkipCount++;
-            }
-          } catch (error) {
+          // Determine the overall status and message
+          if (!existingDepartmentPillar && assignedKpiCount > 0) {
+            // New pillar with all KPIs
             results.push({
               departmentId: department.id,
               departmentName: department.dept_name,
-              status: 'error',
-              message: `${pillarTemplate.pillar_name}: Failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
+              status: 'success',
+              message: `${pillarTemplate.pillar_name}: ${pillarAction}, ${kpiAction}`,
             });
-            totalErrorCount++;
+            totalSuccessCount++;
+          } else if (existingDepartmentPillar && assignedKpiCount > 0) {
+            // Existing pillar with some new KPIs
+            results.push({
+              departmentId: department.id,
+              departmentName: department.dept_name,
+              status: 'success',
+              message: `${pillarTemplate.pillar_name}: ${pillarAction}, ${kpiAction}`,
+            });
+            totalSuccessCount++;
+          } else {
+            // Everything already exists
+            results.push({
+              departmentId: department.id,
+              departmentName: department.dept_name,
+              status: 'skipped',
+              message: `${pillarTemplate.pillar_name}: ${pillarAction}, ${kpiAction}`,
+            });
+            totalSkipCount++;
           }
+        } catch (error) {
+          results.push({
+            departmentId: department.id,
+            departmentName: department.dept_name,
+            status: 'error',
+            message: `${pillarTemplate.pillar_name}: Failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          });
+          totalErrorCount++;
         }
       }
-    });
+    }
 
     return {
-      message: `Assignment completed. ${totalSuccessCount} assignments created/updated, ${totalSkipCount} skipped.`,
+      message:
+        totalSuccessCount === 0 && totalErrorCount === 0
+          ? `All pillars and KPIs are already assigned. ${totalSkipCount} assignments skipped.`
+          : `Assignment completed. ${totalSuccessCount} assignments created/updated, ${totalSkipCount} skipped.`,
       summary: {
         totalDepartments: departments.length,
         totalPillars: pillarTemplates.length,

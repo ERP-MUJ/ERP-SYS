@@ -18,6 +18,7 @@ import {
   DepartmentPillar,
   DepartmentKpi,
   AssignPillarPayload,
+  BulkAssignmentResponse,
 } from "@/services/qc/department-assignment.service";
 
 export function useGetDepartments() {
@@ -134,22 +135,33 @@ export function useAssignPillarAndKpiToAllDepartments() {
     onSuccess: (data) => {
       // Invalidate all related queries since we've assigned to all departments
       queryClient.invalidateQueries({
-        queryKey: ["qc-department-pillars"],
+        predicate: (query) => {
+          const key = query.queryKey[0] as string;
+          return (
+            key.startsWith("qc-") &&
+            (key.includes("department-pillars") ||
+              key.includes("pillar-templates"))
+          );
+        },
       });
-      queryClient.invalidateQueries({
-        queryKey: ["qc-all-department-pillars"],
-      });
-      queryClient.invalidateQueries({ queryKey: ["qc-pillar-templates"] });
 
       // Show detailed success message
       const { summary } = data;
-      if (summary.errorCount > 0) {
+
+      if (summary.successCount === 0 && summary.errorCount === 0) {
+        // Everything was already assigned
+        toast.info(data.message, {
+          description: `No new assignments needed - all ${summary.totalPillars} pillars already assigned to all departments`,
+        });
+      } else if (summary.errorCount > 0) {
+        // Some errors occurred
         toast.warning(data.message, {
-          description: `${summary.successCount} successful assignments, ${summary.skipCount} skipped, ${summary.errorCount} errors`,
+          description: `${summary.successCount} successful, ${summary.skipCount} skipped, ${summary.errorCount} errors`,
         });
       } else {
+        // Some assignments were made
         toast.success(data.message, {
-          description: `${summary.totalPillars} pillars assigned across ${summary.totalDepartments} departments`,
+          description: `${summary.totalPillars} pillars processed across ${summary.totalDepartments} departments`,
         });
       }
     },

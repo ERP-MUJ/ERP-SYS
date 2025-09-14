@@ -15,6 +15,7 @@ import {
   AssignKpiTable,
   type KpiData,
 } from "@/components/qc/assign/AssignKpiTable";
+import { AssignAllButton } from "@/components/qc/assign-all-button";
 import {
   useGetDepartments,
   useGetPillarTemplates,
@@ -22,7 +23,6 @@ import {
   useGetAllDepartmentPillars,
   useGetDepartmentPillarKPIs,
   useAssignPillarToDepartment,
-  useAssignPillarAndKpiToAllDepartments,
   useUnassignPillarFromDepartment,
   useUpdateDepartmentPillar,
   useAssignKpiToDepartmentPillar,
@@ -65,7 +65,6 @@ export default function AssignKpiToDepartmentPage() {
     useGetDepartmentPillarKPIs(selectedDepartmentPillar?.id || null);
 
   const assignPillarMutation = useAssignPillarToDepartment();
-  const assignAllMutation = useAssignPillarAndKpiToAllDepartments();
   const unassignPillarMutation = useUnassignPillarFromDepartment();
   const updatePillarMutation = useUpdateDepartmentPillar();
   const assignKpiMutation = useAssignKpiToDepartmentPillar();
@@ -186,10 +185,6 @@ export default function AssignKpiToDepartmentPage() {
         pillarTarget: pillar.target,
       },
     });
-  };
-
-  const handleAssignPillarToAllDepartments = () => {
-    assignAllMutation.mutate();
   };
 
   const handleUnassignPillar = (pillar: PillarData) => {
@@ -320,35 +315,8 @@ export default function AssignKpiToDepartmentPage() {
         <h1 className="text-3xl font-bold">
           Assign Pillar and KPI to Department
         </h1>
-        <Button
-          onClick={handleAssignPillarToAllDepartments}
-          disabled={assignAllMutation.isPending}
-          size="lg"
-        >
-          {assignAllMutation.isPending ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Assigning...
-            </>
-          ) : (
-            <>
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Assign All
-            </>
-          )}
-        </Button>
+
+        <AssignAllButton />
       </div>
 
       {!selectedDepartmentId ? (
