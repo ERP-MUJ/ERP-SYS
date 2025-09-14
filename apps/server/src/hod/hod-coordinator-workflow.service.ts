@@ -72,6 +72,13 @@ export class HodCoordinatorWorkflowService {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(userRole);
 
+    // Get user information for review history
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { user_name: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
     const departmentId = await this.getHodDepartmentId(userId);
     console.log('HOD department ID:', departmentId);
 
@@ -93,7 +100,7 @@ export class HodCoordinatorWorkflowService {
       throw new BadRequestException('No coordinator submission to review');
     }
     let newCoordinatorStatus: CoordinatorWorkflow['coordinator_status'];
-    const reviewData = { reviewed_at: new Date().toISOString(), action, comments };
+    const reviewData = { reviewed_at: new Date().toISOString(), action, comments, by: user.user_name };
     if (action === 'APPROVE') {
       newCoordinatorStatus = 'APPROVED_BY_HOD';
       type Entry = Record<string, unknown>;
