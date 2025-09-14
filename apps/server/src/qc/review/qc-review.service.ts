@@ -69,7 +69,7 @@ export class QcReviewService {
     // Get user information for review history
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { user_name: true },
+      select: { user_name: true, user_email: true },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -108,14 +108,23 @@ export class QcReviewService {
         throw new BadRequestException('Invalid action');
     }
 
-    type ReviewEntry = { action: string; by: string; at: string; remark: string };
+    type ReviewEntry = { action: string; by: string; by_id?: string; at: string; remark: string };
     const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown> & {
       review_history?: ReviewEntry[];
     };
     const existingHistory = Array.isArray(existingMetrics.review_history) ? existingMetrics.review_history : [];
     const updatedMetrics = {
       ...existingMetrics,
-      review_history: [...existingHistory, { action, by: user.user_name, at: new Date().toISOString(), remark }],
+      review_history: [
+        ...existingHistory,
+        {
+          action,
+          by: user.user_name ?? user.user_email ?? userId,
+          by_id: userId,
+          at: new Date().toISOString(),
+          remark,
+        },
+      ],
     };
 
     console.log('QC Review Service - About to update KPI:', {

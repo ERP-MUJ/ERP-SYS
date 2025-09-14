@@ -29,6 +29,7 @@ import {
 } from "@workspace/ui/components/table";
 import { Badge } from "@workspace/ui/components/badge";
 import { useGetDepartmentPillars } from "@/queries/hod/kpi";
+import { useGetAssignedKpis } from "@/queries/coordinator/kpi";
 import { type DerivedDisplayStatus } from "@/lib/qc-status";
 import { StatusBadge } from "@/components/common/StatusBadge";
 
@@ -36,26 +37,102 @@ export default function KpiManagementPage() {
   const { data: session } = useSession();
   const [selectedPillarId, setSelectedPillarId] = useState<string>("");
 
-  // Fetch department pillars from backend (works for both FACULTY and KPI_COORDINATOR)
+  const isCoordinator = session?.user?.role === "KPI_COORDINATOR";
+  const isFaculty = session?.user?.role === "FACULTY";
+
+  // Fetch data based on user role
+  // Coordinators: Only see assigned KPIs
+  // Faculty: No access to KPIs
+  // HOD: See all department KPIs (but HODs use different dashboard)
+  const {
+    data: assignedKpis,
+    isLoading: isAssignedKpisLoading,
+    error: assignedKpisError,
+  } = useGetAssignedKpis();
+
   const {
     data: pillarsData,
     isLoading: isPillarsLoading,
     error: pillarsError,
   } = useGetDepartmentPillars();
 
-  // Ensure pillars is always an array
-  const pillars = Array.isArray(pillarsData) ? pillarsData : [];
+  // For coordinators, transform assigned KPIs to pillar format
+  const pillars = useMemo(() => {
+    if (isCoordinator && assignedKpis) {
+      // Group assigned KPIs by pillar
+      const pillarMap = new Map();
 
-  // Get the selected pillar data
+      assignedKpis.forEach((kpi: any) => {
+        const pillarName =
+          kpi.department_pillar?.pillar_name || "Unknown Pillar";
+        const pillarkId = kpi.dept_pillar_id;
+
+        if (!pillarMap.has(pillarkId)) {
+          pillarMap.set(pillarkId, {
+            id: pillarkId,
+            pillar_name: pillarName,
+            kpis: [],
+          });
+        }
+
+        pillarMap.get(pillarkId).kpis.push(kpi);
+      });
+
+      return Array.from(pillarMap.values());
+    }
+
+    return Array.isArray(pillarsData) ? pillarsData : [];
+  }, [isCoordinator, assignedKpis, pillarsData]);
+
+  const isLoading = isCoordinator ? isAssignedKpisLoading : isPillarsLoading;
+  const error = isCoordinator ? assignedKpisError : pillarsError;
+
   const selectedPillar = useMemo(() => {
     return pillars.find((pillar: any) => pillar.id === selectedPillarId);
   }, [pillars, selectedPillarId]);
 
+  // Faculty access control - only coordinators can access KPIs
+  if (isFaculty) {
+    return (
+      <div className="space-y-6 max-w-7xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-6 w-6" />
+              Access Restricted
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <BarChart3 className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                KPI Management Access Required
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You need to be assigned as a KPI Coordinator by your HOD to
+                access KPI management features.
+              </p>
+              <p className="text-sm text-gray-500">
+                Contact your Head of Department to request coordinator access
+                for specific KPIs.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Transform KPI data for the table
   const transformedKpis = useMemo(() => {
-    if (!selectedPillar?.department_kpis) return [];
+    // Handle different data structures based on user role
+    const kpiList = isCoordinator
+      ? selectedPillar?.kpis || [] // Coordinators use assigned KPIs
+      : selectedPillar?.department_kpis || []; // Others use department KPIs
 
-    const isCoordinator = session?.user?.role === "KPI_COORDINATOR";
+    if (kpiList.length === 0) return [];
 
     const mapDisplayToStatusType = (
       display: string,
@@ -81,7 +158,7 @@ export default function KpiManagementPage() {
       }
     };
 
-    return selectedPillar.department_kpis.map((kpi: any, idx: number) => {
+    return kpiList.map((kpi: any, idx: number) => {
       const cw = kpi.form_responses?.coordinator_workflow;
       const baseStatus: string = kpi.kpi_status || "PENDING";
 
@@ -156,7 +233,7 @@ export default function KpiManagementPage() {
   // Not needed with StatusBadge mapping, placeholder retained for future
   const getStatusBadgeVariant = (_status: string) => "pending";
 
-  if (isPillarsLoading) {
+  if (isLoading) {
     return (
       <main className="container mx-auto py-8 px-4">
         <div className="flex justify-center items-center h-64">
@@ -165,6 +242,62 @@ export default function KpiManagementPage() {
             <p className="mt-2 text-sm text-gray-600">Loading KPI data...</p>
           </div>
         </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <main className="container mx-auto py-8 px-4">
+        <Card>
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <TrendingUp className="h-8 w-8 text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Failed to load KPI data
+              </h3>
+              <p className="text-gray-600">
+                {error.message || "An error occurred while loading your KPIs."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
+
+  // Show message if coordinator has no assigned KPIs
+  if (isCoordinator && pillars.length === 0) {
+    return (
+      <main className="container mx-auto py-8 px-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-6 w-6" />
+              KPI Coordinator Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <BarChart3 className="h-8 w-8 text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No KPIs Assigned
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You haven't been assigned to any KPIs yet.
+              </p>
+              <p className="text-sm text-gray-500">
+                Contact your Head of Department to get assigned to specific KPIs
+                you'll be responsible for managing.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     );
   }

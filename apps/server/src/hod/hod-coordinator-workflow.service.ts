@@ -75,7 +75,7 @@ export class HodCoordinatorWorkflowService {
     // Get user information for review history
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { user_name: true },
+      select: { user_name: true, user_email: true },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -100,7 +100,13 @@ export class HodCoordinatorWorkflowService {
       throw new BadRequestException('No coordinator submission to review');
     }
     let newCoordinatorStatus: CoordinatorWorkflow['coordinator_status'];
-    const reviewData = { reviewed_at: new Date().toISOString(), action, comments, by: user.user_name };
+    const reviewData = {
+      reviewed_at: new Date().toISOString(),
+      action,
+      comments,
+      by: user.user_name ?? user.user_email ?? userId,
+      by_id: userId,
+    };
     if (action === 'APPROVE') {
       newCoordinatorStatus = 'APPROVED_BY_HOD';
       type Entry = Record<string, unknown>;

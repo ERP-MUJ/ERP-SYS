@@ -19,6 +19,8 @@ export interface CoordinatorWorkflow {
     reviewed_at: string;
     action: 'APPROVE' | 'REJECT' | 'REQUEST_REVISION';
     comments: string;
+    by?: string;
+    by_id?: string;
   };
   revision_history?: Array<{
     revision_number: number;
@@ -74,9 +76,16 @@ export class CoordinatorKpiService {
     this.assertCoordinatorRole(userRole);
     const departmentId = await this.getCoordinatorDepartmentId(userId);
 
-    // Coordinators now see ALL KPIs in their department (no per-KPI assignment required)
+    // Coordinators now see only KPIs where they are specifically assigned via assigned_users relationship
     const kpis = await this.prisma.departmentKpi.findMany({
-      where: { dept_id: departmentId },
+      where: {
+        dept_id: departmentId,
+        assigned_users: {
+          some: {
+            id: userId,
+          },
+        },
+      },
       include: {
         department_pillar: { select: { pillar_name: true } },
         assigned_users: {
