@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Delete, Param, Patch, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Delete, Param, Patch, Get, Query } from '@nestjs/common';
 import { KpiService } from './kpi.service';
 import { CreateKpiDto } from './dto/create-kpi.dto';
 import { UpdateKpiDto } from './dto/update-kpi.dto';
@@ -45,6 +45,25 @@ export class KpiController {
     @Body() dto: UpdateKpiDto,
   ) {
     return this.kpiService.updateKpi(user.id, user.role, kpiId, dto);
+  }
+
+  @Get('check-duplicate/:kpiNumber')
+  @ApiOperation({ summary: 'Check if KPI number already exists in this pillar' })
+  async checkKpiNumberExists(
+    @CurrentUser() user: RequestUser,
+    @Param('pillarId') pillarId: string,
+    @Param('kpiNumber') kpiNumber: string,
+    @Query('academicYear') academicYear: string,
+    @Query('excludeKpiId') excludeKpiId?: string,
+  ) {
+    return this.kpiService.checkKpiNumberExists(
+      user.id,
+      user.role,
+      pillarId,
+      parseInt(kpiNumber),
+      parseInt(academicYear),
+      excludeKpiId,
+    );
   }
 
   @Delete(':kpiId')

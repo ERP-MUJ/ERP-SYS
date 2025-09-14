@@ -33,7 +33,11 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
-import { useAddKpi, useUpdateKpi } from "@/queries/qc/kpi";
+import {
+  useAddKpi,
+  useUpdateKpi,
+  useCheckKpiNumberExists,
+} from "@/queries/qc/kpi";
 import { useRouter } from "next/navigation";
 import { WeightValidation } from "@/components/common/WeightValidation";
 import { CreateKpiRequestData } from "@workspace/types/types";
@@ -76,6 +80,18 @@ export default function FormBuilder({
 
   const isEditMode = !!kpiId;
   const isSaving = isSavingAdd || isSavingUpdate;
+  const currentYear = new Date().getFullYear();
+
+  // Check for duplicate KPI numbers
+  const { data: duplicateCheck, isLoading: isCheckingDuplicate } =
+    useCheckKpiNumberExists(
+      pillarId,
+      parseInt(kpiNo) || 0,
+      currentYear,
+      isEditMode ? kpiId : undefined,
+    );
+
+  const isDuplicate = duplicateCheck?.exists || false;
 
   // Calculate current total weight from existing KPIs (values are already 0-1)
   // In edit mode, exclude the current KPI from the calculation
@@ -227,6 +243,14 @@ export default function FormBuilder({
       return;
     }
 
+    // Check for duplicate KPI number
+    if (isDuplicate) {
+      toast.error(
+        `KPI number ${kpiNo} already exists in academic year ${currentYear}. Please choose a different number.`,
+      );
+      return;
+    }
+
     if (!metric.trim()) {
       toast.error("KPI Metric Name is required");
       return;
@@ -356,10 +380,31 @@ export default function FormBuilder({
               max={78}
               value={kpiNo}
               onChange={(e) => setKpiNo(e.target.value.replace(/\D/g, ""))}
-              className="text-lg font-medium"
+              className={`text-lg font-medium ${
+                isDuplicate ? "border-red-500 focus:border-red-500" : ""
+              }`}
               placeholder="Enter KPI Number"
               required
             />
+            {isCheckingDuplicate && kpiNo && (
+              <p className="text-sm text-blue-600 mt-1">
+                Checking for duplicates...
+              </p>
+            )}
+            {isDuplicate && kpiNo && (
+              <p className="text-sm text-red-600 mt-1">
+                ⚠️ KPI number {kpiNo} already exists in academic year{" "}
+                {currentYear}. Please choose a different number.
+              </p>
+            )}
+            {!isDuplicate &&
+              !isCheckingDuplicate &&
+              kpiNo &&
+              parseInt(kpiNo) > 0 && (
+                <p className="text-sm text-green-600 mt-1">
+                  ✓ KPI number {kpiNo} is available.
+                </p>
+              )}
           </div>
 
           {/* Metric */}
@@ -441,7 +486,12 @@ export default function FormBuilder({
               <div className="flex gap-2">
                 <Button
                   onClick={handleSaveKpi}
-                  disabled={isSaving || !isValidWeight}
+                  disabled={
+                    isSaving ||
+                    !isValidWeight ||
+                    isDuplicate ||
+                    isCheckingDuplicate
+                  }
                 >
                   {isSaving ? (
                     <>
