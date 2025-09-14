@@ -125,6 +125,26 @@ export interface AssignPillarResponse {
 }
 
 /**
+ * Interface for assign-all response
+ */
+export interface AssignAllResponse {
+  message: string;
+  summary: {
+    totalDepartments: number;
+    totalPillars: number;
+    successCount: number;
+    skipCount: number;
+    errorCount: number;
+  };
+  results: {
+    departmentId: string;
+    departmentName: string;
+    status: "success" | "skipped" | "error";
+    message: string;
+  }[];
+}
+
+/**
  * Fetches all departments
  * @returns Promise with departments data
  */
@@ -203,6 +223,22 @@ export const assignPillarToDepartment = async (
     const response = await ApiClient.post<AssignPillarResponse>(
       `/qc/department-assignment/departments/${departmentId}/pillars`,
       payload,
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};
+
+/**
+ * Assigns all pillar templates and their KPIs to all departments
+ * @returns Promise with assignment response
+ */
+export const assignPillarAndKpiToAllDepartments = async () => {
+  try {
+    const response = await ApiClient.post<AssignAllResponse>(
+      `/qc/department-assignment/assign-all`,
     );
     return response;
   } catch (error: unknown) {

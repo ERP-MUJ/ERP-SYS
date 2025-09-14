@@ -6,6 +6,7 @@ import {
   getDepartmentPillars,
   getAllDepartmentPillars,
   assignPillarToDepartment,
+  assignPillarAndKpiToAllDepartments,
   updateDepartmentPillar,
   unassignPillarFromDepartment,
   getDepartmentPillarKPIs,
@@ -113,6 +114,47 @@ export function useAssignPillarToDepartment() {
     },
     onError: (error: any) => {
       toast.error("Failed to assign pillar to department", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
+export function useAssignPillarAndKpiToAllDepartments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await assignPillarAndKpiToAllDepartments();
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message ||
+          "Failed to assign pillars and KPIs to all departments",
+      );
+    },
+    onSuccess: (data) => {
+      // Invalidate all related queries since we've assigned to all departments
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillars"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-all-department-pillars"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["qc-pillar-templates"] });
+
+      // Show detailed success message
+      const { summary } = data;
+      if (summary.errorCount > 0) {
+        toast.warning(data.message, {
+          description: `${summary.successCount} successful assignments, ${summary.skipCount} skipped, ${summary.errorCount} errors`,
+        });
+      } else {
+        toast.success(data.message, {
+          description: `${summary.totalPillars} pillars assigned across ${summary.totalDepartments} departments`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast.error("Failed to assign pillars and KPIs to all departments", {
         description: error.message || "An error occurred",
       });
     },

@@ -48,6 +48,11 @@ export class DepartmentAssignmentController {
     );
   }
 
+  @Post('assign-all')
+  assignPillarAndKpiToAllDepartments(@CurrentUser() user: RequestUser) {
+    return this.departmentAssignmentService.assignPillarAndKpiToAllDepartments(user.id, user.role);
+  }
+
   /**
    * Update a DepartmentPillar, e.g., its weightage
    * PATCH /qc/department-assignment/department-pillars/:departmentPillarId
