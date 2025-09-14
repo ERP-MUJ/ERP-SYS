@@ -80,6 +80,21 @@ export class KpiService {
     });
     if (!pillar) throw new BadRequestException('Pillar template not found or not owned by you');
 
+    // Check for duplicate KPI number across all pillars for the same academic year
+    const existingKpi = await this.prisma.kpiTemplate.findFirst({
+      where: {
+        kpi_number: dto.kpi_number,
+        academic_year: dto.academic_year,
+        created_by_user: userId, // Only check within user's templates
+      },
+    });
+
+    if (existingKpi) {
+      throw new BadRequestException(
+        `KPI number ${dto.kpi_number} already exists in academic year ${dto.academic_year}. Please choose a different KPI number.`,
+      );
+    }
+
     const kpiTemplate = await this.prisma.kpiTemplate.create({
       data: {
         pillar_template_id: pillarId,
@@ -98,6 +113,33 @@ export class KpiService {
 
   async updateKpi(userId: string, userRole: UserRole, kpiId: string, dto: UpdateKpiDto): Promise<KpiTemplateInstance> {
     this.assertQacRole(userRole);
+
+    // Get the existing KPI to validate pillar ownership
+    const existingKpi = await this.prisma.kpiTemplate.findFirst({
+      where: { id: kpiId, created_by_user: userId },
+    });
+
+    if (!existingKpi) {
+      throw new BadRequestException('KPI not found or not owned by you');
+    }
+
+    // Check for duplicate KPI number if kpi_number is being updated
+    if (dto.kpi_number !== undefined && dto.kpi_number !== existingKpi.kpi_number) {
+      const duplicateKpi = await this.prisma.kpiTemplate.findFirst({
+        where: {
+          kpi_number: dto.kpi_number,
+          academic_year: dto.academic_year || existingKpi.academic_year,
+          created_by_user: userId, // Only check within user's templates
+          id: { not: kpiId }, // Exclude current KPI
+        },
+      });
+
+      if (duplicateKpi) {
+        throw new BadRequestException(
+          `KPI number ${dto.kpi_number} already exists in academic year ${dto.academic_year || existingKpi.academic_year}. Please choose a different KPI number.`,
+        );
+      }
+    }
 
     const updatedKpi = await this.prisma.kpiTemplate.update({
       where: { id: kpiId, created_by_user: userId },
@@ -120,6 +162,31 @@ export class KpiService {
     });
 
     return this.transformToKpiTemplate(updatedKpi);
+  }
+
+  async checkKpiNumberExists(
+    userId: string,
+    userRole: UserRole,
+    pillarId: string,
+    kpiNumber: number,
+    academicYear: number,
+    excludeKpiId?: string,
+  ): Promise<{ exists: boolean; kpiNumber?: number }> {
+    this.assertQacRole(userRole);
+
+    const existingKpi = await this.prisma.kpiTemplate.findFirst({
+      where: {
+        kpi_number: kpiNumber,
+        academic_year: academicYear,
+        created_by_user: userId, // Only check within user's templates
+        ...(excludeKpiId && { id: { not: excludeKpiId } }),
+      },
+    });
+
+    return {
+      exists: !!existingKpi,
+      kpiNumber: existingKpi?.kpi_number,
+    };
   }
 
   async deleteKpi(userId: string, userRole: UserRole, kpiId: string): Promise<KpiTemplateInstance> {

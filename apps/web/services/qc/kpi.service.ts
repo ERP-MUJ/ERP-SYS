@@ -100,3 +100,34 @@ export const deleteKpi = async (pillarId: string, kpiId: string) => {
     throw error;
   }
 };
+
+/**
+ * Check if KPI number already exists in the pillar
+ * @param pillarId - The ID of the pillar
+ * @param kpiNumber - The KPI number to check
+ * @param academicYear - The academic year
+ * @param excludeKpiId - Optional KPI ID to exclude from check (for edit mode)
+ * @returns Promise with duplicate check result
+ */
+export const checkKpiNumberExists = async (
+  pillarId: string,
+  kpiNumber: number,
+  academicYear: number,
+  excludeKpiId?: string,
+) => {
+  try {
+    const params = new URLSearchParams({
+      academicYear: academicYear.toString(),
+      ...(excludeKpiId && { excludeKpiId }),
+    });
+
+    const response = await ApiClient.get<{
+      exists: boolean;
+      kpiNumber?: number;
+    }>(`/qc/${pillarId}/kpi/check-duplicate/${kpiNumber}?${params}`);
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};

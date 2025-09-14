@@ -5,6 +5,7 @@ import {
   addKpi,
   updateKpi,
   deleteKpi,
+  checkKpiNumberExists,
 } from "@/services/qc/kpi.service";
 import {
   KpiTemplateInstance,
@@ -151,5 +152,44 @@ export function useDeleteKpi() {
     onError: () => {
       toast.error("Failed to delete KPI");
     },
+  });
+}
+
+/**
+ * Hook to check if a KPI number already exists
+ * @param pillarId - The ID of the pillar
+ * @param kpiNumber - The KPI number to check
+ * @param academicYear - The academic year
+ * @param excludeKpiId - Optional KPI ID to exclude from check (for edit mode)
+ * @returns Query result with duplicate check
+ */
+export function useCheckKpiNumberExists(
+  pillarId: string,
+  kpiNumber: number,
+  academicYear: number,
+  excludeKpiId?: string,
+) {
+  return useQuery<{ exists: boolean; kpiNumber?: number }>({
+    queryKey: [
+      "kpi",
+      "check-duplicate",
+      pillarId,
+      kpiNumber,
+      academicYear,
+      excludeKpiId,
+    ],
+    queryFn: async () => {
+      const res = await checkKpiNumberExists(
+        pillarId,
+        kpiNumber,
+        academicYear,
+        excludeKpiId,
+      );
+      if (res.data) {
+        return res.data;
+      }
+      return { exists: false };
+    },
+    enabled: !!pillarId && kpiNumber > 0 && academicYear > 0, // Only run query if all required params are provided
   });
 }
