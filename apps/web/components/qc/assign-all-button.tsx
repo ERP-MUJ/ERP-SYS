@@ -29,15 +29,16 @@ export function AssignAllButton({ className }: AssignAllButtonProps) {
 
   const { data: departments } = useGetDepartments();
   const { data: pillarTemplates } = useGetPillarTemplates();
-  const assignAllMutation = useAssignPillarAndKpiToAllDepartments();
+  const { mutate: assignAll, isPending: isAssigning } =
+    useAssignPillarAndKpiToAllDepartments();
 
   const handleAssignAll = async () => {
-    try {
-      await assignAllMutation.mutateAsync();
-      setDialogOpen(false);
-    } catch (error) {
+    assignAll(undefined, {
+      onSuccess: () => {
+        setDialogOpen(false);
+      },
       // Error is handled by the mutation's onError callback
-    }
+    });
   };
 
   const departmentCount = departments?.length || 0;
@@ -72,17 +73,13 @@ export function AssignAllButton({ className }: AssignAllButtonProps) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={assignAllMutation.isPending}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isAssigning}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleAssignAll}
-            disabled={assignAllMutation.isPending}
+            disabled={isAssigning}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {assignAllMutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isAssigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Assign All
           </AlertDialogAction>
         </AlertDialogFooter>

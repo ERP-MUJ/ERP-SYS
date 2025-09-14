@@ -65,35 +65,40 @@ export class ApiClient {
   static async get<T>(
     url: string,
     params?: Record<string, unknown>,
+    config?: Omit<AxiosRequestConfig, "method" | "url" | "params">,
   ): Promise<ApiResult<T>> {
-    return this.request<T>({ method: "GET", url, params });
+    return this.request<T>({ method: "GET", url, params, ...config });
   }
 
   static async post<T, D = unknown>(
     url: string,
     data?: D,
+    config?: Omit<AxiosRequestConfig, "method" | "url" | "data">,
   ): Promise<ApiResult<T>> {
-    return this.request<T>({ method: "POST", url, data });
+    return this.request<T>({ method: "POST", url, data, ...config });
   }
 
   static async put<T, D = unknown>(
     url: string,
     data?: D,
+    config?: Omit<AxiosRequestConfig, "method" | "url" | "data">,
   ): Promise<ApiResult<T>> {
-    return this.request<T>({ method: "PUT", url, data });
+    return this.request<T>({ method: "PUT", url, data, ...config });
   }
 
   static async patch<T, D = unknown>(
     url: string,
     data?: D,
+    config?: Omit<AxiosRequestConfig, "method" | "url" | "data">,
   ): Promise<ApiResult<T>> {
-    return this.request<T>({ method: "PATCH", url, data });
+    return this.request<T>({ method: "PATCH", url, data, ...config });
   }
 
   static async delete<T>(
     url: string,
     params?: Record<string, unknown>,
+    config?: Omit<AxiosRequestConfig, "method" | "url" | "params">,
   ): Promise<ApiResult<T>> {
-    return this.request<T>({ method: "DELETE", url, params });
+    return this.request<T>({ method: "DELETE", url, params, ...config });
   }
 }

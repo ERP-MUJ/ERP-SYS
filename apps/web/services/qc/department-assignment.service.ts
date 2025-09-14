@@ -264,12 +264,11 @@ export async function assignPillarAndKpiToAllDepartments(): Promise<{
   data?: BulkAssignmentResponse;
   error?: ApiError;
 }> {
-  // Use longer timeout for bulk operation
-  return ApiClient.request<BulkAssignmentResponse>({
-    method: "POST",
-    url: "/qc/department-assignment/assign-all",
-    timeout: 60000, // 60 seconds for bulk operation
-  });
+  return ApiClient.post<BulkAssignmentResponse>(
+    "/qc/department-assignment/assign-all",
+    undefined,
+    { timeout: 60000 }, // 60 seconds for bulk operation
+  );
 }
 
 /**
