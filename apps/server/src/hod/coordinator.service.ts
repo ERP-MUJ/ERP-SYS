@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole, User, Department, DepartmentKpi, Prisma } from '@repo/db/prisma/client';
+import { UserRole } from '@repo/db/prisma/client';
 import { AssignCoordinatorDto } from './dto/assign-coordinator.dto';
 
 /**
@@ -41,7 +41,7 @@ export class CoordinatorService {
    * @returns HOD user with department information
    * @throws NotFoundException if HOD or department not found
    */
-  private async getHodDepartment(userId: string): Promise<User & { department: Department }> {
+  private async getHodDepartment(userId: string) {
     const hod = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { department: true },
@@ -52,8 +52,7 @@ export class CoordinatorService {
       throw new NotFoundException('HOD department not found');
     }
 
-    // Type assertion is safe here because we've checked that department is not null
-    return hod as User & { department: Department };
+    return hod;
   }
 
   /**
@@ -63,10 +62,7 @@ export class CoordinatorService {
    * @returns Faculty user information
    * @throws NotFoundException if faculty member not found or doesn't belong to department
    */
-  private async validateFacultyInDepartment(
-    facultyId: string,
-    hodDepartmentId: string,
-  ): Promise<User & { department: Department | null }> {
+  private async validateFacultyInDepartment(facultyId: string, hodDepartmentId: string) {
     const faculty = await this.prisma.user.findFirst({
       where: {
         id: facultyId,
@@ -91,7 +87,7 @@ export class CoordinatorService {
    * @returns Coordinator user information
    * @throws NotFoundException if coordinator not found or doesn't belong to department
    */
-  private async validateCoordinatorInDepartment(coordinatorId: string, hodDepartmentId: string): Promise<User> {
+  private async validateCoordinatorInDepartment(coordinatorId: string, hodDepartmentId: string) {
     const coordinator = await this.prisma.user.findFirst({
       where: {
         id: coordinatorId,
@@ -115,7 +111,7 @@ export class CoordinatorService {
    * @returns KPI information
    * @throws NotFoundException if KPI not found or doesn't belong to department
    */
-  private async validateKpiInDepartment(kpiId: string, hodDepartmentId: string): Promise<DepartmentKpi> {
+  private async validateKpiInDepartment(kpiId: string, hodDepartmentId: string) {
     const kpi = await this.prisma.departmentKpi.findFirst({
       where: { id: kpiId, dept_id: hodDepartmentId },
     });
@@ -213,11 +209,11 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     // Validate faculty exists and belongs to department
-    const faculty = await this.validateFacultyInDepartment(payload.faculty_id, hod.department.id);
+    const faculty = await this.validateFacultyInDepartment(payload.faculty_id, hod.department!.id);
 
     // Handle role change from COORDINATOR to FACULTY - remove KPI assignments
     if (payload.new_role === 'FACULTY' && faculty.user_role === 'KPI_COORDINATOR') {
-      await this.removeCoordinatorKpiAssignments(payload.faculty_id, hod.department.id);
+      await this.removeCoordinatorKpiAssignments(payload.faculty_id, hod.department!.id);
     }
 
     // Update user role
@@ -257,7 +253,7 @@ export class CoordinatorService {
 
     return this.prisma.user.findMany({
       where: {
-        dept_id: hod.department.id,
+        dept_id: hod.department!.id,
         user_role: { in: [UserRole.FACULTY, UserRole.KPI_COORDINATOR] },
       },
       select: {
@@ -286,7 +282,7 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     return this.prisma.departmentKpi.findMany({
-      where: { dept_id: hod.department.id },
+      where: { dept_id: hod.department!.id },
       include: {
         department_pillar: { select: { pillar_name: true } },
         assigned_users: {
@@ -319,8 +315,8 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     // Validate KPI and coordinator belong to HOD's department
-    await this.validateKpiInDepartment(kpiId, hod.department.id);
-    const coordinator = await this.validateCoordinatorInDepartment(coordinatorId, hod.department.id);
+    await this.validateKpiInDepartment(kpiId, hod.department!.id);
+    const coordinator = await this.validateCoordinatorInDepartment(coordinatorId, hod.department!.id);
 
     // Add coordinator to KPI's assigned_users
     await this.prisma.departmentKpi.update({
@@ -356,7 +352,7 @@ export class CoordinatorService {
     const hod = await this.getHodDepartment(userId);
 
     // Validate KPI belongs to HOD's department
-    await this.validateKpiInDepartment(kpiId, hod.department.id);
+    await this.validateKpiInDepartment(kpiId, hod.department!.id);
 
     // Remove coordinator from KPI's assigned_users
     await this.prisma.departmentKpi.update({
