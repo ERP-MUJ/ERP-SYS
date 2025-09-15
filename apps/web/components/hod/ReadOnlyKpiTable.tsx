@@ -42,9 +42,15 @@ const getKpiStatusLabel = (kpiStatus?: string, kpiMetrics?: any): string => {
   if (!kpiStatus) return "Unknown";
   const normalized = kpiStatus.toLowerCase();
 
+  // Check if coordinator has submitted - this overrides both pending and revision status
+  const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
+
   if (normalized === "pending") {
-    const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
     return isSubmittedToQc ? "Awaiting Approval" : "Pending";
+  }
+
+  if (normalized === "revision") {
+    return isSubmittedToQc ? "Awaiting Approval" : "Revision";
   }
 
   // For other statuses, capitalize properly
@@ -71,17 +77,24 @@ const mapKpiStatusToStatusBadgeType = (
   // Direct status mappings for new workflow
   if (normalized === "approved") return "approved";
   if (normalized === "rejected") return "rejected";
-  if (normalized === "revision") return "revision";
   if (normalized === "overdue") return "overdue";
 
-  // Check if PENDING status has been submitted to QC
+  // Check if coordinator has submitted - this overrides both pending and revision status
+  const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
+
   if (normalized === "pending") {
-    const isSubmittedToQc = kpiMetrics?.is_submitted_to_qc === true;
     if (isSubmittedToQc) {
-      return "awaiting"; // Blue badge for "Awaiting QC Review"
+      return "awaiting"; // Blue badge for "Awaiting Approval"
     }
     // For non-submitted PENDING KPIs, show as pending (yellow) to indicate work needed
     return "pending";
+  }
+
+  if (normalized === "revision") {
+    if (isSubmittedToQc) {
+      return "awaiting"; // Blue badge for "Awaiting Approval" - coordinator has resubmitted
+    }
+    return "revision"; // Orange badge for revision needed
   }
 
   // Legacy status mappings

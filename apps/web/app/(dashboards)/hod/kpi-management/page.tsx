@@ -88,19 +88,35 @@ export default function KpiManagementPage() {
   const transformedKpis = useMemo(() => {
     if (!selectedPillar?.department_kpis) return [];
 
-    return selectedPillar.department_kpis.map((kpi: DepartmentKpi) => ({
-      kpi_no: kpi.kpi_number,
-      metric: kpi.kpi_metric_name,
-      dataProvidedBy: kpi.data_provided_by || "N/A",
-      target: kpi.kpi_value?.toString() || "0",
-      actual: kpi.percentage_target_achieved?.toString() || "0",
-      percentAchieved: kpi.percentage_target_achieved?.toString() || "0%",
-      value: kpi.kpi_value?.toString() || "0",
-      status: kpi.kpi_status?.toLowerCase() || "pending",
-      kpiId: kpi.id,
-      kpi_calculated_metrics: kpi.kpi_calculated_metrics, // Include metrics for status determination
-    }));
-  }, [selectedPillar]);
+    return selectedPillar.department_kpis.map((kpi: DepartmentKpi) => {
+      // Check if this KPI has a coordinator submission awaiting review
+      const hasSubmission = reviewKpis.some(
+        (reviewKpi) => reviewKpi.id === kpi.id,
+      );
+
+      // Create enhanced metrics object to indicate coordinator submission
+      const enhancedMetrics = {
+        ...kpi.kpi_calculated_metrics,
+        is_submitted_to_qc: hasSubmission, // Set flag when coordinator has submitted
+      };
+
+      return {
+        kpi_no: kpi.kpi_number,
+        metric: kpi.kpi_metric_name,
+        dataProvidedBy: kpi.data_provided_by || "N/A",
+        target: kpi.kpi_target?.toString() || "0",
+        actual: kpi.kpi_value?.toString() || "0",
+        percentAchieved:
+          kpi.percentage_target_achieved != null
+            ? `${kpi.percentage_target_achieved}%`
+            : "0%",
+        value: kpi.kpi_value?.toString() || "0",
+        status: kpi.kpi_status?.toLowerCase() || "pending",
+        kpiId: kpi.id,
+        kpi_calculated_metrics: enhancedMetrics, // Pass enhanced metrics with submission flag
+      };
+    });
+  }, [selectedPillar, reviewKpis]);
 
   // Handle opening individual KPI
   const handleOpenKpi = (kpiId: string) => {

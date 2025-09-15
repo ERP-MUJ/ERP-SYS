@@ -154,10 +154,17 @@ export default function FacultyKpiPage({
                       <p className="text-sm italic bg-background/60 p-3 rounded border">
                         "{hodReview.comments}"
                       </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Reviewed on{" "}
-                        {new Date(hodReview.reviewed_at).toLocaleString()}
-                      </p>
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          Reviewed on{" "}
+                          {new Date(hodReview.reviewed_at).toLocaleString()}
+                        </p>
+                        {hodReview.by && (
+                          <p className="text-xs text-muted-foreground">
+                            By: {hodReview.by}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
