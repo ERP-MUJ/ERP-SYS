@@ -20,6 +20,7 @@ import { Textarea } from "@workspace/ui/components/textarea";
 import { Badge } from "@workspace/ui/components/badge";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { RejectKpiModal } from "@/components/qc/reject-kpi-modal";
 
 export default function QcKpiReviewPage() {
   const params = useParams();
@@ -29,6 +30,7 @@ export default function QcKpiReviewPage() {
   const { mutate: updateStatus, isPending: updating } = useUpdateKpiStatus();
   const [remark, setRemark] = useState("");
   const [showPanel, setShowPanel] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
   const displayStatus = useMemo(() => {
     if (!data) return null;
@@ -163,11 +165,20 @@ export default function QcKpiReviewPage() {
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={() => act("REJECT")}
+                        onClick={() => setIsRejectModalOpen(true)}
                         disabled={updating || remark.trim().length === 0}
                       >
                         Reject
                       </Button>
+                      <RejectKpiModal
+                        open={isRejectModalOpen}
+                        onOpenChange={setIsRejectModalOpen}
+                        onConfirm={() => {
+                          act("REJECT");
+                          setIsRejectModalOpen(false);
+                        }}
+                        isLoading={updating}
+                      />
                     </div>
                   </div>
                 )}
