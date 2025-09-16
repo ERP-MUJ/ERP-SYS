@@ -17,6 +17,11 @@ export class QcDashboardController {
     return this.qcDashboardService.getDashboardData(user.id, user.role);
   }
 
+  @Get('submission-summary')
+  async getSubmissionSummary(@CurrentUser() user: RequestUser) {
+    return this.qcDashboardService.getSubmissionSummary(user.id, user.role);
+  }
+
   @Get('score-sheet/:deptId')
   async getScoreSheetData(
     @CurrentUser() user: RequestUser,
