@@ -201,9 +201,11 @@ export default function LoginPage() {
 
         <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-background/80 border-orange-200/20 dark:border-orange-500/20">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Login Portal</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Login to Portal
+            </CardTitle>
             <CardDescription className="text-center">
-              Select your role and enter your credentials
+              Select your role and and enter your credentials
             </CardDescription>
           </CardHeader>
           <CardContent>
