@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { useGetSubmissionSummary } from "@/queries/qc/submission-summary";
 import {
   Table,
   TableBody,
@@ -86,6 +87,8 @@ export default function QACDashboard() {
 
   // Fetch real data using React Query
   const { data: dashboardData, isLoading, error } = useGetDashboardData();
+  const { data: summaryData, isLoading: isSummaryLoading } =
+    useGetSubmissionSummary();
   const { data: pillarsData } = useGetDepartmentPillars(selectedDept);
 
   if (isLoading) return <LoadingSpinner />;
@@ -267,6 +270,7 @@ export default function QACDashboard() {
         <TabsList>
           <TabsTrigger value="scoresheet">Score Sheet</TabsTrigger>
           <TabsTrigger value="status">Dept. Status</TabsTrigger>
+          <TabsTrigger value="summary">Submission Summary</TabsTrigger>
         </TabsList>
 
         <TabsContent value="scoresheet">
@@ -370,6 +374,53 @@ export default function QACDashboard() {
                       </TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="summary">
+          <Card>
+            <CardHeader>
+              <CardTitle>Department Submission Summary</CardTitle>
+              <CardDescription>
+                Overview of KPI submissions and data entries by department.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableCell className="font-medium">Department</TableCell>
+                    <TableCell className="text-center font-medium">
+                      Submitted KPIs
+                    </TableCell>
+                    <TableCell className="text-center font-medium">
+                      Total Entries
+                    </TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isSummaryLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    summaryData?.map((dept) => (
+                      <TableRow key={dept.id}>
+                        <TableCell>{dept.name}</TableCell>
+                        <TableCell className="text-center">
+                          {dept.submittedKpis}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {dept.totalEntries}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

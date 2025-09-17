@@ -27,6 +27,18 @@ export class QcDashboardService {
       where: {
         dept_id: deptId,
         ...(pillarId && { dept_pillar_id: pillarId }),
+        OR: [
+          {
+            kpi_status: 'APPROVED',
+          },
+          {
+            kpi_status: 'PENDING',
+            kpi_calculated_metrics: {
+              path: ['is_submitted_to_qc'],
+              equals: true,
+            },
+          },
+        ],
       },
       select: {
         kpi_number: true,
@@ -103,6 +115,75 @@ export class QcDashboardService {
     });
   }
 
+  async getSubmissionSummary(userId: string, userRole: UserRole) {
+    if (!userId) throw new ForbiddenException('User ID is required');
+    this.assertQacRole(userRole);
+
+    // Get all departments with their KPI submissions and entry counts
+    const departments = await this.prisma.department.findMany({
+      select: {
+        id: true,
+        dept_name: true,
+        department_pillars: {
+          where: { status: 'active' },
+          select: {
+            department_kpis: {
+              where: {
+                OR: [
+                  {
+                    kpi_status: 'APPROVED',
+                  },
+                  {
+                    kpi_status: 'PENDING',
+                    kpi_calculated_metrics: {
+                      path: ['is_submitted_to_qc'],
+                      equals: true,
+                    },
+                  },
+                ],
+              },
+              select: {
+                form_responses: true,
+                kpi_status: true,
+                kpi_calculated_metrics: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return departments.map((dept) => {
+      let totalEntries = 0;
+      const submittedKpis = dept.department_pillars.reduce((acc, pillar) => acc + pillar.department_kpis.length, 0);
+
+      // Calculate total entries from form responses
+      dept.department_pillars.forEach((pillar) => {
+        pillar.department_kpis.forEach((kpi) => {
+          if (kpi.form_responses) {
+            try {
+              const responses =
+                typeof kpi.form_responses === 'string' ? JSON.parse(kpi.form_responses) : kpi.form_responses;
+
+              if (responses && Array.isArray(responses.entries)) {
+                totalEntries += responses.entries.length;
+              }
+            } catch (error) {
+              console.error('Error parsing form_responses:', error);
+            }
+          }
+        });
+      });
+
+      return {
+        id: dept.id,
+        name: dept.dept_name,
+        submittedKpis,
+        totalEntries,
+      };
+    });
+  }
+
   async getDashboardData(userId: string, userRole: UserRole): Promise<QacDashboardData> {
     if (!userId) throw new ForbiddenException('User ID is required');
     this.assertQacRole(userRole);
@@ -122,15 +203,28 @@ export class QcDashboardService {
     // Calculate submission statistics
     const totalSubmissions = await this.prisma.departmentKpi.count({
       where: {
-        kpi_status: {
-          in: ['APPROVED', 'PENDING', 'REVISION', 'REJECTED'],
-        },
+        OR: [
+          {
+            kpi_status: 'APPROVED',
+          },
+          {
+            kpi_status: 'PENDING',
+            kpi_calculated_metrics: {
+              path: ['is_submitted_to_qc'],
+              equals: true,
+            },
+          },
+        ],
       },
     });
 
     const pendingReview = await this.prisma.departmentKpi.count({
       where: {
         kpi_status: 'PENDING',
+        kpi_calculated_metrics: {
+          path: ['is_submitted_to_qc'],
+          equals: true,
+        },
       },
     });
 
@@ -148,9 +242,18 @@ export class QcDashboardService {
         const latestSubmission = await this.prisma.departmentKpi.findFirst({
           where: {
             dept_id: dept.id,
-            kpi_status: {
-              in: ['APPROVED', 'PENDING', 'REVISION', 'REJECTED'],
-            },
+            OR: [
+              {
+                kpi_status: 'APPROVED',
+              },
+              {
+                kpi_status: 'PENDING',
+                kpi_calculated_metrics: {
+                  path: ['is_submitted_to_qc'],
+                  equals: true,
+                },
+              },
+            ],
           },
           orderBy: {
             completed_date: 'desc',
@@ -163,9 +266,18 @@ export class QcDashboardService {
         const totalDeptSubmissions = await this.prisma.departmentKpi.count({
           where: {
             dept_id: dept.id,
-            kpi_status: {
-              in: ['APPROVED', 'PENDING', 'REVISION', 'REJECTED'],
-            },
+            OR: [
+              {
+                kpi_status: 'APPROVED',
+              },
+              {
+                kpi_status: 'PENDING',
+                kpi_calculated_metrics: {
+                  path: ['is_submitted_to_qc'],
+                  equals: true,
+                },
+              },
+            ],
           },
         });
 
