@@ -1,209 +1,280 @@
-// pages/report-generator.tsx
 "use client";
-import React, { useState } from "react";
-import Head from "next/head";
 
-export default function ReportGenerator() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+import { useMemo, useState } from "react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert";
+import { Separator } from "@workspace/ui/components/separator";
+import { Loader2, Download, FileSpreadsheet, Building } from "lucide-react";
+import {
+  useGetReportKpiOptions,
+  useDownloadKpiWorkbook,
+  useDownloadDepartmentWorkbook,
+} from "@/queries/qc/report";
+import { useGetDepartments } from "@/queries/qc/department-assignment";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+export default function QcReportGenerationPage() {
+  const [selectedKpiTemplateId, setSelectedKpiTemplateId] = useState<
+    string | null
+  >(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<
+    string | null
+  >(null);
 
-    // Reset states
-    setIsLoading(true);
-    setError("");
-    setSuccess(false);
+  const {
+    data: kpiOptions = [],
+    isLoading: loadingKpiOptions,
+    isError: kpiOptionsError,
+    error: kpiOptionsErrorDetails,
+  } = useGetReportKpiOptions();
 
-    try {
-      // Call the API endpoint
-      const response = await fetch("/api/generate-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title, description }),
-      });
+  const {
+    data: departments = [],
+    isLoading: loadingDepartments,
+    isError: departmentsError,
+    error: departmentsErrorDetails,
+  } = useGetDepartments();
 
-      // Check the content type to determine how to handle the response
-      const contentType = response.headers.get("content-type");
+  const { mutate: downloadKpi, isPending: downloadingKpi } =
+    useDownloadKpiWorkbook();
+  const { mutate: downloadDepartment, isPending: downloadingDepartment } =
+    useDownloadDepartmentWorkbook();
 
-      if (contentType && contentType.includes("application/json")) {
-        // Handle JSON response (likely an error)
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate report");
-      } else if (!response.ok) {
-        // Non-JSON error response
-        throw new Error(`Server error: ${response.status}`);
-      } else {
-        // Success - this is a file download
-        const blob = await response.blob();
+  const selectedKpi = useMemo(
+    () =>
+      kpiOptions.find((option) => option.id === selectedKpiTemplateId) ?? null,
+    [kpiOptions, selectedKpiTemplateId],
+  );
 
-        // Create a download link and trigger it
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${title}_Report.docx`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
-        // Clean up the URL
-        window.URL.revokeObjectURL(url);
-
-        setSuccess(true);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const selectedDepartment = useMemo(
+    () =>
+      departments.find(
+        (department) => department.id === selectedDepartmentId,
+      ) ?? null,
+    [departments, selectedDepartmentId],
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Head>
-        <title>Professional Report Generator</title>
-        <meta
-          name="description"
-          content="Generate professional reports using AI"
-        />
-      </Head>
-
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Professional Report Generator
-          </h1>
-          <p className="mt-3 text-xl text-gray-500">
-            Create professional reports with AI in seconds
-          </p>
-        </div>
-
-        <div className="bg-white shadow overflow-hidden rounded-lg">
-          <form onSubmit={handleSubmit} className="px-6 py-8">
-            <div className="space-y-6">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Report Title
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    placeholder="Enter a title for your report"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Report Description
-                </label>
-                <div className="mt-1">
-                  <textarea
-                    id="description"
-                    rows={6}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    placeholder="Describe what you want the report to cover"
-                    required
-                  ></textarea>
-                </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  Provide as much detail as possible for better results.
-                </p>
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-red-50 p-4">
-                  <div className="flex">
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">
-                        Error
-                      </h3>
-                      <div className="mt-2 text-sm text-red-700">{error}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {success && (
-                <div className="rounded-md bg-green-50 p-4">
-                  <div className="flex">
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-green-800">
-                        Success!
-                      </h3>
-                      <div className="mt-2 text-sm text-green-700">
-                        Your report has been generated and downloaded.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    isLoading ? "opacity-75 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {isLoading ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    "Generate Report"
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Powered by Gemini AI • Creates professional DOCX reports</p>
-        </div>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight">Report Generation</h1>
+        <p className="text-muted-foreground text-sm">
+          Export curated Excel workbooks for KPI and department-wide analytics
+          directly from QC dashboard data.
+        </p>
       </div>
+
+      <Tabs defaultValue="kpi" className="space-y-6">
+        <TabsList className="grid grid-cols-2 w-full md:w-[480px]">
+          <TabsTrigger value="kpi">KPI Report</TabsTrigger>
+          <TabsTrigger value="department">Department Report</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kpi" className="space-y-6">
+          <Card className="shadow-sm border border-muted-foreground/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <FileSpreadsheet className="h-5 w-5 text-primary" /> KPI
+                Workbook
+              </CardTitle>
+              <CardDescription>
+                Generate a consolidated workbook with one sheet per department
+                for the selected KPI template.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[220px] space-y-2">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+                    KPI Template
+                  </label>
+                  <Select
+                    value={selectedKpiTemplateId ?? undefined}
+                    onValueChange={setSelectedKpiTemplateId}
+                    disabled={loadingKpiOptions || kpiOptions.length === 0}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          loadingKpiOptions ? "Loading..." : "Select KPI number"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kpiOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          KPI {option.kpi_number} — {option.kpi_metric_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  <Button
+                    className="w-full sm:w-auto"
+                    disabled={!selectedKpiTemplateId || downloadingKpi}
+                    onClick={() =>
+                      selectedKpiTemplateId &&
+                      downloadKpi(selectedKpiTemplateId)
+                    }
+                  >
+                    {downloadingKpi ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Download workbook
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Only KPIs designed by your QAC account are displayed.
+              </p>
+
+              {selectedKpi && (
+                <div className="rounded-md border border-muted-foreground/30 p-4 text-xs bg-muted/30">
+                  <p className="font-semibold text-sm text-foreground">
+                    KPI {selectedKpi.kpi_number}
+                  </p>
+                  <Separator className="my-2" />
+                  <p className="text-muted-foreground">
+                    {selectedKpi.kpi_metric_name}
+                  </p>
+                </div>
+              )}
+
+              {(kpiOptionsError || departmentsError) && (
+                <Alert variant="destructive">
+                  <AlertTitle>Unable to load report metadata</AlertTitle>
+                  <AlertDescription>
+                    {(kpiOptionsErrorDetails as any)?.message ||
+                      (departmentsErrorDetails as any)?.message ||
+                      "Please refresh the page and try again."}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="department" className="space-y-6">
+          <Card className="shadow-sm border border-muted-foreground/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Building className="h-5 w-5 text-primary" /> Department
+                Workbook
+              </CardTitle>
+              <CardDescription>
+                Export the complete departmental performance workbook including
+                the overview sheet and each KPI sheet.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="flex-1 min-w-[220px] space-y-2">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+                    Department
+                  </label>
+                  <Select
+                    value={selectedDepartmentId ?? undefined}
+                    onValueChange={setSelectedDepartmentId}
+                    disabled={loadingDepartments || departments.length === 0}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          loadingDepartments
+                            ? "Loading..."
+                            : "Select department"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((department) => (
+                        <SelectItem key={department.id} value={department.id}>
+                          {department.dept_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  <Button
+                    className="w-full sm:w-auto"
+                    disabled={!selectedDepartmentId || downloadingDepartment}
+                    onClick={() =>
+                      selectedDepartmentId &&
+                      downloadDepartment(selectedDepartmentId)
+                    }
+                  >
+                    {downloadingDepartment ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Download department workbook
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Includes active pillars, performance scores, and all assigned
+                KPIs.
+              </p>
+
+              {selectedDepartment && (
+                <div className="rounded-md border border-muted-foreground/30 p-4 text-xs bg-muted/30">
+                  <p className="font-semibold text-sm text-foreground">
+                    {selectedDepartment.dept_name}
+                  </p>
+                  <Separator className="my-2" />
+                  <p className="text-muted-foreground">
+                    {selectedDepartment.hod_name
+                      ? `HoD: ${selectedDepartment.hod_name}`
+                      : "HoD details pending"}
+                  </p>
+                </div>
+              )}
+
+              {departmentsError && (
+                <Alert variant="destructive">
+                  <AlertTitle>Unable to load departments</AlertTitle>
+                  <AlertDescription>
+                    {(departmentsErrorDetails as any)?.message ||
+                      "Please refresh the page and try again."}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

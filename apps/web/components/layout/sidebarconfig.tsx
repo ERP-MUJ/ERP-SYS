@@ -59,6 +59,12 @@ export function useSidebarConfig(): SidebarConfig {
           id: "review-submissions",
           path: "/qc/review",
         },
+        {
+          icon: DownloadCloudIcon,
+          label: "Report Generation",
+          id: "report-generation",
+          path: "/qc/report",
+        },
       ],
     },
     faculty: {
