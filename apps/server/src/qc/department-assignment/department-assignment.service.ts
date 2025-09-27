@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@repo/db/prisma/client';
+import type { KpiFormResponses } from '@workspace/types/types';
 
 export interface AssignmentResult {
   departmentId: string;
@@ -56,7 +57,7 @@ export class DepartmentAssignmentService {
     if (!department) {
       throw new NotFoundException('Department not found');
     }
-    return this.prisma.departmentPillar.findMany({
+    const pillars = await this.prisma.departmentPillar.findMany({
       where: {
         dept_id: departmentId,
         status: 'active',
@@ -78,32 +79,50 @@ export class DepartmentAssignmentService {
       },
       orderBy: { assigned_date: 'desc' },
     });
+
+    return pillars.map((pillar) => ({
+      ...pillar,
+      department_kpis: pillar.department_kpis.map((kpi) => ({
+        ...kpi,
+        total_entries: this.countFormEntries(kpi.form_responses),
+      })),
+    }));
   }
 
   getAllDepartmentPillars(userId: string, userRole: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertQacRole(userRole);
-    return this.prisma.departmentPillar.findMany({
-      where: {
-        status: 'active',
-      },
-      include: {
-        department_kpis: {
-          include: {
-            assigned_users: {
-              select: {
-                id: true,
-                user_name: true,
-                user_email: true,
-                user_role: true,
+    return this.prisma.departmentPillar
+      .findMany({
+        where: {
+          status: 'active',
+        },
+        include: {
+          department_kpis: {
+            include: {
+              assigned_users: {
+                select: {
+                  id: true,
+                  user_name: true,
+                  user_email: true,
+                  user_role: true,
+                },
               },
             },
+            orderBy: { kpi_number: 'asc' },
           },
-          orderBy: { kpi_number: 'asc' },
         },
-      },
-      orderBy: { assigned_date: 'desc' },
-    });
+        orderBy: { assigned_date: 'desc' },
+      })
+      .then((pillars) =>
+        pillars.map((pillar) => ({
+          ...pillar,
+          department_kpis: pillar.department_kpis.map((kpi) => ({
+            ...kpi,
+            total_entries: this.countFormEntries(kpi.form_responses),
+          })),
+        })),
+      );
   }
 
   async assignPillarToDepartment(
@@ -131,6 +150,9 @@ export class DepartmentAssignmentService {
     if (!pillarTemplate) {
       throw new NotFoundException('Pillar template not found');
     }
+    if (pillarTarget !== undefined && pillarTarget < 0) {
+      throw new ForbiddenException('Pillar target cannot be negative');
+    }
     const existingAssignment = await this.prisma.departmentPillar.findUnique({
       where: {
         dept_id_template_id: {
@@ -149,6 +171,7 @@ export class DepartmentAssignmentService {
         pillar_name: pillarTemplate.pillar_name,
         description: pillarTemplate.description,
         pillar_weight: pillarWeight || pillarTemplate.pillar_value || 0,
+        pillar_target: pillarTarget ?? undefined,
         academic_year: new Date().getFullYear(),
       },
       include: {
@@ -488,12 +511,43 @@ export class DepartmentAssignmentService {
       },
       orderBy: { kpi_number: 'asc' },
     });
-    return kpis.filter((k) => {
-      const fr = (k.form_responses || {}) as Record<string, unknown>;
-      const cw = fr['coordinator_workflow'] as { coordinator_status?: string } | undefined;
-      if (!cw) return true;
-      return cw.coordinator_status === 'APPROVED_BY_HOD';
-    });
+    return kpis
+      .map((kpi) => ({
+        ...kpi,
+        total_entries: this.countFormEntries(kpi.form_responses),
+      }))
+      .filter((k) => {
+        const fr = (k.form_responses || {}) as Record<string, unknown>;
+        const cw = fr['coordinator_workflow'] as { coordinator_status?: string } | undefined;
+        if (!cw) return true;
+        return cw.coordinator_status === 'APPROVED_BY_HOD';
+      });
+  }
+
+  private countFormEntries(formResponses: unknown): number {
+    if (!formResponses) {
+      return 0;
+    }
+
+    try {
+      const parsed: KpiFormResponses =
+        typeof formResponses === 'string'
+          ? (JSON.parse(formResponses) as KpiFormResponses)
+          : (formResponses as KpiFormResponses);
+
+      if (!parsed || typeof parsed !== 'object') {
+        return 0;
+      }
+
+      const baseEntries = Array.isArray(parsed.entries) ? parsed.entries.length : 0;
+      const coordinatorData = parsed.coordinator_workflow?.coordinator_submission?.data;
+      const coordinatorEntries = Array.isArray(coordinatorData) ? coordinatorData.length : 0;
+
+      return baseEntries + coordinatorEntries;
+    } catch (error) {
+      console.error('Failed to parse form responses for entry count', error);
+      return 0;
+    }
   }
 
   async assignKpiToDepartmentPillar(
@@ -529,6 +583,9 @@ export class DepartmentAssignmentService {
     if (existing) {
       throw new ForbiddenException('KPI already assigned to this pillar');
     }
+    if (kpiTarget !== undefined && kpiTarget < 0) {
+      throw new ForbiddenException('KPI target cannot be negative');
+    }
     const kpiDataJson = kpiTemplate.kpi_data ? JSON.parse(JSON.stringify(kpiTemplate.kpi_data)) : null;
     const metricsJson = kpiTemplate.kpi_calculated_metrics
       ? JSON.parse(JSON.stringify(kpiTemplate.kpi_calculated_metrics))
@@ -542,6 +599,7 @@ export class DepartmentAssignmentService {
         kpi_metric_name: kpiTemplate.kpi_metric_name,
         kpi_description: kpiTemplate.kpi_description,
         kpi_value: kpiValue,
+        kpi_target: kpiTarget ?? undefined,
         data_provided_by: kpiTemplate.data_provided_by,
         kpi_data: kpiDataJson ?? undefined,
         kpi_calculated_metrics: metricsJson ?? undefined,

@@ -31,6 +31,7 @@ export type PillarKpi = {
   status?: string;
   kpiId?: string;
   isSubmittedToQc?: boolean;
+  totalEntries?: number;
 };
 
 export interface PillarTableProps {
@@ -51,6 +52,7 @@ export const dummyKpiData: PillarKpi[] = [
     value: "80",
     status: "pending review",
     kpiId: "1",
+    totalEntries: 12,
   },
   {
     kpi_no: 2,
@@ -62,6 +64,7 @@ export const dummyKpiData: PillarKpi[] = [
     value: "80",
     status: "approved",
     kpiId: "2",
+    totalEntries: 8,
   },
   {
     kpi_no: 3,
@@ -73,6 +76,7 @@ export const dummyKpiData: PillarKpi[] = [
     value: "40",
     status: "needs revision",
     kpiId: "3",
+    totalEntries: 3,
   },
 ];
 
@@ -117,6 +121,9 @@ export const PillarKpiTable: React.FC<
                 % Target Achieved
               </TableHead>
               <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
+                Total Entries
+              </TableHead>
+              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
                 Value
               </TableHead>
               {showStatusColumn && (
@@ -144,6 +151,9 @@ export const PillarKpiTable: React.FC<
                 <TableCell className="text-center">{row.actual}</TableCell>
                 <TableCell className="text-center">
                   {row.percentAchieved}
+                </TableCell>
+                <TableCell className="text-center">
+                  {row.totalEntries ?? 0}
                 </TableCell>
                 <TableCell className="text-center">
                   <Input
@@ -213,7 +223,7 @@ export const PillarKpiTable: React.FC<
           <TableFooter>
             <TableRow>
               {/* Empty cells before Value column */}
-              <TableCell colSpan={6} className="font-bold text-right">
+              <TableCell colSpan={7} className="font-bold text-right">
                 Total Value
               </TableCell>
               <TableCell className="font-bold text-center">

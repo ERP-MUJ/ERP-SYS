@@ -14,7 +14,9 @@
   },
   "exports": {
     "./schema": "./schema/index.ts",
+    "./schema/*": "./schema/*.ts",
     "./types": "./types/index.ts",
+    "./types/*": "./types/*.ts",
     "./enums/enums": "./enums/enums.ts"
   }
 }
