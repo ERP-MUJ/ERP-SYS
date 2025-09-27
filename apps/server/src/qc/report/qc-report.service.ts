@@ -198,7 +198,12 @@ export class QcReportService {
       XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
     }
 
-    const fileName = `KPI_${kpiTemplate.kpi_number}_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `${this.buildFilename([
+      'KPI',
+      kpiTemplate.kpi_number,
+      kpiTemplate.kpi_metric_name,
+      new Date().toISOString().split('T')[0],
+    ])}.xlsx`;
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
     return new StreamableFile(buffer, {
@@ -279,7 +284,81 @@ export class QcReportService {
       }
     }
 
-    const fileName = `${this.slugify(department.dept_name)}_department_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `${this.buildFilename([
+      department.dept_name,
+      'department_report',
+      new Date().toISOString().split('T')[0],
+    ])}.xlsx`;
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    return new StreamableFile(buffer, {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      disposition: `attachment; filename="${fileName}"`,
+    });
+  }
+
+  async generateDepartmentKpiWorkbook(
+    userId: string,
+    userRole: UserRole,
+    departmentKpiId: string,
+  ): Promise<StreamableFile> {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    if (!departmentKpiId) {
+      throw new BadRequestException('Department KPI identifier is required');
+    }
+
+    const departmentKpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: departmentKpiId },
+      include: {
+        department: { select: { dept_name: true } },
+        department_pillar: { select: { pillar_name: true } },
+        assigned_users: {
+          select: {
+            id: true,
+            user_name: true,
+            user_email: true,
+            user_role: true,
+          },
+        },
+      },
+    });
+
+    if (!departmentKpi) {
+      throw new NotFoundException('Department KPI not found');
+    }
+
+    const departmentName = departmentKpi.department?.dept_name ?? 'Unknown Department';
+    const pillarName = departmentKpi.department_pillar?.pillar_name ?? '-';
+
+    const { rows, summaryRowCount, formHeaderLength, formEntriesCount } = this.buildKpiWorksheetData(
+      departmentName,
+      pillarName,
+      departmentKpi,
+    );
+
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    worksheet['!cols'] = this.generateColumnWidths(rows);
+    this.applySummaryStyles(worksheet, summaryRowCount);
+    if (formHeaderLength > 0) {
+      this.applyFormResponseStyles(worksheet, summaryRowCount, formHeaderLength, formEntriesCount);
+    }
+
+    const workbook = XLSX.utils.book_new();
+    const sheetName = this.createSheetName(
+      `KPI ${departmentKpi.kpi_number} ${departmentName}`,
+      new Map<string, number>(),
+    );
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+    const fileName = `${this.buildFilename([
+      departmentName,
+      'KPI',
+      departmentKpi.kpi_number,
+      departmentKpi.kpi_metric_name,
+      new Date().toISOString().split('T')[0],
+    ])}.xlsx`;
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
     return new StreamableFile(buffer, {
@@ -684,6 +763,23 @@ export class QcReportService {
         .replace(/\s+/g, '_')
         .substring(0, 31) || 'Sheet'
     );
+  }
+
+  private buildFilename(parts: Array<string | number | null | undefined>): string {
+    const sanitized = parts
+      .map((part) => (part === null || part === undefined ? '' : String(part)))
+      .map((part) =>
+        part
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .replace(/_+/g, '_')
+          .substring(0, 50),
+      )
+      .filter((part) => part.length > 0);
+
+    return sanitized.join('_') || 'report';
   }
 
   private asNumber(value: number | null): number | null {

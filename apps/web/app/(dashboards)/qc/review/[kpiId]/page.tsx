@@ -1,6 +1,10 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { useGetKpi, useUpdateKpiStatus } from "@/queries/qc/review";
+import {
+  useDownloadDepartmentKpiWorkbook,
+  useGetKpi,
+  useUpdateKpiStatus,
+} from "@/queries/qc/review";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   deriveDisplayStatus,
@@ -21,6 +25,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { RejectKpiModal } from "@/components/qc/reject-kpi-modal";
+import { Download, Loader2 } from "lucide-react";
 
 export default function QcKpiReviewPage() {
   const params = useParams();
@@ -28,6 +33,8 @@ export default function QcKpiReviewPage() {
   const kpiId = params?.kpiId as string | undefined;
   const { data, isLoading, isError, error } = useGetKpi(kpiId || null);
   const { mutate: updateStatus, isPending: updating } = useUpdateKpiStatus();
+  const { mutate: downloadWorkbook, isPending: downloadingWorkbook } =
+    useDownloadDepartmentKpiWorkbook();
   const [remark, setRemark] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -74,17 +81,39 @@ export default function QcKpiReviewPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" onClick={() => router.back()}>
           &larr; Back
         </Button>
-        <h1 className="text-xl font-semibold flex-1">KPI Review</h1>
+        <h1 className="text-xl font-semibold grow">KPI Review</h1>
         {displayStatus && (
           <StatusBadge
             status={displayStatusToBadgeVariant(displayStatus) as any}
             label={displayStatus}
           />
         )}
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!kpiId || downloadingWorkbook}
+          onClick={() => {
+            if (kpiId) {
+              downloadWorkbook({
+                departmentKpiId: kpiId,
+                departmentName: data?.department?.dept_name,
+                kpiNumber: data?.kpi_number,
+                kpiMetricName: data?.kpi_metric_name,
+              });
+            }
+          }}
+        >
+          {downloadingWorkbook ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" />
+          )}
+          Download Excel
+        </Button>
       </div>
       <Card>
         <CardHeader>

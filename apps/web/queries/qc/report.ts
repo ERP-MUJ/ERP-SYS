@@ -21,8 +21,23 @@ export function useGetReportKpiOptions() {
 
 export function useDownloadKpiWorkbook() {
   return useMutation({
-    mutationFn: async (kpiTemplateId: string) => {
-      const result = await downloadKpiReport(kpiTemplateId);
+    mutationFn: async ({
+      kpiTemplateId,
+      kpiNumber,
+      kpiMetricName,
+    }: {
+      kpiTemplateId: string;
+      kpiNumber?: number | string;
+      kpiMetricName?: string | null;
+    }) => {
+      if (!kpiTemplateId) {
+        throw new Error("KPI template is required");
+      }
+      const result = await downloadKpiReport({
+        kpiTemplateId,
+        kpiNumber,
+        kpiMetricName,
+      });
       triggerBrowserDownload(result);
       return result.fileName;
     },
@@ -41,8 +56,20 @@ export function useDownloadKpiWorkbook() {
 
 export function useDownloadDepartmentWorkbook() {
   return useMutation({
-    mutationFn: async (departmentId: string) => {
-      const result = await downloadDepartmentReport(departmentId);
+    mutationFn: async ({
+      departmentId,
+      departmentName,
+    }: {
+      departmentId: string;
+      departmentName?: string | null;
+    }) => {
+      if (!departmentId) {
+        throw new Error("Department is required");
+      }
+      const result = await downloadDepartmentReport({
+        departmentId,
+        departmentName,
+      });
       triggerBrowserDownload(result);
       return result.fileName;
     },

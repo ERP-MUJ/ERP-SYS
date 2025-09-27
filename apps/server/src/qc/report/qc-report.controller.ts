@@ -41,4 +41,15 @@ export class QcReportController {
   ): Promise<StreamableFile> {
     return this.qcReportService.generateDepartmentReport(user.id, user.role, departmentId);
   }
+
+  @Get('department-kpi/:departmentKpiId/download')
+  @ApiOperation({ summary: 'Download review workbook for a specific department KPI' })
+  @ApiParam({ name: 'departmentKpiId', description: 'Department KPI identifier' })
+  @ApiResponse({ status: 200, description: 'Workbook stream initiated successfully', type: StreamableFile })
+  async downloadDepartmentKpiReport(
+    @Param('departmentKpiId') departmentKpiId: string,
+    @CurrentUser() user: RequestUser,
+  ): Promise<StreamableFile> {
+    return this.qcReportService.generateDepartmentKpiWorkbook(user.id, user.role, departmentKpiId);
+  }
 }

@@ -97,8 +97,7 @@ export default function QcReportGenerationPage() {
           <Card className="shadow-sm border border-muted-foreground/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <FileSpreadsheet className="h-5 w-5 text-primary" /> KPI
-                Workbook
+                <FileSpreadsheet className="h-5 w-5 text-primary" /> KPI Report
               </CardTitle>
               <CardDescription>
                 Generate a consolidated workbook with one sheet per department
@@ -139,7 +138,11 @@ export default function QcReportGenerationPage() {
                     disabled={!selectedKpiTemplateId || downloadingKpi}
                     onClick={() =>
                       selectedKpiTemplateId &&
-                      downloadKpi(selectedKpiTemplateId)
+                      downloadKpi({
+                        kpiTemplateId: selectedKpiTemplateId,
+                        kpiNumber: selectedKpi?.kpi_number,
+                        kpiMetricName: selectedKpi?.kpi_metric_name,
+                      })
                     }
                   >
                     {downloadingKpi ? (
@@ -147,7 +150,7 @@ export default function QcReportGenerationPage() {
                     ) : (
                       <Download className="mr-2 h-4 w-4" />
                     )}
-                    Download workbook
+                    Download report
                   </Button>
                 </div>
               </div>
@@ -186,8 +189,7 @@ export default function QcReportGenerationPage() {
           <Card className="shadow-sm border border-muted-foreground/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
-                <Building className="h-5 w-5 text-primary" /> Department
-                Workbook
+                <Building className="h-5 w-5 text-primary" /> Department Report
               </CardTitle>
               <CardDescription>
                 Export the complete departmental performance workbook including
@@ -230,7 +232,10 @@ export default function QcReportGenerationPage() {
                     disabled={!selectedDepartmentId || downloadingDepartment}
                     onClick={() =>
                       selectedDepartmentId &&
-                      downloadDepartment(selectedDepartmentId)
+                      downloadDepartment({
+                        departmentId: selectedDepartmentId,
+                        departmentName: selectedDepartment?.dept_name,
+                      })
                     }
                   >
                     {downloadingDepartment ? (
@@ -238,7 +243,7 @@ export default function QcReportGenerationPage() {
                     ) : (
                       <Download className="mr-2 h-4 w-4" />
                     )}
-                    Download department workbook
+                    Download department report
                   </Button>
                 </div>
               </div>

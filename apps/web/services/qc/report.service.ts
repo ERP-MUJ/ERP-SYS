@@ -13,6 +13,28 @@ const REPORT_BASE_URL = "/qc/report";
 
 const DEFAULT_KPI_FILENAME = "kpi-report.xlsx";
 const DEFAULT_DEPARTMENT_FILENAME = "department-report.xlsx";
+const DEFAULT_DEPARTMENT_KPI_FILENAME = "department-kpi.xlsx";
+
+function buildFilename(
+  parts: Array<string | number | null | undefined>,
+  extension = "xlsx",
+): string {
+  const sanitized = parts
+    .map((part) => (part === null || part === undefined ? "" : String(part)))
+    .map((part) =>
+      part
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_")
+        .substring(0, 50),
+    )
+    .filter((part) => part.length > 0);
+
+  const base = sanitized.join("_") || "report";
+  return extension ? `${base}.${extension.replace(/^\./, "")}` : base;
+}
 
 export async function getReportKpiOptions() {
   try {
@@ -39,6 +61,7 @@ function extractFilename(disposition: string | null): string | null {
 async function authenticatedDownload(
   path: string,
   fallbackName: string,
+  fallbackParts: Array<string | number | null | undefined> = [],
 ): Promise<DownloadResult> {
   const session = await getSession();
   if (!session?.user?.token) {
@@ -62,29 +85,85 @@ async function authenticatedDownload(
   }
 
   const blob = await response.blob();
+  const computedFallback =
+    fallbackParts.length > 0 ? buildFilename(fallbackParts) : fallbackName;
   const fileName =
     extractFilename(response.headers.get("content-disposition")) ||
-    fallbackName;
+    computedFallback;
   return { blob, fileName };
 }
 
-export async function downloadKpiReport(
-  kpiTemplateId: string,
-): Promise<DownloadResult> {
+export async function downloadKpiReport(params: {
+  kpiTemplateId: string;
+  kpiNumber?: number | string;
+  kpiMetricName?: string | null;
+}): Promise<DownloadResult> {
+  const { kpiTemplateId, kpiNumber, kpiMetricName } = params;
   if (!kpiTemplateId) throw new Error("KPI template is required");
+
+  const fallbackParts =
+    (kpiNumber ?? kpiMetricName)
+      ? [
+          "KPI",
+          kpiNumber ?? null,
+          kpiMetricName ?? null,
+          new Date().toISOString().split("T")[0],
+        ]
+      : [];
+
   return authenticatedDownload(
     `${REPORT_BASE_URL}/kpi/${kpiTemplateId}/download`,
     DEFAULT_KPI_FILENAME,
+    fallbackParts,
   );
 }
 
-export async function downloadDepartmentReport(
-  departmentId: string,
-): Promise<DownloadResult> {
+export async function downloadDepartmentReport(params: {
+  departmentId: string;
+  departmentName?: string | null;
+}): Promise<DownloadResult> {
+  const { departmentId, departmentName } = params;
   if (!departmentId) throw new Error("Department is required");
+
+  const fallbackParts = departmentName
+    ? [
+        departmentName,
+        "department_report",
+        new Date().toISOString().split("T")[0],
+      ]
+    : [];
+
   return authenticatedDownload(
     `${REPORT_BASE_URL}/department/${departmentId}/download`,
     DEFAULT_DEPARTMENT_FILENAME,
+    fallbackParts,
+  );
+}
+
+export async function downloadDepartmentKpiWorkbook(params: {
+  departmentKpiId: string;
+  departmentName?: string | null;
+  kpiNumber?: number | string;
+  kpiMetricName?: string | null;
+}): Promise<DownloadResult> {
+  const { departmentKpiId, departmentName, kpiNumber, kpiMetricName } = params;
+  if (!departmentKpiId) throw new Error("Department KPI is required");
+
+  const fallbackParts =
+    (departmentName ?? kpiNumber ?? kpiMetricName)
+      ? [
+          departmentName ?? "Department",
+          "KPI",
+          kpiNumber ?? null,
+          kpiMetricName ?? null,
+          new Date().toISOString().split("T")[0],
+        ]
+      : [];
+
+  return authenticatedDownload(
+    `${REPORT_BASE_URL}/department-kpi/${departmentKpiId}/download`,
+    DEFAULT_DEPARTMENT_KPI_FILENAME,
+    fallbackParts,
   );
 }
 
