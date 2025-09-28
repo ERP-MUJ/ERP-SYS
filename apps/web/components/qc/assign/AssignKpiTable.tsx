@@ -9,36 +9,8 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
-import React from "react";
-
-export interface KpiData {
-  id: string;
-  departmentKpiId?: string; // ID of the DepartmentKpi record for updates
-  kpiNo?: number;
-  kpi_number?: number;
-  kpi_no?: number;
-  metric?: string;
-  kpi_metric_name: string;
-  dataProvidedBy?: string | null;
-  data_provided_by?: string | null;
-  kpi_description?: string | null;
-  kpi_value?: number | null;
-  kpi_target?: number | null;
-  kpi_data?: any;
-  kpi_calculated_metrics?: any;
-  academic_year?: number;
-  percentage_target_achieved?: number | null;
-  performance?: number | null;
-  kpi_status?: string;
-  assigned_date?: string;
-  due_date?: string | null;
-  completed_date?: string | null;
-  comments?: string | null;
-  form_responses?: any | null;
-  user_ids?: string[];
-  assigned_users?: any[];
-  isAssigned?: boolean;
-}
+import React, { useMemo } from "react";
+import { KpiData } from "@/lib/types/qc-assignment";
 
 interface KpiValue {
   weightage: string;
@@ -51,6 +23,7 @@ interface AssignKpiTableProps {
   onAssign: (kpi: KpiData, weightage: number, target?: number) => void;
   onUnassign: (kpi: KpiData) => void;
   onUpdate: (kpi: KpiData, weightage?: number, target?: number) => void;
+  hideUnassignedSection?: boolean;
 }
 
 export function AssignKpiTable({
@@ -59,21 +32,31 @@ export function AssignKpiTable({
   onAssign,
   onUnassign,
   onUpdate,
+  hideUnassignedSection = false,
 }: AssignKpiTableProps) {
   // Combine all KPIs into one list and track their states
-  const allKpis = React.useMemo(() => {
+  const allKpis = useMemo(() => {
     const assignedIds = new Set(assignedKpis.map((kpi) => kpi.id));
-    return [...assignedKpis, ...unassignedKpis]
-      .sort((a, b) => {
-        const aNum = a.kpiNo ?? a.kpi_number ?? 0;
-        const bNum = b.kpiNo ?? b.kpi_number ?? 0;
-        return aNum - bNum;
-      })
-      .map((kpi) => ({
-        ...kpi,
-        isAssigned: assignedIds.has(kpi.id),
-      }));
-  }, [assignedKpis, unassignedKpis]);
+    const allKpisList = [...assignedKpis, ...unassignedKpis].reduce(
+      (acc, kpi) => {
+        if (!acc.find((existingKpi) => existingKpi.id === kpi.id)) {
+          acc.push({
+            ...kpi,
+            isAssigned: assignedIds.has(kpi.id),
+          });
+        }
+        return acc;
+      },
+      [] as KpiData[],
+    );
+
+    // If hideUnassignedSection is true, filter out unassigned KPIs
+    if (hideUnassignedSection) {
+      return allKpisList.filter((kpi) => kpi.isAssigned);
+    }
+
+    return allKpisList;
+  }, [assignedKpis, unassignedKpis, hideUnassignedSection]);
 
   const [kpiValues, setKpiValues] = React.useState<Record<string, KpiValue>>(
     {},

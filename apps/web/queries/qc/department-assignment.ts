@@ -9,6 +9,9 @@ import {
   assignPillarAndKpiToAllDepartments,
   updateDepartmentPillar,
   unassignPillarFromDepartment,
+  archiveOrphanedPillar,
+  restoreArchivedPillar,
+  getArchivedDepartmentPillars,
   getDepartmentPillarKPIs,
   assignKpiToDepartmentPillar,
   unassignKpiFromDepartmentPillar,
@@ -68,6 +71,21 @@ export function useGetAllDepartmentPillars() {
         res.error?.message || "Failed to fetch all department pillars",
       );
     },
+  });
+}
+
+export function useGetArchivedDepartmentPillars(departmentId: string | null) {
+  return useQuery({
+    queryKey: ["qc-archived-department-pillars", departmentId],
+    queryFn: async () => {
+      if (!departmentId) throw new Error("Department ID is required");
+      const res = await getArchivedDepartmentPillars(departmentId);
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message || "Failed to fetch archived department pillars",
+      );
+    },
+    enabled: !!departmentId,
   });
 }
 
@@ -244,6 +262,85 @@ export function useUnassignPillarFromDepartment() {
     },
     onError: (error: any) => {
       toast.error("Failed to unassign pillar from department", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * React Query mutation hook for archiving an orphaned pillar to preserve historical data
+ * @returns Mutation object with archive functionality
+ */
+export function useArchiveOrphanedPillar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      departmentPillarId,
+      departmentId,
+    }: {
+      departmentPillarId: string;
+      departmentId: string;
+    }) => {
+      const res = await archiveOrphanedPillar(departmentPillarId);
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message || "Failed to archive orphaned pillar",
+      );
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillars", variables.departmentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-all-department-pillars"],
+      });
+      toast.success("Pillar archived successfully", {
+        description:
+          "Historical data has been preserved. You can restore it later if needed.",
+      });
+    },
+    onError: (error: any) => {
+      toast.error("Failed to archive pillar", {
+        description: error.message || "An error occurred",
+      });
+    },
+  });
+}
+
+/**
+ * React Query mutation hook for restoring an archived pillar
+ * @returns Mutation object with restore functionality
+ */
+export function useRestoreArchivedPillar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      departmentPillarId,
+      departmentId,
+    }: {
+      departmentPillarId: string;
+      departmentId: string;
+    }) => {
+      const res = await restoreArchivedPillar(departmentPillarId);
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message || "Failed to restore archived pillar",
+      );
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["qc-department-pillars", variables.departmentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["qc-all-department-pillars"],
+      });
+      toast.success("Pillar restored successfully", {
+        description: "The archived pillar is now active again.",
+      });
+    },
+    onError: (error: any) => {
+      toast.error("Failed to restore pillar", {
         description: error.message || "An error occurred",
       });
     },
