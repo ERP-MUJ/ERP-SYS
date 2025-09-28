@@ -407,3 +407,54 @@ export async function updateDepartmentPillar(
     throw error;
   }
 }
+
+/**
+ * Archives an orphaned department pillar (when its template was deleted)
+ * @param departmentPillarId - The department pillar ID
+ * @returns Promise with archive response
+ */
+export const archiveOrphanedPillar = async (departmentPillarId: string) => {
+  try {
+    const response = await ApiClient.post<{ message: string }>(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}/archive`,
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};
+
+/**
+ * Restores an archived department pillar
+ * @param departmentPillarId - The department pillar ID
+ * @returns Promise with restore response
+ */
+export const restoreArchivedPillar = async (departmentPillarId: string) => {
+  try {
+    const response = await ApiClient.post<{ message: string }>(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}/restore`,
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};
+
+/**
+ * Fetches archived department pillars for a specific department
+ * @param departmentId - The department ID
+ * @returns Promise with archived department pillars data
+ */
+export const getArchivedDepartmentPillars = async (departmentId: string) => {
+  try {
+    const response = await ApiClient.get<DepartmentPillar[]>(
+      `/qc/department-assignment/departments/${departmentId}/archived-pillars`,
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};
