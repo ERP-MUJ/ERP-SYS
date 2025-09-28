@@ -3,6 +3,10 @@ import {
   QcReviewService,
   UpdateKpiStatusPayload,
 } from "@/services/qc/review.service";
+import {
+  downloadDepartmentKpiWorkbook,
+  triggerBrowserDownload,
+} from "@/services/qc/report.service";
 import { toast } from "sonner";
 
 export function useGetKpi(kpiId: string | null) {
@@ -39,6 +43,44 @@ export function useUpdateKpiStatus() {
     },
     onError: (err: any) => {
       toast.error("Update failed", { description: err.message });
+    },
+  });
+}
+
+export function useDownloadDepartmentKpiWorkbook() {
+  return useMutation({
+    mutationFn: async ({
+      departmentKpiId,
+      departmentName,
+      kpiNumber,
+      kpiMetricName,
+    }: {
+      departmentKpiId: string;
+      departmentName?: string | null;
+      kpiNumber?: number | string;
+      kpiMetricName?: string | null;
+    }) => {
+      if (!departmentKpiId) {
+        throw new Error("KPI identifier is required");
+      }
+      const result = await downloadDepartmentKpiWorkbook({
+        departmentKpiId,
+        departmentName,
+        kpiNumber,
+        kpiMetricName,
+      });
+      triggerBrowserDownload(result);
+      return result.fileName;
+    },
+    onSuccess: (fileName) => {
+      toast.success("KPI workbook downloaded", {
+        description: fileName,
+      });
+    },
+    onError: (err: any) => {
+      toast.error("Failed to download KPI workbook", {
+        description: err.message,
+      });
     },
   });
 }

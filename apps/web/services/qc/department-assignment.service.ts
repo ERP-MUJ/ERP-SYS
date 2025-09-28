@@ -111,6 +111,7 @@ export interface DepartmentKpi {
   form_responses: any | null;
   user_ids: string[];
   assigned_users: AssignedUser[];
+  total_entries?: number;
 }
 
 /**

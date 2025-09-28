@@ -93,7 +93,7 @@ export default function QACSubmissionReview() {
         acc[key].push({
           kpi_no: kpi.kpi_number,
           metric: kpi.kpi_metric_name,
-          dataProvidedBy: "HoD", // placeholder until backend provides
+          dataProvidedBy: kpi.data_provided_by || "HoD",
           target: kpi.kpi_value?.toString() ?? "-",
           actual: kpi.kpi_data?.actual ?? "-",
           percentAchieved: kpi.percentage_target_achieved ?? "-",
@@ -101,6 +101,7 @@ export default function QACSubmissionReview() {
           status: kpi.kpi_status?.toLowerCase() ?? "pending",
           kpiId: kpi.id,
           isSubmittedToQc, // Pass submission status to the component
+          totalEntries: kpi.total_entries ?? 0,
         });
       });
     });
