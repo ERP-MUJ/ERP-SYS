@@ -53,7 +53,7 @@ import { useSaveKpiData } from "@/hooks/faculty";
 import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { ExcelUploadDialog } from "./ExcelUploadDialog";
-import { FrontendExcelUploadDialog } from "../hod/FrontendExcelUploadDialog";
+import { FrontendExcelUploadDialog } from "../common/FrontendExcelUploadDialog";
 interface TableFormRendererProps {
   name: string;
   elements: FormElementInstance[];
@@ -514,11 +514,13 @@ export default function TableFormRenderer({
             </Button>
             {useFrontendExcelUpload ? (
               <FrontendExcelUploadDialog
-                kpiId={id}
                 onDataParsed={handleExcelDataAppend}
-                tableHeaders={tableElements.map(
-                  (element) => element.attributes.label,
-                )}
+                tableHeaders={tableElements.map((element) => ({
+                  id: element.id,
+                  label: element.attributes.label || "Field",
+                }))}
+                title="Upload Excel File"
+                description="Upload an Excel file to add data to the table. The first row should contain column headers that match the table headers."
               />
             ) : customExcelHooks?.uploadComponent ? (
               <customExcelHooks.uploadComponent kpiId={id} />
