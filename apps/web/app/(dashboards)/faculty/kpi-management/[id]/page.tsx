@@ -181,6 +181,7 @@ export default function FacultyKpiPage({
           elements={elements}
           existingData={existingData}
           customSaveHook={customSaveHook}
+          useFrontendExcelUpload={true}
           secondaryAction={{
             label: submitting
               ? isRevision
@@ -222,6 +223,7 @@ export default function FacultyKpiPage({
       elements={elements}
       existingData={existingData}
       customSaveHook={useSaveHodKpiData}
+      useFrontendExcelUpload={true}
     />
   );
 }
