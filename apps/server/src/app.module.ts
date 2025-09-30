@@ -15,6 +15,15 @@ import { CoordinatorModule } from './coordinator/coordinator.module';
       pinoHttp: {
         redact: ['req.headers', 'res.headers'],
         level: 'debug',
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'HH:MM:ss Z',
+            ignore: 'pid,hostname',
+            singleLine: true,
+          },
+        },
       },
     }),
     AuthModule,
