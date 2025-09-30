@@ -1,10 +1,21 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole, KpiStatus } from '@repo/db/prisma/client';
+import { UserRole, KpiStatus as PrismaKpiStatus } from '@repo/db/prisma/client';
+import { KpiStatus } from '@workspace/types/enums';
+import { ReviewKpiEntryDto, BulkReviewKpiEntriesDto } from './dto/review-kpi-entry.dto';
+import type { KpiEntryWithReview, KpiFormResponses } from '@workspace/types/types';
 
 @Injectable()
 export class QcReviewService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private convertPrismaToWorkspaceStatus(status: PrismaKpiStatus): KpiStatus {
+    return status as KpiStatus;
+  }
+
+  private convertWorkspaceToPrismaStatus(status: KpiStatus): PrismaKpiStatus {
+    return status as PrismaKpiStatus;
+  }
 
   private assertQacRole(userRole: UserRole) {
     if (userRole !== UserRole.QAC) {
@@ -89,7 +100,7 @@ export class QcReviewService {
     }
 
     const finalized = new Set<KpiStatus>([KpiStatus.APPROVED, KpiStatus.REJECTED]);
-    if (finalized.has(kpi.kpi_status)) {
+    if (finalized.has(this.convertPrismaToWorkspaceStatus(kpi.kpi_status))) {
       throw new BadRequestException('Finalized KPI cannot be updated');
     }
 
@@ -135,7 +146,7 @@ export class QcReviewService {
     });
 
     interface DepartmentKpiReviewData {
-      kpi_status: KpiStatus;
+      kpi_status: PrismaKpiStatus;
       comments: string;
       kpi_calculated_metrics: object;
       percentage_target_achieved?: number;
@@ -144,7 +155,7 @@ export class QcReviewService {
 
     // Calculate percentage_target_achieved when approving
     const updateData: DepartmentKpiReviewData = {
-      kpi_status: target,
+      kpi_status: this.convertWorkspaceToPrismaStatus(target),
       comments: remark,
       kpi_calculated_metrics: updatedMetrics as object,
     };
@@ -230,5 +241,155 @@ export class QcReviewService {
     }
 
     return { message: 'KPI status updated', data: updated };
+  }
+
+  /**
+   * Get individual KPI entries with their review status
+   */
+  async getKpiEntriesWithReview(userId: string, userRole: UserRole, kpiId: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    const kpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: kpiId },
+      include: {
+        department_pillar: { select: { pillar_name: true } },
+        department: { select: { dept_name: true } },
+        assigned_users: { select: { id: true, user_name: true, user_email: true, user_role: true } },
+      },
+    });
+
+    if (!kpi) throw new NotFoundException('KPI not found');
+
+    const formResponses = (kpi.form_responses || {}) as KpiFormResponses;
+    const entries = formResponses.entries || [];
+    const entriesWithReview = formResponses.entries_with_review || [];
+
+    // If no entries_with_review exist, create them from regular entries
+    if (entriesWithReview.length === 0 && entries.length > 0) {
+      const newEntriesWithReview: KpiEntryWithReview[] = entries.map((entry, index) => ({
+        entry_id: `entry_${index + 1}`,
+        data: entry,
+        status: KpiStatus.PENDING,
+      }));
+
+      // Update the KPI with entries_with_review structure
+      await this.prisma.departmentKpi.update({
+        where: { id: kpiId },
+        data: {
+          form_responses: {
+            ...formResponses,
+            entries_with_review: newEntriesWithReview,
+          } as KpiFormResponses,
+        },
+      });
+
+      return {
+        ...kpi,
+        entries_with_review: newEntriesWithReview,
+      };
+    }
+
+    return {
+      ...kpi,
+      entries_with_review: entriesWithReview,
+    };
+  }
+
+  /**
+   * Review individual KPI entry
+   */
+  async reviewKpiEntry(userId: string, userRole: UserRole, kpiId: string, reviewDto: ReviewKpiEntryDto) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    const kpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: kpiId },
+    });
+
+    if (!kpi) throw new NotFoundException('KPI not found');
+
+    const formResponses = (kpi.form_responses || {}) as KpiFormResponses;
+    const entriesWithReview = formResponses.entries_with_review || [];
+
+    // Find the entry to review
+    const entryIndex = entriesWithReview.findIndex((entry) => entry.entry_id === reviewDto.entry_id);
+
+    if (entryIndex === -1) {
+      throw new NotFoundException('KPI entry not found');
+    }
+
+    // Update the entry with review information
+    entriesWithReview[entryIndex] = {
+      ...entriesWithReview[entryIndex],
+      status: reviewDto.status,
+      review: reviewDto.review,
+      reviewed_by: userId,
+      reviewed_at: new Date().toISOString(),
+    };
+
+    // Update the KPI with reviewed entries
+    const updatedKpi = await this.prisma.departmentKpi.update({
+      where: { id: kpiId },
+      data: {
+        form_responses: {
+          ...formResponses,
+          entries_with_review: entriesWithReview,
+        } as KpiFormResponses,
+      },
+    });
+
+    return {
+      message: 'KPI entry reviewed successfully',
+      entry: entriesWithReview[entryIndex],
+    };
+  }
+
+  /**
+   * Bulk review multiple KPI entries
+   */
+  async bulkReviewKpiEntries(userId: string, userRole: UserRole, bulkReviewDto: BulkReviewKpiEntriesDto) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    const kpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: bulkReviewDto.kpi_id },
+    });
+
+    if (!kpi) throw new NotFoundException('KPI not found');
+
+    const formResponses = (kpi.form_responses || {}) as KpiFormResponses;
+    const entriesWithReview = [...(formResponses.entries_with_review || [])];
+
+    // Update each entry in the bulk review
+    for (const reviewDto of bulkReviewDto.entries) {
+      const entryIndex = entriesWithReview.findIndex((entry) => entry.entry_id === reviewDto.entry_id);
+
+      if (entryIndex !== -1) {
+        entriesWithReview[entryIndex] = {
+          ...entriesWithReview[entryIndex],
+          status: reviewDto.status,
+          review: reviewDto.review,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+        };
+      }
+    }
+
+    // Update the KPI with all reviewed entries
+    const updatedKpi = await this.prisma.departmentKpi.update({
+      where: { id: bulkReviewDto.kpi_id },
+      data: {
+        form_responses: {
+          ...formResponses,
+          entries_with_review: entriesWithReview,
+        } as KpiFormResponses,
+      },
+    });
+
+    return {
+      message: `${bulkReviewDto.entries.length} KPI entries reviewed successfully`,
+      entries_with_review: entriesWithReview,
+    };
   }
 }

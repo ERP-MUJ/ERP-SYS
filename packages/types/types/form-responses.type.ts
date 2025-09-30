@@ -1,13 +1,18 @@
-/**
- * Base form response entry type
- */
+import { KpiStatus } from "../enums";
+
 export interface FormEntry {
   [key: string]: unknown;
 }
 
-/**
- * Coordinator workflow structure within form responses
- */
+export interface KpiEntryWithReview {
+  entry_id: string;
+  data: FormEntry;
+  status: KpiStatus;
+  review?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+}
+
 export interface CoordinatorWorkflow {
   assigned_to?: string;
   coordinator_status?: string;
@@ -20,17 +25,12 @@ export interface CoordinatorWorkflow {
   };
 }
 
-/**
- * Form responses structure for KPIs
- */
 export interface KpiFormResponses {
   entries?: FormEntry[];
+  entries_with_review?: KpiEntryWithReview[];
   coordinator_workflow?: CoordinatorWorkflow;
 }
 
-/**
- * Type for entries count response
- */
 export interface KpiEntriesCount {
   total: number;
 }

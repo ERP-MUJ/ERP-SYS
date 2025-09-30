@@ -5,6 +5,7 @@ import { ExcelService, ExcelValidationService } from 'src/services/excel.service
 import { ExcelTemplateResponseDto } from './dto/excel.dto';
 import { ExcelUploadResponseDto } from './dto/excel-upload.dto';
 import type { FormElementInstance } from '@workspace/types/types';
+import { ensureEntriesWithReviewStructure } from 'src/common/utils/kpi-entry-helper';
 
 export interface CoordinatorWorkflow {
   assigned_to?: string;
@@ -198,11 +199,12 @@ export class CoordinatorKpiService {
       coordinator_workflow: updatedWorkflow,
     };
 
+    const finalFormResponses = ensureEntriesWithReviewStructure(updatedFormResponses);
+
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
-        // Keep existing kpi_status, don't change it
+        form_responses: JSON.parse(JSON.stringify(finalFormResponses)),
       },
     });
 
