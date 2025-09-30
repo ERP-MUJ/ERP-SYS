@@ -3,17 +3,6 @@
  * Consolidates interfaces used across multiple components and pages
  */
 
-import { KpiStatus } from "@workspace/types/enums";
-
-export interface KpiEntryWithReview {
-  entry_id: string;
-  data: Record<string, unknown>;
-  status: KpiStatus;
-  review?: string;
-  reviewed_by?: string;
-  reviewed_at?: string;
-}
-
 export interface PillarData {
   id: string;
   pillar_name: string;
@@ -55,7 +44,6 @@ export interface KpiData {
   completed_date?: string | null;
   comments?: string | null;
   form_responses?: any | null;
-  entries_with_review?: KpiEntryWithReview[];
   user_ids?: string[];
   assigned_users?: any[];
   isAssigned?: boolean;

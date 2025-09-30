@@ -10,7 +10,6 @@ import { useReviewCoordinatorSubmission } from "@/queries/hod/coordinator-workfl
 import { useDownloadHodExcelTemplate } from "@/queries/hod/excel";
 import { HodExcelUploadDialog } from "@/components/hod/ExcelUploadDialog";
 import { FormElementType, FormElementInstance } from "@/lib/types";
-import type { KpiEntryWithReview } from "@workspace/types/types";
 import {
   Card,
   CardContent,
@@ -19,7 +18,6 @@ import {
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { AlertCircle, MessageSquare, Send } from "lucide-react";
-import EntryReviewDisplay from "@/components/common/entry-review-display";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import { Textarea } from "@workspace/ui/components/textarea";
@@ -48,7 +46,6 @@ interface KpiData {
   };
   form_responses?: {
     entries: Record<string, any>[];
-    entries_with_review?: KpiEntryWithReview[];
     submittedAt?: string;
   };
   kpi_status?: string;
@@ -195,9 +192,6 @@ export default function HodKpiPage({
     ["REVISION", "APPROVED", "REJECTED"].includes(kpiData.kpi_status);
   const reviewHistory = kpiData.kpi_calculated_metrics?.review_history || [];
   const latestComment = kpiData.comments;
-
-  // Get individual entry reviews if available
-  const entriesWithReview = formResponses?.entries_with_review || [];
   // Check if KPI is editable
   const isEditable =
     !kpiData.kpi_status || ["PENDING", "REVISION"].includes(kpiData.kpi_status);
@@ -647,15 +641,6 @@ export default function HodKpiPage({
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Individual Entry Reviews Display */}
-      {entriesWithReview.length > 0 && (
-        <EntryReviewDisplay
-          entries={entriesWithReview}
-          title="QAC Entry Reviews"
-          showSummary={true}
-        />
       )}
     </div>
   );

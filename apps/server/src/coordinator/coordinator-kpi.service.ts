@@ -4,10 +4,37 @@ import { UserRole, Prisma } from '@repo/db/prisma/client';
 import { ExcelService, ExcelValidationService } from 'src/services/excel.service';
 import { ExcelTemplateResponseDto } from './dto/excel.dto';
 import { ExcelUploadResponseDto } from './dto/excel-upload.dto';
-import type { FormElementInstance, CoordinatorWorkflow, KpiFormResponses } from '@workspace/types/types';
-import { ensureEntriesWithReviewStructure } from 'src/common/utils/kpi-entry-helper';
+import type { FormElementInstance } from '@workspace/types/types';
 
-// Using types from @workspace/types package
+export interface CoordinatorWorkflow {
+  assigned_to?: string;
+  assigned_at?: string;
+  coordinator_status: 'PENDING' | 'SUBMITTED' | 'APPROVED_BY_HOD' | 'REJECTED_BY_HOD' | 'REVISION_REQUESTED';
+  coordinator_submission?: {
+    submitted_at: string;
+    data: Record<string, unknown>[];
+    comments?: string;
+  };
+  hod_review?: {
+    reviewed_at: string;
+    action: 'APPROVE' | 'REJECT' | 'REQUEST_REVISION';
+    comments: string;
+    by?: string;
+    by_id?: string;
+  };
+  revision_history?: Array<{
+    revision_number: number;
+    requested_at: string;
+    completed_at?: string;
+    reason: string;
+  }>;
+}
+
+export interface KpiFormResponsesWithWorkflow {
+  entries?: Record<string, unknown>[];
+  coordinator_workflow?: CoordinatorWorkflow;
+  [key: string]: unknown;
+}
 
 @Injectable()
 export class CoordinatorKpiService {
@@ -69,7 +96,7 @@ export class CoordinatorKpiService {
     });
 
     return kpis.map((kpi) => {
-      const formResponses = kpi.form_responses as KpiFormResponses | null;
+      const formResponses = kpi.form_responses as KpiFormResponsesWithWorkflow | null;
       const coordinatorWorkflow = formResponses?.coordinator_workflow;
       return {
         ...kpi,
@@ -108,7 +135,7 @@ export class CoordinatorKpiService {
       throw new NotFoundException('KPI not found or not accessible');
     }
 
-    const formResponses = kpi.form_responses as KpiFormResponses | null;
+    const formResponses = kpi.form_responses as KpiFormResponsesWithWorkflow | null;
     const coordinatorWorkflow = formResponses?.coordinator_workflow;
 
     return {
@@ -144,7 +171,7 @@ export class CoordinatorKpiService {
       throw new NotFoundException('KPI not found or not accessible');
     }
 
-    const existingFormResponses = (kpi.form_responses as KpiFormResponses) || {};
+    const existingFormResponses = (kpi.form_responses as KpiFormResponsesWithWorkflow) || {};
     const existingWorkflow = existingFormResponses.coordinator_workflow || {
       assigned_to: userId, // Set at first interaction for audit purposes
       assigned_at: new Date().toISOString(),
@@ -152,10 +179,7 @@ export class CoordinatorKpiService {
     };
 
     // Check if coordinator can submit (not already approved or pending HOD review)
-    if (
-      existingWorkflow.coordinator_status &&
-      ['SUBMITTED', 'APPROVED_BY_HOD'].includes(existingWorkflow.coordinator_status)
-    ) {
+    if (['SUBMITTED', 'APPROVED_BY_HOD'].includes(existingWorkflow.coordinator_status)) {
       throw new BadRequestException('KPI is already submitted or approved. Cannot resubmit.');
     }
 
@@ -169,17 +193,16 @@ export class CoordinatorKpiService {
       },
     };
 
-    const updatedFormResponses: KpiFormResponses = {
+    const updatedFormResponses: KpiFormResponsesWithWorkflow = {
       ...existingFormResponses,
       coordinator_workflow: updatedWorkflow,
     };
 
-    const finalFormResponses = ensureEntriesWithReviewStructure(updatedFormResponses);
-
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: JSON.parse(JSON.stringify(finalFormResponses)),
+        form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
+        // Keep existing kpi_status, don't change it
       },
     });
 
@@ -211,7 +234,7 @@ export class CoordinatorKpiService {
     });
     if (!kpi) throw new NotFoundException('KPI not found or not accessible');
 
-    const existingFormResponses = (kpi.form_responses as KpiFormResponses) || {};
+    const existingFormResponses = (kpi.form_responses as KpiFormResponsesWithWorkflow) || {};
     const existingWorkflow = existingFormResponses.coordinator_workflow || {
       assigned_to: userId,
       assigned_at: new Date().toISOString(),
@@ -219,10 +242,7 @@ export class CoordinatorKpiService {
     };
 
     // Enhanced status check to prevent conflicts during HOD review actions
-    if (
-      existingWorkflow.coordinator_status &&
-      ['SUBMITTED', 'APPROVED_BY_HOD'].includes(existingWorkflow.coordinator_status)
-    ) {
+    if (['SUBMITTED', 'APPROVED_BY_HOD'].includes(existingWorkflow.coordinator_status)) {
       // Instead of throwing error, silently ignore save attempts after submission
       console.log('Draft save ignored for KPI %s - status: %s', kpiId, existingWorkflow.coordinator_status);
       return { message: 'Draft already submitted' };
@@ -246,7 +266,7 @@ export class CoordinatorKpiService {
         },
       };
 
-      const updatedFormResponses: KpiFormResponses = {
+      const updatedFormResponses: KpiFormResponsesWithWorkflow = {
         ...existingFormResponses,
         coordinator_workflow: updatedWorkflow,
       };
@@ -291,7 +311,7 @@ export class CoordinatorKpiService {
       throw new NotFoundException('KPI not found or not accessible');
     }
 
-    const existingFormResponses = (kpi.form_responses as KpiFormResponses) || {};
+    const existingFormResponses = (kpi.form_responses as KpiFormResponsesWithWorkflow) || {};
     const existingWorkflow = existingFormResponses.coordinator_workflow;
 
     if (!existingWorkflow || existingWorkflow.coordinator_status !== 'REVISION_REQUESTED') {
@@ -318,7 +338,7 @@ export class CoordinatorKpiService {
       revision_history: revisionHistory,
     };
 
-    const updatedFormResponses: KpiFormResponses = {
+    const updatedFormResponses: KpiFormResponsesWithWorkflow = {
       ...existingFormResponses,
       coordinator_workflow: updatedWorkflow,
     };
