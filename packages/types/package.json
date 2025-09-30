@@ -17,7 +17,6 @@
     "./schema/*": "./schema/*.ts",
     "./types": "./types/index.ts",
     "./types/*": "./types/*.ts",
-    "./enums": "./enums/index.ts",
-    "./enums/*": "./enums/*.ts"
+    "./enums/enums": "./enums/enums.ts"
   }
 }

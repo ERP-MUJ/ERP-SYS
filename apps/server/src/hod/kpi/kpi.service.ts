@@ -1,7 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@repo/db/prisma/client';
-import { ensureEntriesWithReviewStructure } from 'src/common/utils/kpi-entry-helper';
 
 /**
  * Service for HOD to manage their department's assigned KPIs
@@ -193,13 +192,10 @@ export class HodKpiService {
       throw new NotFoundException('KPI not found or not accessible');
     }
 
-    // Ensure entries_with_review structure is maintained
-    const updatedFormResponses = ensureEntriesWithReviewStructure(formResponses);
-
     await this.prisma.departmentKpi.update({
       where: { id: kpiId },
       data: {
-        form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
+        form_responses: JSON.parse(JSON.stringify(formResponses)),
         kpi_status: 'PENDING', // Set to pending for review
         completed_date: new Date(),
       },

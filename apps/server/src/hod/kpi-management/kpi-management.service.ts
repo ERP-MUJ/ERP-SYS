@@ -5,7 +5,6 @@ import { ExcelService, ExcelValidationService } from 'src/services/excel.service
 import { ExcelTemplateResponseDto } from 'src/coordinator/dto/excel.dto';
 import { ExcelUploadResponseDto } from 'src/coordinator/dto/excel-upload.dto';
 import type { FormElementInstance } from '@workspace/types/types';
-import { ensureEntriesWithReviewStructure } from 'src/common/utils/kpi-entry-helper';
 @Injectable()
 export class HodKpiService {
   constructor(
@@ -475,10 +474,8 @@ export class HodKpiService {
       const updatedFormResponses = {
         ...formResponses,
         // Preserve coordinator workflow if it exists
-        coordinator_workflow: existingFormResponses.coordinator_workflow || undefined,
+        coordinator_workflow: existingFormResponses.coordinator_workflow || null,
       };
-
-      const finalFormResponses = ensureEntriesWithReviewStructure(updatedFormResponses);
 
       // Calculate HOD percentage target achieved
       const entriesCount = validationResult.processedData.length;
@@ -500,7 +497,7 @@ export class HodKpiService {
       await this.prisma.departmentKpi.update({
         where: { id: kpiId },
         data: {
-          form_responses: JSON.parse(JSON.stringify(finalFormResponses)),
+          form_responses: JSON.parse(JSON.stringify(updatedFormResponses)),
           hod_performance: hodPerformance,
           hod_percentage_target_achieved: hodPercentageAchieved,
           kpi_calculated_metrics: JSON.parse(JSON.stringify(updatedMetrics)),

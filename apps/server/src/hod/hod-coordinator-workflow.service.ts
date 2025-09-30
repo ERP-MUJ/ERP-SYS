@@ -1,7 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole, Prisma, KpiStatus } from '@repo/db/prisma/client';
-import { CoordinatorWorkflow, KpiFormResponses } from '@workspace/types/types';
+import { CoordinatorWorkflow, KpiFormResponsesWithWorkflow } from '../coordinator/coordinator-kpi.service';
 
 @Injectable()
 export class HodCoordinatorWorkflowService {
@@ -46,7 +46,7 @@ export class HodCoordinatorWorkflowService {
       orderBy: { kpi_number: 'asc' },
     });
     return kpis.map((kpi) => {
-      const formResponses = kpi.form_responses as KpiFormResponses | null;
+      const formResponses = kpi.form_responses as KpiFormResponsesWithWorkflow | null;
       const coordinatorWorkflow = formResponses?.coordinator_workflow;
       return {
         ...kpi,
@@ -88,7 +88,7 @@ export class HodCoordinatorWorkflowService {
       throw new NotFoundException('KPI not found or not accessible');
     }
 
-    const existingFormResponses = (kpi.form_responses as KpiFormResponses) || {};
+    const existingFormResponses = (kpi.form_responses as KpiFormResponsesWithWorkflow) || {};
     const existingWorkflow = existingFormResponses.coordinator_workflow;
     console.log('Existing workflow:', existingWorkflow);
 
@@ -137,7 +137,7 @@ export class HodCoordinatorWorkflowService {
       coordinator_status: newCoordinatorStatus,
       hod_review: reviewData,
     };
-    const updatedFormResponses: KpiFormResponses = {
+    const updatedFormResponses: KpiFormResponsesWithWorkflow = {
       ...existingFormResponses,
       coordinator_workflow: updatedWorkflow,
     };

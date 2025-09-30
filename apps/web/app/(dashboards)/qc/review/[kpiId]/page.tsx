@@ -3,9 +3,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   useDownloadDepartmentKpiWorkbook,
   useGetKpi,
-  useGetKpiEntriesWithReview,
   useUpdateKpiStatus,
-  useReviewKpiEntry,
 } from "@/queries/qc/review";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
@@ -13,9 +11,7 @@ import {
   displayStatusToBadgeVariant,
 } from "@/lib/qc-status";
 import ReadOnlyFormTable from "@/components/qc/readonly-form-table";
-import IndividualEntryReviewTable from "@/components/qc/individual-entry-review-table";
 import { FormElementInstance, FormElementType } from "@/lib/types";
-import { KpiStatus } from "@workspace/types/enums";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -36,17 +32,12 @@ export default function QcKpiReviewPage() {
   const router = useRouter();
   const kpiId = params?.kpiId as string | undefined;
   const { data, isLoading, isError, error } = useGetKpi(kpiId || null);
-  const { data: entriesData, isLoading: entriesLoading } =
-    useGetKpiEntriesWithReview(kpiId || null);
   const { mutate: updateStatus, isPending: updating } = useUpdateKpiStatus();
-  const { mutate: reviewEntry, isPending: reviewingEntry } =
-    useReviewKpiEntry();
   const { mutate: downloadWorkbook, isPending: downloadingWorkbook } =
     useDownloadDepartmentKpiWorkbook();
   const [remark, setRemark] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [showIndividualReview, setShowIndividualReview] = useState(false);
 
   const displayStatus = useMemo(() => {
     if (!data) return null;
@@ -74,30 +65,6 @@ export default function QcKpiReviewPage() {
       {
         onSuccess: () => {
           setRemark("");
-        },
-      },
-    );
-  }
-
-  function handleEntryReview(
-    entryId: string,
-    status: KpiStatus,
-    review: string,
-  ) {
-    if (!kpiId) return;
-
-    reviewEntry(
-      {
-        kpiId,
-        payload: {
-          entry_id: entryId,
-          status,
-          review,
-        },
-      },
-      {
-        onSuccess: () => {
-          // Individual entry review success is handled by the mutation
         },
       },
     );
@@ -313,41 +280,6 @@ export default function QcKpiReviewPage() {
               );
             })()}
           </div>
-
-          {/* Individual Entry Review Section */}
-          {!data.locked &&
-            entriesData?.entries_with_review &&
-            entriesData.entries_with_review.length > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">
-                    Individual Entry Review
-                  </h3>
-                  <Button
-                    variant={showIndividualReview ? "default" : "outline"}
-                    size="sm"
-                    onClick={() =>
-                      setShowIndividualReview(!showIndividualReview)
-                    }
-                  >
-                    {showIndividualReview
-                      ? "Hide Individual Review"
-                      : "Show Individual Review"}
-                  </Button>
-                </div>
-
-                {showIndividualReview && (
-                  <IndividualEntryReviewTable
-                    kpiName={data.kpi_metric_name || "KPI"}
-                    kpiDescription={data.kpi_description || ""}
-                    entries={entriesData.entries_with_review}
-                    onEntryReview={handleEntryReview}
-                    isReviewing={reviewingEntry}
-                  />
-                )}
-              </div>
-            )}
-
           {/* Review history moved inside collapsible panel */}
         </CardContent>
       </Card>
