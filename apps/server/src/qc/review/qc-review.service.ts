@@ -1,6 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserRole, KpiStatus as PrismaKpiStatus } from '@repo/db/prisma/client';
+import { UserRole, KpiStatus as PrismaKpiStatus, Prisma } from '@repo/db/prisma/client';
 import { KpiStatus } from '@workspace/types/enums';
 import { ReviewKpiEntryDto, BulkReviewKpiEntriesDto } from './dto/review-kpi-entry.dto';
 import type { KpiEntryWithReview, KpiFormResponses } from '@workspace/types/types';
@@ -280,7 +280,7 @@ export class QcReviewService {
           form_responses: {
             ...formResponses,
             entries_with_review: newEntriesWithReview,
-          } as KpiFormResponses,
+          } as Prisma.InputJsonValue,
         },
       });
 
@@ -335,7 +335,7 @@ export class QcReviewService {
         form_responses: {
           ...formResponses,
           entries_with_review: entriesWithReview,
-        } as KpiFormResponses,
+        } as Prisma.InputJsonValue,
       },
     });
 
@@ -383,7 +383,7 @@ export class QcReviewService {
         form_responses: {
           ...formResponses,
           entries_with_review: entriesWithReview,
-        } as KpiFormResponses,
+        } as Prisma.InputJsonValue,
       },
     });
 
