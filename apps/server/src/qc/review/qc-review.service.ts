@@ -280,7 +280,7 @@ export class QcReviewService {
           form_responses: {
             ...formResponses,
             entries_with_review: newEntriesWithReview,
-          } as Prisma.InputJsonValue,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -335,7 +335,7 @@ export class QcReviewService {
         form_responses: {
           ...formResponses,
           entries_with_review: entriesWithReview,
-        } as Prisma.InputJsonValue,
+        } as unknown as Prisma.InputJsonValue,
       },
     });
 
@@ -383,7 +383,7 @@ export class QcReviewService {
         form_responses: {
           ...formResponses,
           entries_with_review: entriesWithReview,
-        } as Prisma.InputJsonValue,
+        } as unknown as Prisma.InputJsonValue,
       },
     });
 
