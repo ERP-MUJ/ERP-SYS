@@ -1,9 +1,7 @@
 import { ApiClient } from "@/lib/api-client";
 import { ApiError } from "@/types/error";
-import {
-  DepartmentKpi,
-  KpiEntryWithReview,
-} from "@/services/qc/department-assignment.service";
+import { DepartmentKpi } from "@/services/qc/department-assignment.service";
+import type { KpiEntryWithReview } from "@workspace/types/types";
 import { KpiStatus } from "@workspace/types/enums";
 
 export interface QcReviewedKpi extends DepartmentKpi {

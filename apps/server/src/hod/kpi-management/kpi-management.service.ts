@@ -475,7 +475,7 @@ export class HodKpiService {
       const updatedFormResponses = {
         ...formResponses,
         // Preserve coordinator workflow if it exists
-        coordinator_workflow: existingFormResponses.coordinator_workflow || null,
+        coordinator_workflow: existingFormResponses.coordinator_workflow || undefined,
       };
 
       const finalFormResponses = ensureEntriesWithReviewStructure(updatedFormResponses);

@@ -101,7 +101,7 @@ export default function EntryReviewDisplay({
   const reviewSummary = getReviewSummary();
 
   const tableHeaders =
-    entries.length > 0 && entries[0].data ? Object.keys(entries[0].data) : [];
+    entries.length > 0 && entries[0]?.data ? Object.keys(entries[0].data) : [];
 
   if (entries.length === 0) {
     return null;

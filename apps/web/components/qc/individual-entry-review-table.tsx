@@ -42,7 +42,7 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { KpiEntryWithReview } from "@/services/qc/department-assignment.service";
+import type { KpiEntryWithReview } from "@workspace/types/types";
 import { KpiStatus } from "@workspace/types/enums";
 
 interface IndividualEntryReviewTableProps {
@@ -69,7 +69,7 @@ export default function IndividualEntryReviewTable({
 
   // Get all unique keys from the entries to create table headers
   const tableHeaders =
-    entries.length > 0 && entries[0].data ? Object.keys(entries[0].data) : [];
+    entries.length > 0 && entries[0]?.data ? Object.keys(entries[0].data) : [];
 
   const handleOpenReviewDialog = (entryId: string) => {
     const entry = entries.find((e) => e.entry_id === entryId);
@@ -90,7 +90,7 @@ export default function IndividualEntryReviewTable({
       setDialogOpen(false);
       setSelectedEntryId(null);
       setReviewComment("");
-      setReviewStatus("PENDING");
+      setReviewStatus(KpiStatus.PENDING);
     }
   };
 

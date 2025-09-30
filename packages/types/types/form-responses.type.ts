@@ -15,14 +15,32 @@ export interface KpiEntryWithReview {
 
 export interface CoordinatorWorkflow {
   assigned_to?: string;
-  coordinator_status?: string;
+  assigned_at?: string;
+  coordinator_status?:
+    | "PENDING"
+    | "SUBMITTED"
+    | "APPROVED_BY_HOD"
+    | "REJECTED_BY_HOD"
+    | "REVISION_REQUESTED";
   coordinator_submission?: {
+    submitted_at?: string;
     data?: FormEntry[];
-  };
-  hod_review?: {
-    status: string;
     comments?: string;
   };
+  hod_review?: {
+    reviewed_at?: string;
+    action?: "APPROVE" | "REJECT" | "REQUEST_REVISION";
+    comments?: string;
+    by?: string;
+    by_id?: string;
+    status?: string; // Keep for backward compatibility
+  };
+  revision_history?: Array<{
+    revision_number?: number;
+    requested_at?: string;
+    completed_at?: string;
+    reason?: string;
+  }>;
 }
 
 export interface KpiFormResponses {

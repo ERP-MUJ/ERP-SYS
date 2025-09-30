@@ -10,7 +10,7 @@ import { useReviewCoordinatorSubmission } from "@/queries/hod/coordinator-workfl
 import { useDownloadHodExcelTemplate } from "@/queries/hod/excel";
 import { HodExcelUploadDialog } from "@/components/hod/ExcelUploadDialog";
 import { FormElementType, FormElementInstance } from "@/lib/types";
-import type { KpiEntryWithReview } from "@/services/qc/department-assignment.service";
+import type { KpiEntryWithReview } from "@workspace/types/types";
 import {
   Card,
   CardContent,
