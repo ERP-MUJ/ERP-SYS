@@ -69,6 +69,38 @@ export class CoordinatorKpiService {
   }
 
   /**
+   * Gets department information for the coordinator user
+   */
+  private async getCoordinatorDepartmentInfo(userId: string): Promise<{ id: string; name: string }> {
+    const coordinator = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { department: true },
+    });
+
+    if (!coordinator || !coordinator.department) {
+      throw new NotFoundException('Coordinator department not found');
+    }
+
+    return {
+      id: coordinator.department.id,
+      name: coordinator.department.dept_name,
+    };
+  }
+
+  /**
+   * Injects department name as the first field in form entries
+   */
+  private injectDepartmentIntoEntries(
+    entries: Record<string, unknown>[],
+    departmentName: string,
+  ): Record<string, unknown>[] {
+    return entries.map((entry) => ({
+      department_name: departmentName,
+      ...entry,
+    }));
+  }
+
+  /**
    * Get all KPIs assigned to this coordinator
    */
   async getAssignedKpis(userId: string, userRole: UserRole) {
@@ -161,10 +193,10 @@ export class CoordinatorKpiService {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertCoordinatorRole(userRole);
 
-    const departmentId = await this.getCoordinatorDepartmentId(userId);
+    const departmentInfo = await this.getCoordinatorDepartmentInfo(userId);
 
     const kpi = await this.prisma.departmentKpi.findFirst({
-      where: { id: kpiId, dept_id: departmentId },
+      where: { id: kpiId, dept_id: departmentInfo.id },
     });
 
     if (!kpi) {
@@ -183,12 +215,15 @@ export class CoordinatorKpiService {
       throw new BadRequestException('KPI is already submitted or approved. Cannot resubmit.');
     }
 
+    // Inject department name as the first field in each entry
+    const entriesWithDepartment = this.injectDepartmentIntoEntries(formData.entries, departmentInfo.name);
+
     const updatedWorkflow: CoordinatorWorkflow = {
       ...existingWorkflow,
       coordinator_status: 'SUBMITTED',
       coordinator_submission: {
         submitted_at: new Date().toISOString(),
-        data: formData.entries,
+        data: entriesWithDepartment,
         comments,
       },
     };
@@ -223,12 +258,12 @@ export class CoordinatorKpiService {
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertCoordinatorRole(userRole);
-    const departmentId = await this.getCoordinatorDepartmentId(userId);
+    const departmentInfo = await this.getCoordinatorDepartmentInfo(userId);
 
     const kpi = await this.prisma.departmentKpi.findFirst({
       where: {
         id: kpiId,
-        dept_id: departmentId,
+        dept_id: departmentInfo.id,
         assigned_users: { some: { id: userId } },
       },
     });
@@ -255,13 +290,16 @@ export class CoordinatorKpiService {
     }
 
     try {
+      // Inject department name as the first field in each entry
+      const entriesWithDepartment = this.injectDepartmentIntoEntries(formData.entries, departmentInfo.name);
+
       const updatedWorkflow: CoordinatorWorkflow = {
         ...existingWorkflow,
         // keep status PENDING to indicate not yet sent to HOD
         coordinator_status: 'PENDING',
         coordinator_submission: {
           submitted_at: existingWorkflow.coordinator_submission?.submitted_at || new Date().toISOString(),
-          data: formData.entries,
+          data: entriesWithDepartment,
           comments,
         },
       };
@@ -297,12 +335,12 @@ export class CoordinatorKpiService {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertCoordinatorRole(userRole);
 
-    const departmentId = await this.getCoordinatorDepartmentId(userId);
+    const departmentInfo = await this.getCoordinatorDepartmentInfo(userId);
 
     const kpi = await this.prisma.departmentKpi.findFirst({
       where: {
         id: kpiId,
-        dept_id: departmentId,
+        dept_id: departmentInfo.id,
         assigned_users: { some: { id: userId } },
       },
     });
@@ -327,12 +365,15 @@ export class CoordinatorKpiService {
       }
     }
 
+    // Inject department name as the first field in each entry
+    const entriesWithDepartment = this.injectDepartmentIntoEntries(formData.entries, departmentInfo.name);
+
     const updatedWorkflow: CoordinatorWorkflow = {
       ...existingWorkflow,
       coordinator_status: 'SUBMITTED',
       coordinator_submission: {
         submitted_at: new Date().toISOString(),
-        data: formData.entries,
+        data: entriesWithDepartment,
         comments,
       },
       revision_history: revisionHistory,
@@ -490,9 +531,18 @@ export class CoordinatorKpiService {
     let dataSaved = false;
     if (validationResult.processedData.length > 0) {
       try {
+        // Get department info for name injection
+        const departmentInfo = await this.getCoordinatorDepartmentInfo(userId);
+
+        // Inject department name into the processed data
+        const processedDataWithDepartment = this.injectDepartmentIntoEntries(
+          validationResult.processedData,
+          departmentInfo.name,
+        );
+
         // Update the form_responses field with the new data
         const existingResponses = (kpi.form_responses as Record<string, unknown>[]) || [];
-        const updatedResponses = [...existingResponses, ...validationResult.processedData];
+        const updatedResponses = [...existingResponses, ...processedDataWithDepartment];
 
         await this.prisma.departmentKpi.update({
           where: { id: kpiId },

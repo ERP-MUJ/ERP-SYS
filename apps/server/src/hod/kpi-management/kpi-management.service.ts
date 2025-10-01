@@ -24,6 +24,38 @@ export class HodKpiService {
     if (!user?.dept_id) throw new NotFoundException('Department not found');
     return user.dept_id;
   }
+
+  /**
+   * Gets department information for the HOD user
+   */
+  private async getHodDepartmentInfo(userId: string): Promise<{ id: string; name: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { department: true },
+    });
+
+    if (!user || !user.department) {
+      throw new NotFoundException('HOD department not found');
+    }
+
+    return {
+      id: user.department.id,
+      name: user.department.dept_name,
+    };
+  }
+
+  /**
+   * Injects department name as the first field in form entries
+   */
+  private injectDepartmentIntoEntries(
+    entries: Record<string, unknown>[],
+    departmentName: string,
+  ): Record<string, unknown>[] {
+    return entries.map((entry) => ({
+      department_name: departmentName,
+      ...entry,
+    }));
+  }
   async getDepartmentPillars(userId: string, role: UserRole) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertDeptAccess(role);
@@ -95,8 +127,8 @@ export class HodKpiService {
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(role);
-    const deptId = await this.getDeptId(userId);
-    const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: deptId } });
+    const departmentInfo = await this.getHodDepartmentInfo(userId);
+    const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: departmentInfo.id } });
     if (!kpi) throw new NotFoundException('KPI not found or not accessible');
     // Check if KPI is locked (APPROVED, REJECTED, OVERDUE)
     const lockedStatuses: KpiStatus[] = [KpiStatus.APPROVED, KpiStatus.REJECTED, KpiStatus.OVERDUE];
@@ -112,6 +144,10 @@ export class HodKpiService {
       preserveComments = kpi.comments;
       preserveMetrics = kpi.kpi_calculated_metrics as object;
     }
+
+    // Inject department name as the first field in each entry
+    const entriesWithDepartment = this.injectDepartmentIntoEntries(formResponses.entries, departmentInfo.name);
+
     // Get existing metrics and preserve important data while updating draft status
     const existingMetrics = (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
     const updatedMetrics = {
@@ -121,7 +157,7 @@ export class HodKpiService {
       is_submitted_to_qc: false, // Mark as draft, not submitted
     };
     // Calculate HOD percentage target achieved
-    const entriesCount = formResponses.entries?.length || 0;
+    const entriesCount = entriesWithDepartment.length || 0;
     const kpiTarget = Number(kpi.kpi_target) || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? Number(((entriesCount / kpiTarget) * 100).toFixed(2)) : 0;
     // Calculate HOD performance based on kpi_value and hod_percentage_target_achieved
@@ -131,9 +167,9 @@ export class HodKpiService {
     // Get existing form responses to preserve coordinator workflow
     const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
 
-    // Prepare updated form responses preserving coordinator workflow
+    // Prepare updated form responses with department-injected entries preserving coordinator workflow
     const updatedFormResponses = {
-      ...formResponses,
+      entries: entriesWithDepartment,
       // Preserve coordinator workflow if it exists
       coordinator_workflow: existingFormResponses.coordinator_workflow || null,
     };
@@ -185,8 +221,8 @@ export class HodKpiService {
   ) {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(role);
-    const deptId = await this.getDeptId(userId);
-    const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: deptId } });
+    const departmentInfo = await this.getHodDepartmentInfo(userId);
+    const kpi = await this.prisma.departmentKpi.findFirst({ where: { id: kpiId, dept_id: departmentInfo.id } });
     if (!kpi) throw new NotFoundException('KPI not found or not accessible');
     // Check if KPI is locked (APPROVED, REJECTED, OVERDUE)
     const lockedStatuses: KpiStatus[] = [KpiStatus.APPROVED, KpiStatus.REJECTED, KpiStatus.OVERDUE];
@@ -197,6 +233,10 @@ export class HodKpiService {
     if (!formResponses.entries || formResponses.entries.length === 0) {
       throw new ForbiddenException('Cannot submit empty KPI. Please add data before submission.');
     }
+
+    // Inject department name as the first field in each entry
+    const entriesWithDepartment = this.injectDepartmentIntoEntries(formResponses.entries, departmentInfo.name);
+
     // Get current user info for submission tracking
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -213,7 +253,7 @@ export class HodKpiService {
     const existingMetrics = (kpi.kpi_calculated_metrics as Record<string, unknown>) || {};
     const existingHistory = (existingMetrics.submission_history as unknown[]) || [];
     // Calculate HOD percentage target achieved
-    const entriesCount = formResponses.entries?.length || 0;
+    const entriesCount = entriesWithDepartment.length || 0;
     const kpiTarget = kpi.kpi_target || 0;
     const hodPercentageAchieved = kpiTarget > 0 ? (entriesCount / kpiTarget) * 100 : 0;
 
@@ -223,9 +263,9 @@ export class HodKpiService {
     // Get existing form responses to preserve coordinator workflow
     const existingFormResponses = (kpi.form_responses as Record<string, unknown>) || {};
 
-    // Prepare updated form responses preserving coordinator workflow
+    // Prepare updated form responses with department-injected entries preserving coordinator workflow
     const updatedFormResponses = {
-      ...formResponses,
+      entries: entriesWithDepartment,
       // Preserve coordinator workflow if it exists
       coordinator_workflow: existingFormResponses.coordinator_workflow || null,
     };
@@ -362,22 +402,22 @@ export class HodKpiService {
     if (!userId) throw new ForbiddenException('User not authenticated');
     this.assertHodRole(userRole);
 
-    const deptId = await this.getDeptId(userId);
+    const departmentInfo = await this.getHodDepartmentInfo(userId);
 
     // Verify user has access to this KPI
     const kpi = await this.prisma.departmentKpi.findFirst({
       where: {
         id: kpiId,
-        dept_id: deptId,
+        dept_id: departmentInfo.id,
       },
     });
 
     if (!kpi) {
-      console.log('KPI access denied - User: %s, Department: %s, KPI: %s', userId, deptId, kpiId);
+      console.log('KPI access denied - User: %s, Department: %s, KPI: %s', userId, departmentInfo.id, kpiId);
       throw new NotFoundException('KPI not found or access denied');
     }
 
-    console.log('KPI access granted - User: %s, Department: %s, KPI: %s', userId, deptId, kpiId);
+    console.log('KPI access granted - User: %s, Department: %s, KPI: %s', userId, departmentInfo.id, kpiId);
 
     // Check if KPI is locked (APPROVED, REJECTED, OVERDUE)
     const lockedStatuses: KpiStatus[] = [KpiStatus.APPROVED, KpiStatus.REJECTED, KpiStatus.OVERDUE];
@@ -461,8 +501,14 @@ export class HodKpiService {
 
     // Save the validated data
     try {
+      // Inject department name into the processed data
+      const processedDataWithDepartment = this.injectDepartmentIntoEntries(
+        validationResult.processedData,
+        departmentInfo.name,
+      );
+
       const formResponses = {
-        entries: validationResult.processedData,
+        entries: processedDataWithDepartment,
         uploaded_at: new Date().toISOString(),
         uploaded_by: userId,
       };
@@ -478,7 +524,7 @@ export class HodKpiService {
       };
 
       // Calculate HOD percentage target achieved
-      const entriesCount = validationResult.processedData.length;
+      const entriesCount = processedDataWithDepartment.length;
       const kpiTarget = Number(kpi.kpi_target) || 0;
       const hodPercentageAchieved = kpiTarget > 0 ? Number(((entriesCount / kpiTarget) * 100).toFixed(2)) : 0;
 

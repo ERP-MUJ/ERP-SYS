@@ -266,11 +266,11 @@ export default function QACDashboard() {
       </div>
 
       {/* Tabbed Interface */}
-      <Tabs defaultValue="scoresheet" className="space-y-4">
+      <Tabs defaultValue="summary" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="summary">Submission Summary</TabsTrigger>
           <TabsTrigger value="scoresheet">Score Sheet</TabsTrigger>
           <TabsTrigger value="status">Dept. Status</TabsTrigger>
-          <TabsTrigger value="summary">Submission Summary</TabsTrigger>
         </TabsList>
 
         <TabsContent value="scoresheet">
@@ -397,7 +397,7 @@ export default function QACDashboard() {
                       Submitted KPIs
                     </TableCell>
                     <TableCell className="text-center font-medium">
-                      Total Entries
+                      Verified Entries
                     </TableCell>
                   </TableRow>
                 </TableHeader>
