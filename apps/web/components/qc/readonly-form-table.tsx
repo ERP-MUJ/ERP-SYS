@@ -211,41 +211,44 @@ export function ReadOnlyFormTable({
                       </div>
                     ) : (
                       <div>
-                        {entryComments[rI.toString()] ? (
-                          <div className="space-y-1">
-                            <div className="text-xs bg-muted/50 rounded p-2 border">
-                              {entryComments[rI.toString()].comment}
+                        {(() => {
+                          const comment = entryComments[rI.toString()];
+                          return comment ? (
+                            <div className="space-y-1">
+                              <div className="text-xs bg-muted/50 rounded p-2 border">
+                                {comment.comment}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                By {comment.reviewed_by} •{" "}
+                                {new Date(
+                                  comment.reviewed_at,
+                                ).toLocaleDateString()}
+                              </div>
+                              {canEditComments && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => startEditingComment(rI)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Edit
+                                </Button>
+                              )}
                             </div>
-                            <div className="text-[10px] text-muted-foreground">
-                              By {entryComments[rI.toString()].reviewed_by} •{" "}
-                              {new Date(
-                                entryComments[rI.toString()].reviewed_at,
-                              ).toLocaleDateString()}
-                            </div>
-                            {canEditComments && (
+                          ) : (
+                            canEditComments && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => startEditingComment(rI)}
                                 className="h-6 px-2 text-xs"
                               >
-                                Edit
+                                <MessageSquare className="w-3 h-3 mr-1" />
+                                Add Comment
                               </Button>
-                            )}
-                          </div>
-                        ) : (
-                          canEditComments && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => startEditingComment(rI)}
-                              className="h-6 px-2 text-xs"
-                            >
-                              <MessageSquare className="w-3 h-3 mr-1" />
-                              Add Comment
-                            </Button>
-                          )
-                        )}
+                            )
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
