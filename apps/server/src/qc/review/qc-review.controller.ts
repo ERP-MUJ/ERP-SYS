@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { QcReviewService } from './qc-review.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -9,16 +9,17 @@ import { UserRole } from '@repo/db/prisma/client';
 
 @Controller('qc/review')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.QAC)
 export class QcReviewController {
   constructor(private readonly reviewService: QcReviewService) {}
 
   @Get('kpis/:kpiId')
+  @Roles(UserRole.QAC)
   async getKpi(@CurrentUser() user: RequestUser, @Param('kpiId') kpiId: string) {
     return this.reviewService.getKpi(user.id, user.role, kpiId);
   }
 
   @Patch('kpis/:kpiId/status')
+  @Roles(UserRole.QAC)
   async updateStatus(
     @CurrentUser() user: RequestUser,
     @Param('kpiId') kpiId: string,
@@ -39,5 +40,27 @@ export class QcReviewController {
       console.error('QC Review Controller - updateStatus error:', error);
       throw error;
     }
+  }
+
+  @Patch('kpis/:kpiId/entries/:entryIndex/comment')
+  @Roles(UserRole.QAC)
+  async saveEntryComment(
+    @CurrentUser() user: RequestUser,
+    @Param('kpiId') kpiId: string,
+    @Param('entryIndex') entryIndex: string,
+    @Body() body: { comment: string },
+  ) {
+    const index = parseInt(entryIndex, 10);
+    if (isNaN(index)) {
+      throw new BadRequestException('Invalid entry index');
+    }
+
+    return this.reviewService.saveEntryComment(user.id, user.role, kpiId, index, body.comment || '');
+  }
+
+  @Get('kpis/:kpiId/entry-comments')
+  @Roles(UserRole.QAC, UserRole.HOD, UserRole.FACULTY)
+  async getEntryComments(@CurrentUser() user: RequestUser, @Param('kpiId') kpiId: string) {
+    return this.reviewService.getEntryComments(user.id, user.role, kpiId);
   }
 }

@@ -1,6 +1,8 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { FormElementInstance } from "@/lib/types";
+import { Button } from "@workspace/ui/components/button";
+import { Textarea } from "@workspace/ui/components/textarea";
 import {
   Table as ReactTable,
   TableBody,
@@ -9,6 +11,14 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table";
+import { Save, MessageSquare } from "lucide-react";
+
+export interface EntryComment {
+  comment: string;
+  reviewed_by: string;
+  reviewed_by_id: string;
+  reviewed_at: string;
+}
 
 interface ReadOnlyFormTableProps {
   elements: FormElementInstance[];
@@ -16,6 +26,12 @@ interface ReadOnlyFormTableProps {
   className?: string;
   rowNumbers?: boolean;
   compact?: boolean;
+  // Row comments functionality
+  enableRowComments?: boolean;
+  entryComments?: Record<string, EntryComment>;
+  canEditComments?: boolean;
+  onSaveComment?: (entryIndex: number, comment: string) => void;
+  isSavingComment?: Record<number, boolean>;
 }
 
 export function ReadOnlyFormTable({
@@ -24,9 +40,46 @@ export function ReadOnlyFormTable({
   className,
   rowNumbers = true,
   compact = true,
+  enableRowComments = false,
+  entryComments = {},
+  canEditComments = false,
+  onSaveComment,
+  isSavingComment = {},
 }: ReadOnlyFormTableProps) {
+  const [commentValues, setCommentValues] = useState<Record<number, string>>(
+    {},
+  );
+  const [editingComment, setEditingComment] = useState<number | null>(null);
+
   const cols = React.useMemo(() => elements, [elements]);
-  const cellPad = compact ? "px-3 py-2" : "px-4 py-2.5"; // unify header/body height
+  const cellPad = compact ? "px-3 py-2" : "px-4 py-2.5";
+
+  const handleCommentChange = (rowIndex: number, value: string) => {
+    setCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: value,
+    }));
+  };
+
+  const handleSaveComment = (rowIndex: number) => {
+    const comment = commentValues[rowIndex] || "";
+    onSaveComment?.(rowIndex, comment);
+    setEditingComment(null);
+  };
+
+  const startEditingComment = (rowIndex: number) => {
+    const existingComment = entryComments[rowIndex.toString()]?.comment || "";
+    setCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: existingComment,
+    }));
+    setEditingComment(rowIndex);
+  };
+
+  const cancelEditingComment = () => {
+    setEditingComment(null);
+    setCommentValues({});
+  };
 
   if (!entries || entries.length === 0)
     return (
@@ -69,6 +122,19 @@ export function ReadOnlyFormTable({
                 )}
               </TableHead>
             ))}
+            {enableRowComments && (
+              <TableHead
+                className={
+                  "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase w-64 select-none " +
+                  cellPad
+                }
+              >
+                <div className="flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" />
+                  QC Comments
+                </div>
+              </TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -103,6 +169,91 @@ export function ReadOnlyFormTable({
                   <Value value={row[c.id]} type={c.type} />
                 </TableCell>
               ))}
+              {enableRowComments && (
+                <TableCell className={cellPad + " align-top w-64"}>
+                  <div className="space-y-2">
+                    {editingComment === rI ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={commentValues[rI] || ""}
+                          onChange={(e) =>
+                            handleCommentChange(rI, e.target.value)
+                          }
+                          placeholder="Add QC comment for this entry..."
+                          className="text-xs resize-none"
+                          rows={3}
+                        />
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveComment(rI)}
+                            disabled={isSavingComment[rI]}
+                            className="h-6 px-2 text-xs"
+                          >
+                            {isSavingComment[rI] ? (
+                              "Saving..."
+                            ) : (
+                              <>
+                                <Save className="w-3 h-3 mr-1" />
+                                Save
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={cancelEditingComment}
+                            className="h-6 px-2 text-xs"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {(() => {
+                          const comment = entryComments[rI.toString()];
+                          return comment ? (
+                            <div className="space-y-1">
+                              <div className="text-xs bg-muted/50 rounded p-2 border">
+                                {comment.comment}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                By {comment.reviewed_by} •{" "}
+                                {new Date(
+                                  comment.reviewed_at,
+                                ).toLocaleDateString()}
+                              </div>
+                              {canEditComments && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => startEditingComment(rI)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Edit
+                                </Button>
+                              )}
+                            </div>
+                          ) : (
+                            canEditComments && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => startEditingComment(rI)}
+                                className="h-6 px-2 text-xs"
+                              >
+                                <MessageSquare className="w-3 h-3 mr-1" />
+                                Add Comment
+                              </Button>
+                            )
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>

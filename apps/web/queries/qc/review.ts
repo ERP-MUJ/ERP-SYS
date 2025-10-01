@@ -84,3 +84,48 @@ export function useDownloadDepartmentKpiWorkbook() {
     },
   });
 }
+
+// Entry comments hooks - can be used by QC, HOD, and Faculty
+export function useGetEntryComments(kpiId: string | null) {
+  return useQuery({
+    queryKey: ["qc-entry-comments", kpiId],
+    queryFn: async () => {
+      if (!kpiId) throw new Error("KPI ID required");
+      const res = await QcReviewService.getEntryComments(kpiId);
+      if (res.data) return res.data;
+      throw new Error(res.error?.message || "Failed to fetch entry comments");
+    },
+    enabled: !!kpiId,
+  });
+}
+
+// Only QAC can save comments
+export function useSaveEntryComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      kpiId,
+      entryIndex,
+      comment,
+    }: {
+      kpiId: string;
+      entryIndex: number;
+      comment: string;
+    }) => {
+      const res = await QcReviewService.saveEntryComment(
+        kpiId,
+        entryIndex,
+        comment,
+      );
+      if (res.data) return res.data;
+      throw new Error(res.error?.message || "Failed to save comment");
+    },
+    onSuccess: (_data, vars) => {
+      toast.success("Comment saved");
+      qc.invalidateQueries({ queryKey: ["qc-entry-comments", vars.kpiId] });
+    },
+    onError: (err: any) => {
+      toast.error("Failed to save comment", { description: err.message });
+    },
+  });
+}

@@ -20,6 +20,7 @@ import {
   FileUp,
   FileDown,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import {
   Table as ReactTable,
@@ -54,6 +55,7 @@ import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { ExcelUploadDialog } from "./ExcelUploadDialog";
 import { FrontendExcelUploadDialog } from "../common/FrontendExcelUploadDialog";
+import { useGetEntryComments, useSaveEntryComment } from "@/queries/qc/review";
 interface TableFormRendererProps {
   name: string;
   elements: FormElementInstance[];
@@ -78,11 +80,22 @@ interface TableFormRendererProps {
   useFrontendExcelUpload?: boolean;
   secondaryAction?: {
     label: string;
+    onClick: () => void;
     onAction: (entries: Record<string, any>[]) => Promise<void> | void;
     disabled?: boolean;
     loading?: boolean;
-    variant?: "default" | "outline";
+    variant?:
+      | "default"
+      | "destructive"
+      | "outline"
+      | "secondary"
+      | "ghost"
+      | "link";
   };
+  // QC Comments props
+  kpiId?: string;
+  enableQcComments?: boolean;
+  userRole?: string;
 }
 type FormEntry = Record<string, any>;
 export default function TableFormRenderer({
@@ -96,6 +109,9 @@ export default function TableFormRenderer({
   customExcelHooks,
   useFrontendExcelUpload = false,
   secondaryAction,
+  kpiId,
+  enableQcComments = false,
+  userRole,
 }: TableFormRendererProps) {
   const [entries, setEntries] = useState<FormEntry[]>([{}]);
   const defaultSaveHook = useSaveKpiData();
@@ -103,6 +119,34 @@ export default function TableFormRenderer({
     ? customSaveHook()
     : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // QC Comments functionality
+  const { data: entryCommentsData } = useGetEntryComments(
+    enableQcComments && kpiId ? kpiId : null,
+  );
+  const { mutate: saveEntryComment } = useSaveEntryComment();
+  const [editingComment, setEditingComment] = useState<number | null>(null);
+  const [commentValues, setCommentValues] = useState<Record<number, string>>(
+    {},
+  );
+  const [savingCommentForRow, setSavingCommentForRow] = useState<
+    Record<number, boolean>
+  >({});
+
+  const canEditComments = userRole === "QAC";
+  const showComments =
+    enableQcComments && ["QAC", "HOD", "FACULTY"].includes(userRole || "");
+
+  // Debug: Log comments data
+  console.log("TableFormRenderer Debug:", {
+    enableQcComments,
+    kpiId,
+    userRole,
+    showComments,
+    entryCommentsData,
+    entryComments: entryCommentsData?.entryComments,
+  });
+
   // Excel operations
   const defaultDownloadHook = useDownloadExcelTemplate();
   const downloadExcelMutation =
@@ -114,6 +158,50 @@ export default function TableFormRenderer({
   const [complexValue, setComplexValue] = useState<any>(null);
   // Local storage key for draft data
   const localStorageKey = `kpi-form-draft-${id}`;
+
+  // QC Comments handlers
+  const handleCommentChange = (rowIndex: number, value: string) => {
+    setCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: value,
+    }));
+  };
+
+  const handleSaveComment = (rowIndex: number) => {
+    if (!kpiId) return;
+
+    const comment = commentValues[rowIndex] || "";
+    setSavingCommentForRow((prev) => ({ ...prev, [rowIndex]: true }));
+
+    saveEntryComment(
+      { kpiId, entryIndex: rowIndex, comment },
+      {
+        onSuccess: () => {
+          setSavingCommentForRow((prev) => ({ ...prev, [rowIndex]: false }));
+          setEditingComment(null);
+        },
+        onError: () => {
+          setSavingCommentForRow((prev) => ({ ...prev, [rowIndex]: false }));
+        },
+      },
+    );
+  };
+
+  const startEditingComment = (rowIndex: number) => {
+    const existingComment =
+      entryCommentsData?.entryComments?.[rowIndex.toString()]?.comment || "";
+    setCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: existingComment,
+    }));
+    setEditingComment(rowIndex);
+  };
+
+  const cancelEditingComment = () => {
+    setEditingComment(null);
+    setCommentValues({});
+  };
+
   // Load existing data or draft data on component mount
   useEffect(() => {
     // First try to load from props (server data)
@@ -551,6 +639,14 @@ export default function TableFormRenderer({
                   </TableHead>
                 ))}
                 {hasComplexElements && <TableHead>Additional Fields</TableHead>}
+                {showComments && (
+                  <TableHead className="w-[250px]">
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      QC Comments
+                    </div>
+                  </TableHead>
+                )}
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -590,6 +686,107 @@ export default function TableFormRenderer({
                             </Button>
                           );
                         })}
+                      </div>
+                    </TableCell>
+                  )}
+                  {showComments && (
+                    <TableCell className="w-[250px]">
+                      <div className="space-y-2">
+                        {editingComment === rowIndex ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={commentValues[rowIndex] || ""}
+                              onChange={(e) =>
+                                handleCommentChange(rowIndex, e.target.value)
+                              }
+                              placeholder="Add QC comment for this entry..."
+                              className="text-xs resize-none"
+                              rows={3}
+                            />
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveComment(rowIndex)}
+                                disabled={savingCommentForRow[rowIndex]}
+                                className="h-6 px-2 text-xs"
+                              >
+                                {savingCommentForRow[rowIndex] ? (
+                                  "Saving..."
+                                ) : (
+                                  <>
+                                    <Save className="w-3 h-3 mr-1" />
+                                    Save
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={cancelEditingComment}
+                                className="h-6 px-2 text-xs"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            {entryCommentsData?.entryComments?.[
+                              rowIndex.toString()
+                            ] ? (
+                              <div className="space-y-1">
+                                <div className="text-xs bg-muted/50 rounded p-2 border">
+                                  {
+                                    entryCommentsData.entryComments[
+                                      rowIndex.toString()
+                                    ]?.comment
+                                  }
+                                </div>
+                                <div className="text-[10px] text-muted-foreground">
+                                  By{" "}
+                                  {
+                                    entryCommentsData.entryComments[
+                                      rowIndex.toString()
+                                    ]?.reviewed_by
+                                  }{" "}
+                                  •{" "}
+                                  {entryCommentsData.entryComments[
+                                    rowIndex.toString()
+                                  ]?.reviewed_at &&
+                                    new Date(
+                                      entryCommentsData.entryComments[
+                                        rowIndex.toString()
+                                      ]!.reviewed_at,
+                                    ).toLocaleDateString()}
+                                </div>
+                                {canEditComments && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      startEditingComment(rowIndex)
+                                    }
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              canEditComments && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => startEditingComment(rowIndex)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  Add Comment
+                                </Button>
+                              )
+                            )}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                   )}

@@ -15,14 +15,44 @@ export interface UpdateKpiStatusPayload {
   remark: string;
 }
 
+export interface EntryComment {
+  comment: string;
+  reviewed_by: string;
+  reviewed_by_id: string;
+  reviewed_at: string;
+}
+
+export interface EntryCommentsResponse {
+  kpiId: string;
+  entryComments: Record<string, EntryComment>;
+}
+
 export class QcReviewService {
   static async getKpi(kpiId: string) {
     return ApiClient.get<QcReviewedKpi>(`/qc/review/kpis/${kpiId}`);
   }
+
   static async updateStatus(kpiId: string, payload: UpdateKpiStatusPayload) {
     return ApiClient.patch<{ message: string; data: QcReviewedKpi }>(
       `/qc/review/kpis/${kpiId}/status`,
       payload,
+    );
+  }
+
+  static async getEntryComments(kpiId: string) {
+    return ApiClient.get<EntryCommentsResponse>(
+      `/qc/review/kpis/${kpiId}/entry-comments`,
+    );
+  }
+
+  static async saveEntryComment(
+    kpiId: string,
+    entryIndex: number,
+    comment: string,
+  ) {
+    return ApiClient.patch<{ message: string; data: EntryComment }>(
+      `/qc/review/kpis/${kpiId}/entries/${entryIndex}/comment`,
+      { comment },
     );
   }
 }
