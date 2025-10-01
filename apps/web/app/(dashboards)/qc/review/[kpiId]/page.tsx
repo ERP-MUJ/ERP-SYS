@@ -4,6 +4,8 @@ import {
   useDownloadDepartmentKpiWorkbook,
   useGetKpi,
   useUpdateKpiStatus,
+  useGetEntryComments,
+  useSaveEntryComment,
 } from "@/queries/qc/review";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
@@ -12,6 +14,7 @@ import {
 } from "@/lib/qc-status";
 import ReadOnlyFormTable from "@/components/qc/readonly-form-table";
 import { FormElementInstance, FormElementType } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@workspace/ui/components/button";
 import {
   Card,
@@ -30,14 +33,21 @@ import { Download, Loader2 } from "lucide-react";
 export default function QcKpiReviewPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const kpiId = params?.kpiId as string | undefined;
   const { data, isLoading, isError, error } = useGetKpi(kpiId || null);
+  const { data: entryCommentsData } = useGetEntryComments(kpiId || null);
   const { mutate: updateStatus, isPending: updating } = useUpdateKpiStatus();
+  const { mutate: saveEntryComment, isPending: savingComment } =
+    useSaveEntryComment();
   const { mutate: downloadWorkbook, isPending: downloadingWorkbook } =
     useDownloadDepartmentKpiWorkbook();
   const [remark, setRemark] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [savingCommentForRow, setSavingCommentForRow] = useState<
+    Record<number, boolean>
+  >({});
 
   const displayStatus = useMemo(() => {
     if (!data) return null;
@@ -49,6 +59,24 @@ export default function QcKpiReviewPage() {
       isSubmittedToQc,
     });
   }, [data]);
+
+  const handleSaveEntryComment = (entryIndex: number, comment: string) => {
+    if (!kpiId) return;
+
+    setSavingCommentForRow((prev) => ({ ...prev, [entryIndex]: true }));
+
+    saveEntryComment(
+      { kpiId, entryIndex, comment },
+      {
+        onSuccess: () => {
+          setSavingCommentForRow((prev) => ({ ...prev, [entryIndex]: false }));
+        },
+        onError: () => {
+          setSavingCommentForRow((prev) => ({ ...prev, [entryIndex]: false }));
+        },
+      },
+    );
+  };
 
   function act(action: "APPROVE" | "REVISION" | "REJECT") {
     if (!kpiId) return;
@@ -275,8 +303,21 @@ export default function QcKpiReviewPage() {
                 },
               );
               const entries = (data as any).form_responses?.entries || [];
+              const canEditComments = user?.role === "QAC";
+              const showComments = ["QAC", "HOD", "FACULTY"].includes(
+                user?.role || "",
+              );
+
               return (
-                <ReadOnlyFormTable elements={elements} entries={entries} />
+                <ReadOnlyFormTable
+                  elements={elements}
+                  entries={entries}
+                  enableRowComments={showComments}
+                  entryComments={entryCommentsData?.entryComments || {}}
+                  canEditComments={canEditComments}
+                  onSaveComment={handleSaveEntryComment}
+                  isSavingComment={savingCommentForRow}
+                />
               );
             })()}
           </div>

@@ -7,6 +7,7 @@ import {
   useSubmitCoordinatorKpi,
   useResubmitCoordinatorKpi,
 } from "@/queries/coordinator/kpi";
+import { useGetEntryComments } from "@/queries/qc/review";
 import { useSession } from "next-auth/react";
 import {
   Card,
@@ -16,6 +17,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { AlertCircle, MessageSquare } from "lucide-react";
+import ReadOnlyFormTable from "@/components/qc/readonly-form-table";
 
 // Reuse HOD KPI detail fetching so coordinator/faculty see same structure
 export default function FacultyKpiPage({
@@ -26,6 +28,7 @@ export default function FacultyKpiPage({
   const { id } = React.use(params);
   const { data: session } = useSession();
   const { data, isLoading, error } = useGetKpiDetails(id);
+  const { data: entryCommentsData } = useGetEntryComments(id);
   const isCoordinator = session?.user?.role === "KPI_COORDINATOR";
 
   // Coordinator mutations
@@ -182,6 +185,9 @@ export default function FacultyKpiPage({
           existingData={existingData}
           customSaveHook={customSaveHook}
           useFrontendExcelUpload={true}
+          kpiId={id}
+          enableQcComments={true}
+          userRole={session?.user?.role}
           secondaryAction={{
             label: submitting
               ? isRevision
@@ -190,6 +196,7 @@ export default function FacultyKpiPage({
               : isRevision
                 ? "Resubmit to HOD"
                 : "Submit to HOD",
+            onClick: () => {}, // Required prop, but onAction will handle the logic
             disabled:
               submitting ||
               coordinatorStatus === "SUBMITTED" ||
@@ -224,6 +231,9 @@ export default function FacultyKpiPage({
       existingData={existingData}
       customSaveHook={useSaveHodKpiData}
       useFrontendExcelUpload={true}
+      kpiId={id}
+      enableQcComments={true}
+      userRole={session?.user?.role}
     />
   );
 }

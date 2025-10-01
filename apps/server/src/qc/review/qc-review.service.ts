@@ -231,4 +231,122 @@ export class QcReviewService {
 
     return { message: 'KPI status updated', data: updated };
   }
+
+  async saveEntryComment(userId: string, userRole: UserRole, kpiId: string, entryIndex: number, comment: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+
+    if (entryIndex < 0) {
+      throw new BadRequestException('Invalid entry index');
+    }
+
+    const kpi = await this.prisma.departmentKpi.findUnique({ where: { id: kpiId } });
+    if (!kpi) throw new NotFoundException('KPI not found');
+
+    // Get user information for comment tracking
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { user_name: true, user_email: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Verify entry exists
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const entries = (formResponses['entries'] as unknown[]) || [];
+    if (entryIndex >= entries.length) {
+      throw new BadRequestException('Entry index out of range');
+    }
+
+    const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown>;
+    const existingComments = (existingMetrics.entry_comments as Record<string, unknown>) || {};
+
+    // Update or add comment
+    const updatedComments = {
+      ...existingComments,
+      [entryIndex.toString()]: {
+        comment: comment.trim(),
+        reviewed_by: user.user_name ?? user.user_email ?? userId,
+        reviewed_by_id: userId,
+        reviewed_at: new Date().toISOString(),
+      },
+    };
+
+    // If comment is empty, remove the entry
+    if (!comment.trim()) {
+      delete updatedComments[entryIndex.toString()];
+    }
+
+    const updatedMetrics = {
+      ...existingMetrics,
+      entry_comments: updatedComments,
+    };
+
+    await this.prisma.departmentKpi.update({
+      where: { id: kpiId },
+      data: {
+        kpi_calculated_metrics: updatedMetrics as object,
+      },
+    });
+
+    return {
+      message: 'Entry comment saved successfully',
+      data: {
+        entryIndex,
+        comment: comment.trim(),
+        reviewed_by: user.user_name ?? user.user_email ?? userId,
+        reviewed_at: new Date().toISOString(),
+      },
+    };
+  }
+
+  async getEntryComments(userId: string, userRole: UserRole, kpiId: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    // Allow QAC, HOD, and Faculty to view comments
+    const allowedRoles: UserRole[] = [UserRole.QAC, UserRole.HOD, UserRole.FACULTY];
+    if (!allowedRoles.includes(userRole)) {
+      throw new ForbiddenException('Insufficient permissions to view entry comments');
+    }
+
+    const kpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: kpiId },
+      select: {
+        id: true,
+        kpi_calculated_metrics: true,
+        assigned_users: {
+          select: { id: true, user_role: true },
+        },
+        department: {
+          select: { dept_name: true, hod_id: true },
+        },
+      },
+    });
+
+    if (!kpi) throw new NotFoundException('KPI not found');
+
+    // For HOD and Faculty, verify they have access to this KPI
+    if (userRole !== UserRole.QAC) {
+      let hasAccess = false;
+
+      if (userRole === UserRole.HOD) {
+        // HOD has access if they are the HOD of the department
+        hasAccess = kpi.department?.hod_id === userId;
+      } else if (userRole === UserRole.FACULTY) {
+        // Faculty/Coordinators have access if they are assigned to this KPI
+        hasAccess = kpi.assigned_users.some((user) => user.id === userId);
+      }
+
+      if (!hasAccess) {
+        throw new ForbiddenException('You do not have access to this KPI');
+      }
+    }
+
+    const metrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown>;
+    const entryComments = (metrics.entry_comments as Record<string, unknown>) || {};
+
+    return {
+      kpiId,
+      entryComments,
+    };
+  }
 }

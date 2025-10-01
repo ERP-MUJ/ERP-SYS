@@ -8,8 +8,11 @@ import {
 } from "@/queries/hod/kpi";
 import { useReviewCoordinatorSubmission } from "@/queries/hod/coordinator-workflow";
 import { useDownloadHodExcelTemplate } from "@/queries/hod/excel";
+import { useGetEntryComments } from "@/queries/qc/review";
 import { HodExcelUploadDialog } from "@/components/hod/ExcelUploadDialog";
 import { FormElementType, FormElementInstance } from "@/lib/types";
+import ReadOnlyFormTable from "@/components/qc/readonly-form-table";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Card,
   CardContent,
@@ -100,6 +103,7 @@ export default function HodKpiPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = React.use(params);
+  const { user } = useAuth();
 
   // State for coordinator review - must be before early returns
   const [coordinatorRemark, setCoordinatorRemark] = useState("");
@@ -107,6 +111,7 @@ export default function HodKpiPage({
     useState(false);
 
   const { data, isLoading, error } = useGetKpiDetails(id);
+  const { data: entryCommentsData } = useGetEntryComments(id);
   const submitToQc = useSubmitKpiToQc();
   const reviewCoordinatorSubmission = useReviewCoordinatorSubmission();
 
@@ -605,6 +610,7 @@ export default function HodKpiPage({
           </CardContent>
         </Card>
       )}
+
       {/* KPI Form */}
       {isEditable ? (
         <TableFormRenderer
@@ -619,8 +625,12 @@ export default function HodKpiPage({
             uploadComponent: HodExcelUploadDialog,
           }}
           useFrontendExcelUpload={true}
+          kpiId={id}
+          enableQcComments={true}
+          userRole={user?.role}
           secondaryAction={{
             label: "Submit to QC",
+            onClick: () => {}, // Required but onAction handles the logic
             variant: "default",
             onAction: handleSubmitToQc,
             loading: submitToQc.isPending,
