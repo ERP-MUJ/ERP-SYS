@@ -1,21 +1,39 @@
 services:
-  app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: erp-system-app
+    container_name: erp-web
     ports:
       - '3000:3000'
+    env_file:
+      - apps/web/.env
+    environment:
+      - NODE_ENV=development
+      - DOCKER_ENV=true
+    restart: on-failure:5
+    networks:
+      - app_network
+    command: ['pnpm', '--filter', 'web', 'run', 'start']
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: erp-server
+    ports:
       - '3001:3001'
     env_file:
       - apps/server/.env
-      - apps/web/.env
       - packages/db/.env
     environment:
       - NODE_ENV=development
     restart: on-failure:5
     networks:
       - app_network
+    volumes:
+      - ./apps/server/uploads:/app/apps/server/uploads
+    command: ['pnpm', '--filter', 'server', 'run', 'start']
 
 networks:
   app_network:
