@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PillarTemplateModal } from "@/components/qc/pillar/PillarTemplateModal";
@@ -8,11 +9,11 @@ import { useGetPillars, useDeletePillar } from "@/queries/qc/pillar";
 import { PillarInstance } from "@workspace/types/types";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorDisplay } from "@/components/common/ErrorDisplay";
+import PageContainer from "@/components/common/PageContainer";
 
 export default function KpiBuilderPage() {
   const router = useRouter();
 
-  // Fetch pillars from backend
   const { data: pillarTemplates = [], isLoading, error } = useGetPillars();
   const deletePillarMutation = useDeletePillar();
 
@@ -26,7 +27,6 @@ export default function KpiBuilderPage() {
   const handleDelete = (id: string | number) => {
     deletePillarMutation.mutate(String(id), {
       onSuccess: () => {
-        // If the deleted pillar was selected, clear the selection
         if (selectedPillarTemplate?.id === String(id)) {
           setSelectedPillarTemplate(null);
         }
@@ -48,15 +48,10 @@ export default function KpiBuilderPage() {
   };
 
   return (
-    <main className="container mx-auto py-8 px-4 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight mb-2">KPI Builder</h1>
-        <p className="text-muted-foreground text-lg">
-          Create and manage your Key Performance Indicators across different
-          pillars
-        </p>
-      </div>
-
+    <PageContainer
+      title="KPI Builder"
+      subtitle="Create and manage your Key Performance Indicators across different pillars"
+    >
       <PillarTemplateModal
         open={creatingPillar}
         onOpenChange={(open) => {
@@ -107,6 +102,6 @@ export default function KpiBuilderPage() {
           }
         />
       )}
-    </main>
+    </PageContainer>
   );
 }

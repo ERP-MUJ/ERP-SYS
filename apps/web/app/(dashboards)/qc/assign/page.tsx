@@ -8,7 +8,6 @@ import { AssignAllButton } from "@/components/qc/assign-all-button";
 import { DepartmentOverview } from "@/components/qc/assign/DepartmentOverview";
 import { DepartmentAssignmentSections } from "@/components/qc/assign/DepartmentAssignmentSections";
 import { KpiManagementSection } from "@/components/qc/assign/KpiManagementSection";
-import { PillarData, KpiData } from "@/lib/types/qc-assignment";
 import { usePillarAssignments, useKpiAssignments } from "@/hooks/qc-assignment";
 import {
   usePillarHandlers,
@@ -22,6 +21,7 @@ import {
   useGetArchivedDepartmentPillars,
   useGetDepartmentPillarKPIs,
 } from "@/queries/qc/department-assignment";
+import PageContainer from "@/components/common/PageContainer";
 
 export default function AssignKpiToDepartmentPage() {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<
@@ -30,7 +30,7 @@ export default function AssignKpiToDepartmentPage() {
   const [selectedPillarId, setSelectedPillarId] = useState<string | null>(null);
   const kpiSectionRef = useRef<HTMLDivElement>(null);
 
-  // Data fetching
+  // Queries
   const { data: departments = [], isLoading: departmentsLoading } =
     useGetDepartments();
   const { data: pillarTemplates = [], isLoading: pillarTemplatesLoading } =
@@ -39,16 +39,13 @@ export default function AssignKpiToDepartmentPage() {
     data: selectedDepartmentPillars = [],
     isLoading: departmentPillarsLoading,
   } = useGetDepartmentPillars(selectedDepartmentId);
-  const {
-    data: archivedDepartmentPillars = [],
-    isLoading: archivedPillarsLoading,
-  } = useGetArchivedDepartmentPillars(selectedDepartmentId);
+  const { data: archivedDepartmentPillars = [] } =
+    useGetArchivedDepartmentPillars(selectedDepartmentId);
   const {
     data: allDepartmentPillars = [],
     isLoading: allDepartmentPillarsLoading,
   } = useGetAllDepartmentPillars();
 
-  // Processed data using custom hooks
   const { assignedPillars, unassignedPillars } = usePillarAssignments(
     selectedDepartmentId,
     pillarTemplates,
@@ -59,7 +56,6 @@ export default function AssignKpiToDepartmentPage() {
     (dp) => dp.template_id === selectedPillarId,
   );
 
-  // Only fetch department KPI data for assigned pillars, not for templates
   const shouldFetchDepartmentKPIs =
     selectedPillarId && selectedDepartmentPillar;
   const { data: departmentPillarKPIs = [], isLoading: kpisLoading } =
@@ -75,14 +71,12 @@ export default function AssignKpiToDepartmentPage() {
     departmentPillarKPIs,
   );
 
-  // Business logic hooks
   const pillarHandlers = usePillarHandlers(selectedDepartmentId);
   const kpiHandlers = useKpiHandlers(
     selectedDepartmentPillar,
     departmentPillarKPIs,
   );
 
-  // Navigation handlers
   const handleDepartmentChange = (deptId: string) => {
     setSelectedDepartmentId(deptId);
     setSelectedPillarId(null);
@@ -100,7 +94,6 @@ export default function AssignKpiToDepartmentPage() {
     setSelectedPillarId(null);
   };
 
-  // Loading state
   const isLoading =
     departmentsLoading ||
     pillarTemplatesLoading ||
@@ -109,14 +102,17 @@ export default function AssignKpiToDepartmentPage() {
 
   if (isLoading) {
     return (
-      <main className="container mx-auto py-8 px-4">
+      <PageContainer
+        title="Assign Pillar and KPI to Department"
+        subtitle="Loading data..."
+      >
         <div className="flex items-center justify-center py-16">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-2 text-sm text-gray-600">Loading data...</p>
           </div>
         </div>
-      </main>
+      </PageContainer>
     );
   }
 
@@ -133,14 +129,11 @@ export default function AssignKpiToDepartmentPage() {
     selectedAssignedPillar || selectedTemplatePillar || null;
 
   return (
-    <main className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">
-          Assign Pillar and KPI to Department
-        </h1>
-        <AssignAllButton />
-      </div>
-
+    <PageContainer
+      title="Assign Pillar and KPI to Department"
+      subtitle="Manage assignments across departments"
+      actions={<AssignAllButton />}
+    >
       {!selectedDepartmentId ? (
         <DepartmentOverview
           departments={departments}
@@ -148,7 +141,7 @@ export default function AssignKpiToDepartmentPage() {
           onDepartmentSelect={handleDepartmentChange}
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Back Navigation */}
           <div className="flex items-center gap-4">
             <Button
@@ -175,7 +168,7 @@ export default function AssignKpiToDepartmentPage() {
           </div>
 
           {/* Department Info */}
-          <Card>
+          <Card className="shadow-sm rounded-2xl">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -231,6 +224,6 @@ export default function AssignKpiToDepartmentPage() {
           />
         </div>
       )}
-    </main>
+    </PageContainer>
   );
 }
