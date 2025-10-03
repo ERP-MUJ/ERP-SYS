@@ -63,15 +63,15 @@ interface TableFormRendererProps {
   onSuccess?: () => void;
   className?: string;
   id: string;
-  existingData?: Record<string, any>[];
+  existingData?: Record<string, unknown>[];
   customSaveHook?: () => UseMutationResult<
-    any,
+    unknown,
     Error,
-    { id: string; formData: { entries: Record<string, any>[] } },
+    { id: string; formData: { entries: Record<string, unknown>[] } },
     unknown
   >;
   customExcelHooks?: {
-    downloadHook: () => any;
+    downloadHook: () => unknown;
     uploadComponent: React.ComponentType<{
       kpiId: string;
       trigger?: React.ReactNode;
@@ -81,7 +81,7 @@ interface TableFormRendererProps {
   secondaryAction?: {
     label: string;
     onClick: () => void;
-    onAction: (entries: Record<string, any>[]) => Promise<void> | void;
+    onAction: (entries: Record<string, unknown>[]) => Promise<void> | void;
     disabled?: boolean;
     loading?: boolean;
     variant?:
@@ -97,7 +97,7 @@ interface TableFormRendererProps {
   enableQcComments?: boolean;
   userRole?: string;
 }
-type FormEntry = Record<string, any>;
+type FormEntry = Record<string, unknown>;
 export default function TableFormRenderer({
   name,
   elements,
@@ -137,16 +137,6 @@ export default function TableFormRenderer({
   const showComments =
     enableQcComments && ["QAC", "HOD", "FACULTY"].includes(userRole || "");
 
-  // Debug: Log comments data
-  console.log("TableFormRenderer Debug:", {
-    enableQcComments,
-    kpiId,
-    userRole,
-    showComments,
-    entryCommentsData,
-    entryComments: entryCommentsData?.entryComments,
-  });
-
   // Excel operations
   const defaultDownloadHook = useDownloadExcelTemplate();
   const downloadExcelMutation =
@@ -155,7 +145,7 @@ export default function TableFormRenderer({
   const [activeElement, setActiveElement] =
     useState<FormElementInstance | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [complexValue, setComplexValue] = useState<any>(null);
+  const [complexValue, setComplexValue] = useState<unknown>(null);
   // Local storage key for draft data
   const localStorageKey = `kpi-form-draft-${id}`;
 
@@ -233,7 +223,6 @@ export default function TableFormRenderer({
       const saveTimeout = setTimeout(() => {
         try {
           localStorage.setItem(localStorageKey, JSON.stringify(filledEntries));
-          console.log("Draft saved to local storage");
         } catch (error) {
           console.error("Error saving draft data:", error);
         }
@@ -254,7 +243,6 @@ export default function TableFormRenderer({
       const autoSaveTimeout = setTimeout(() => {
         // Don't autosave if actively submitting
         if (!isSubmitting && filledEntries.length > 0) {
-          console.log("Auto-saving to server...");
           const formDataToSubmit = {
             id: id,
             formData: {
@@ -265,7 +253,6 @@ export default function TableFormRenderer({
           saveKpiData(formDataToSubmit, {
             onSuccess: () => {
               setLastSavedEntries(currentEntriesString);
-              console.log("Auto-save successful");
             },
             onError: (error) => {
               console.error("Auto-save failed:", error);
@@ -286,10 +273,12 @@ export default function TableFormRenderer({
       element.type,
     ),
   );
-  // Complex elements that need a dialog
+  // Complex elements that need a dialog (but can still be populated from Excel)
   const complexElements = elements.filter((element) =>
     ["textarea", "radio", "file"].includes(element.type),
   );
+  // All elements for Excel mapping (includes both simple and complex elements)
+  const allElementsForExcel = elements;
   const addNewRow = () => {
     setEntries([...entries, {}]);
   };
@@ -303,7 +292,7 @@ export default function TableFormRenderer({
       setEntries(newEntries);
     }
   };
-  const updateEntry = (rowIndex: number, elementId: string, value: any) => {
+  const updateEntry = (rowIndex: number, elementId: string, value: unknown) => {
     const newEntries = [...entries];
     newEntries[rowIndex] = {
       ...newEntries[rowIndex],
@@ -316,32 +305,56 @@ export default function TableFormRenderer({
    * Handle appending data from Excel upload
    * Maps Excel column headers to element IDs and appends to existing entries
    */
-  const handleExcelDataAppend = (excelData: Record<string, any>[]) => {
-    // Get table headers (element labels)
-    const tableHeaders = tableElements.map(
-      (element) => element.attributes.label,
-    );
-
+  const handleExcelDataAppend = (excelData: Record<string, unknown>[]) => {
     // Transform Excel data to match element structure
     const transformedData = excelData.map((row) => {
-      const transformedRow: Record<string, any> = {};
+      const transformedRow: Record<string, unknown> = {};
 
       // Map each Excel column to the corresponding element ID
-      tableElements.forEach((element) => {
+      // Use all elements for Excel mapping (includes radio, textarea, etc.)
+      allElementsForExcel.forEach((element) => {
         const elementLabel = element.attributes.label;
-        // Find matching column in Excel data (case-insensitive)
-        const matchingKey = Object.keys(row).find(
+        let matchingKey: string | undefined;
+        let value: unknown;
+
+        // Try exact label match first (case-insensitive)
+        matchingKey = Object.keys(row).find(
           (key) =>
             key.toLowerCase().trim() === elementLabel.toLowerCase().trim(),
         );
 
+        // If no label match, try element ID match (for cases where Excel has element IDs as headers)
+        // Also try case-insensitive partial matching for common field variations
+        if (!matchingKey) {
+          // Try exact element ID match
+          matchingKey = Object.keys(row).find((key) => key === element.id);
+        }
+
+        // If still no match, try case-insensitive partial matching
+        if (!matchingKey) {
+          const elementLabelLower = elementLabel.toLowerCase();
+          matchingKey = Object.keys(row).find((key) => {
+            const keyLower = key.toLowerCase();
+            // Check if the Excel header contains the element label or vice versa
+            return (
+              keyLower.includes(elementLabelLower) ||
+              elementLabelLower.includes(keyLower) ||
+              // Handle common variations
+              keyLower.replace(/[_\s-]/g, "") ===
+                elementLabelLower.replace(/[_\s-]/g, "")
+            );
+          });
+        }
+
+        // If we found a matching key, get the value
         if (
           matchingKey &&
           row[matchingKey] !== undefined &&
           row[matchingKey] !== null &&
           row[matchingKey] !== ""
         ) {
-          transformedRow[element.id] = row[matchingKey];
+          value = row[matchingKey];
+          transformedRow[element.id] = value;
         }
       });
 
@@ -477,20 +490,21 @@ export default function TableFormRenderer({
     }
     try {
       await secondaryAction.onAction(filledEntries);
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast.error("Action failed", {
-        description: e.message || "Unknown error",
+        description: e instanceof Error ? e.message : "Unknown error",
       });
     }
   };
   const downloadExcel = () => {
-    downloadExcelMutation.mutate(id);
-  };
-  const downloadPDF = () => {
-    toast.success("PDF download functionality will be implemented");
-  };
-  const generateReport = () => {
-    toast.success("Report generation functionality will be implemented");
+    if (
+      downloadExcelMutation &&
+      typeof downloadExcelMutation === "object" &&
+      downloadExcelMutation !== null &&
+      "mutate" in downloadExcelMutation
+    ) {
+      (downloadExcelMutation as { mutate: (id: string) => void }).mutate(id);
+    }
   };
   const renderComplexElementEditor = () => {
     if (!activeElement) return null;
@@ -507,7 +521,7 @@ export default function TableFormRenderer({
               id={elementId}
               placeholder={attributes.placeholder}
               rows={attributes.rows}
-              value={complexValue || ""}
+              value={String(complexValue || "")}
               onChange={(e) => setComplexValue(e.target.value)}
             />
           </div>
@@ -520,20 +534,22 @@ export default function TableFormRenderer({
               {attributes.required && " *"}
             </Label>
             <RadioGroup
-              value={complexValue || ""}
+              value={String(complexValue || "")}
               onValueChange={setComplexValue}
             >
-              {attributes.options?.map((option: any, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem
-                    value={option.value}
-                    id={`${elementId}-${index}`}
-                  />
-                  <Label htmlFor={`${elementId}-${index}`}>
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
+              {attributes.options?.map(
+                (option: { label: string; value: string }, index: number) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value={option.value}
+                      id={`${elementId}-${index}`}
+                    />
+                    <Label htmlFor={`${elementId}-${index}`}>
+                      {option.label}
+                    </Label>
+                  </div>
+                ),
+              )}
             </RadioGroup>
           </div>
         );
@@ -591,9 +607,20 @@ export default function TableFormRenderer({
             <Button
               variant="outline"
               onClick={downloadExcel}
-              disabled={downloadExcelMutation.isPending}
+              disabled={
+                downloadExcelMutation &&
+                typeof downloadExcelMutation === "object" &&
+                downloadExcelMutation !== null &&
+                "isPending" in downloadExcelMutation
+                  ? (downloadExcelMutation as { isPending: boolean }).isPending
+                  : false
+              }
             >
-              {downloadExcelMutation.isPending ? (
+              {downloadExcelMutation &&
+              typeof downloadExcelMutation === "object" &&
+              downloadExcelMutation !== null &&
+              "isPending" in downloadExcelMutation &&
+              (downloadExcelMutation as { isPending: boolean }).isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <FileDown className="mr-2 h-4 w-4" />
@@ -603,9 +630,29 @@ export default function TableFormRenderer({
             {useFrontendExcelUpload ? (
               <FrontendExcelUploadDialog
                 onDataParsed={handleExcelDataAppend}
-                tableHeaders={tableElements.map((element) => ({
+                tableHeaders={allElementsForExcel.map((element) => ({
                   id: element.id,
                   label: element.attributes.label || "Field",
+                  type: element.type as
+                    | "text"
+                    | "number"
+                    | "date"
+                    | "select"
+                    | "radio"
+                    | "textarea"
+                    | "checkbox"
+                    | "email"
+                    | undefined,
+                  options: element.attributes.options as
+                    | Array<{ label: string; value: string | number }>
+                    | undefined,
+                  required: element.attributes.required as boolean | undefined,
+                  validation: {
+                    min: element.attributes.min as number | undefined,
+                    max: element.attributes.max as number | undefined,
+                    pattern: element.attributes.pattern as string | undefined,
+                    format: element.attributes.format as string | undefined,
+                  },
                 }))}
                 title="Upload Excel File"
                 description="Upload an Excel file to add data to the table. The first row should contain column headers that match the table headers."
@@ -873,9 +920,9 @@ export default function TableFormRenderer({
 }
 function renderTableCellInput(
   element: FormElementInstance,
-  entry: Record<string, any>,
+  entry: Record<string, unknown>,
   rowIndex: number,
-  updateEntry: (rowIndex: number, elementId: string, value: any) => void,
+  updateEntry: (rowIndex: number, elementId: string, value: unknown) => void,
 ) {
   const { id, type, attributes } = element;
   const value = entry[id];
@@ -885,7 +932,7 @@ function renderTableCellInput(
       return (
         <Input
           type={type}
-          value={value || ""}
+          value={String(value || "")}
           onChange={(e) => updateEntry(rowIndex, id, e.target.value)}
           placeholder={attributes.placeholder}
           className="h-8 w-full"
@@ -895,7 +942,7 @@ function renderTableCellInput(
       return (
         <Input
           type="number"
-          value={value || ""}
+          value={String(value || "")}
           onChange={(e) =>
             updateEntry(
               rowIndex,
@@ -913,7 +960,7 @@ function renderTableCellInput(
       return (
         <Input
           type="date"
-          value={value || ""}
+          value={String(value || "")}
           onChange={(e) => updateEntry(rowIndex, id, e.target.value)}
           className="h-8 w-full"
         />
@@ -921,18 +968,20 @@ function renderTableCellInput(
     case "select":
       return (
         <Select
-          value={value || ""}
+          value={String(value || "")}
           onValueChange={(value) => updateEntry(rowIndex, id, value)}
         >
           <SelectTrigger className="h-8 w-full">
             <SelectValue placeholder={attributes.placeholder} />
           </SelectTrigger>
           <SelectContent>
-            {attributes.options?.map((option: any, index: number) => (
-              <SelectItem key={index} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
+            {attributes.options?.map(
+              (option: { label: string; value: string }, index: number) => (
+                <SelectItem key={index} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       );
@@ -940,7 +989,7 @@ function renderTableCellInput(
       return (
         <div className="flex items-center justify-center">
           <Checkbox
-            checked={value || false}
+            checked={Boolean(value)}
             onCheckedChange={(checked) => updateEntry(rowIndex, id, checked)}
           />
         </div>

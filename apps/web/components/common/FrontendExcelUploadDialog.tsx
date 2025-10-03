@@ -23,25 +23,59 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { FileUp, Loader2, CheckCircle } from "lucide-react";
+import {
+  FileUp,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  Info,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
 interface TableHeader {
   id: string;
   label: string;
+  type?:
+    | "text"
+    | "number"
+    | "date"
+    | "select"
+    | "radio"
+    | "textarea"
+    | "checkbox"
+    | "email";
+  options?: Array<{ label: string; value: string | number }>;
+  required?: boolean;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    format?: string;
+  };
 }
 
 interface ParsedData {
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   headers: string[];
   totalRows: number;
   validRows: number;
+  validationErrors?: Array<{
+    row: number;
+    field: string;
+    message: string;
+  }>;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  processedValue: unknown;
+  error?: string;
 }
 
 interface FrontendExcelUploadDialogProps {
   trigger?: React.ReactNode;
-  onDataParsed: (data: Record<string, any>[]) => void;
+  onDataParsed: (data: Record<string, unknown>[]) => void;
   tableHeaders: TableHeader[];
   title?: string;
   description?: string;
@@ -59,6 +93,162 @@ export function FrontendExcelUploadDialog({
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const convertExcelDateToJSDate = (excelDateSerial: number): Date | null => {
+    try {
+      const jsDate = new Date((excelDateSerial - 25569) * 86400 * 1000);
+      if (
+        isNaN(jsDate.getTime()) ||
+        jsDate.getFullYear() < 1900 ||
+        jsDate.getFullYear() > 2100
+      ) {
+        return null;
+      }
+
+      return jsDate;
+    } catch {
+      return null;
+    }
+  };
+
+  const parseDateValue = (
+    value: unknown,
+    fieldName: string,
+  ): ValidationResult => {
+    if (value === null || value === undefined || value === "") {
+      return { isValid: true, processedValue: null };
+    }
+
+    if (value instanceof Date) {
+      return {
+        isValid: true,
+        processedValue: value.toISOString().split("T")[0],
+      };
+    }
+
+    if (typeof value === "string") {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        return {
+          isValid: true,
+          processedValue: date.toISOString().split("T")[0],
+        };
+      }
+    }
+
+    if (typeof value === "number") {
+      const jsDate = convertExcelDateToJSDate(value);
+      if (jsDate) {
+        return {
+          isValid: true,
+          processedValue: jsDate.toISOString().split("T")[0],
+        };
+      }
+    }
+
+    return {
+      isValid: false,
+      processedValue: value,
+      error: `Invalid date format for field '${fieldName}'. Expected: YYYY-MM-DD, MM/DD/YYYY, or Excel date serial number`,
+    };
+  };
+
+  const validateSelectValue = (
+    value: unknown,
+    options: Array<{ label: string; value: string | number }>,
+    fieldName: string,
+  ): ValidationResult => {
+    if (value === null || value === undefined || value === "") {
+      return { isValid: true, processedValue: null };
+    }
+
+    const stringValue = String(value).trim();
+
+    const matchingOption = options.find(
+      (option) =>
+        String(option.value).toLowerCase() === stringValue.toLowerCase() ||
+        option.label.toLowerCase() === stringValue.toLowerCase(),
+    );
+
+    if (matchingOption) {
+      return { isValid: true, processedValue: matchingOption.value };
+    }
+
+    const validOptionsText = options
+      .map((option) => `${option.label} (${option.value})`)
+      .join(", ");
+    return {
+      isValid: false,
+      processedValue: value,
+      error: `Invalid value for field '${fieldName}'. Allowed options: ${validOptionsText}`,
+    };
+  };
+
+  const validateFieldValue = (
+    value: unknown,
+    tableHeader: TableHeader,
+  ): ValidationResult => {
+    const { type, options, required, validation } = tableHeader;
+
+    if (required && (value === null || value === undefined || value === "")) {
+      return {
+        isValid: false,
+        processedValue: value,
+        error: `Required field '${tableHeader.label}' cannot be empty`,
+      };
+    }
+
+    if (!required && (value === null || value === undefined || value === "")) {
+      return { isValid: true, processedValue: null };
+    }
+
+    switch (type) {
+      case "date":
+        return parseDateValue(value, tableHeader.label);
+
+      case "select":
+      case "radio":
+        if (!options || options.length === 0) {
+          return { isValid: true, processedValue: value };
+        }
+        return validateSelectValue(value, options, tableHeader.label);
+
+      case "textarea":
+        return { isValid: true, processedValue: String(value) };
+
+      case "number": {
+        const numValue = Number(value);
+        if (isNaN(numValue)) {
+          return {
+            isValid: false,
+            processedValue: value,
+            error: `Invalid number format for field '${tableHeader.label}'`,
+          };
+        }
+
+        if (validation?.min !== undefined && numValue < validation.min) {
+          return {
+            isValid: false,
+            processedValue: value,
+            error: `Value for field '${tableHeader.label}' must be at least ${validation.min}`,
+          };
+        }
+        if (validation?.max !== undefined && numValue > validation.max) {
+          return {
+            isValid: false,
+            processedValue: value,
+            error: `Value for field '${tableHeader.label}' must be at most ${validation.max}`,
+          };
+        }
+
+        return { isValid: true, processedValue: numValue };
+      }
+
+      case "text":
+      default:
+        return { isValid: true, processedValue: String(value) };
+    }
+  };
+
   const validateHeaders = (
     excelHeaders: string[],
   ): { isValid: boolean; errors: string[] } => {
@@ -74,7 +264,8 @@ export function FrontendExcelUploadDialog({
 
     for (const excelHeader of excelHeadersLower) {
       if (!expectedHeaders.includes(excelHeader)) {
-        console.warn(`Extra column found: "${excelHeader}" - will be ignored`);
+        // Don't warn for extra columns - just ignore them silently
+        // console.warn(`Extra column found: "${excelHeader}" - will be ignored`);
       }
     }
 
@@ -118,7 +309,7 @@ export function FrontendExcelUploadDialog({
         return;
       }
 
-      const [headers, ...dataRows] = jsonData as [string[], ...any[][]];
+      const [headers, ...dataRows] = jsonData as [string[], ...unknown[][]];
 
       const headerValidation = validateHeaders(headers);
       if (!headerValidation.isValid) {
@@ -128,9 +319,14 @@ export function FrontendExcelUploadDialog({
         return;
       }
 
-      const processedData: Record<string, any>[] = [];
+      const processedData: Record<string, unknown>[] = [];
+      const validationErrors: Array<{
+        row: number;
+        field: string;
+        message: string;
+      }> = [];
 
-      dataRows.forEach((row) => {
+      dataRows.forEach((row, rowIndex) => {
         if (
           row.every(
             (cell) => cell === undefined || cell === null || cell === "",
@@ -139,17 +335,37 @@ export function FrontendExcelUploadDialog({
           return;
         }
 
-        const rowData: Record<string, any> = {};
-        headers.forEach((header, index) => {
+        const rowData: Record<string, unknown> = {};
+        let hasRowErrors = false;
+
+        headers.forEach((header, colIndex) => {
           const tableHeader = tableHeaders.find(
             (h) => h.label.toLowerCase() === header.toLowerCase(),
           );
+
           if (tableHeader) {
-            rowData[tableHeader.id] = row[index] || "";
+            const rawValue = row[colIndex];
+            const validationResult = validateFieldValue(rawValue, tableHeader);
+
+            if (validationResult.isValid) {
+              rowData[tableHeader.id] = validationResult.processedValue;
+            } else {
+              hasRowErrors = true;
+              validationErrors.push({
+                row: rowIndex + 2, // +2 because Excel rows start at 1 and we skip header
+                field: tableHeader.label,
+                message: validationResult.error || "Validation failed",
+              });
+              // Still add the raw value for display purposes
+              rowData[tableHeader.id] = validationResult.processedValue;
+            }
           }
         });
 
-        processedData.push(rowData);
+        // Only add rows that don't have validation errors or have at least some valid data
+        if (!hasRowErrors || Object.keys(rowData).length > 0) {
+          processedData.push(rowData);
+        }
       });
 
       if (processedData.length === 0) {
@@ -159,6 +375,7 @@ export function FrontendExcelUploadDialog({
           headers,
           totalRows: dataRows.length,
           validRows: 0,
+          validationErrors,
         });
         return;
       }
@@ -168,11 +385,19 @@ export function FrontendExcelUploadDialog({
         headers,
         totalRows: dataRows.length,
         validRows: processedData.length,
+        validationErrors:
+          validationErrors.length > 0 ? validationErrors : undefined,
       });
 
-      toast.success(
-        `Successfully parsed ${processedData.length} rows from Excel file`,
-      );
+      if (validationErrors.length > 0) {
+        toast.warning(
+          `Parsed ${processedData.length} rows with ${validationErrors.length} validation error(s). Please review the results.`,
+        );
+      } else {
+        toast.success(
+          `Successfully parsed ${processedData.length} rows from Excel file`,
+        );
+      }
     } catch (error) {
       console.error("Excel parsing error:", error);
       toast.error("Failed to parse Excel file", {
@@ -305,6 +530,104 @@ export function FrontendExcelUploadDialog({
                     </div>
                   </div>
 
+                  {parsedResult.validationErrors &&
+                    parsedResult.validationErrors.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-orange-600">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="font-medium">
+                            Validation Errors (
+                            {parsedResult.validationErrors.length})
+                          </span>
+                        </div>
+                        <div className="max-h-32 overflow-y-auto space-y-1 text-sm">
+                          {parsedResult.validationErrors.map((error, index) => (
+                            <div
+                              key={index}
+                              className="text-orange-700 bg-orange-50 p-2 rounded"
+                            >
+                              <span className="font-medium">
+                                Row {error.row}:
+                              </span>{" "}
+                              {error.field} - {error.message}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-blue-600">
+                      <Info className="h-4 w-4" />
+                      <span className="font-medium">Format Guidelines</span>
+                    </div>
+                    <div className="text-sm space-y-1">
+                      {tableHeaders
+                        .map((header) => {
+                          if (header.type === "date") {
+                            return (
+                              <div
+                                key={header.id}
+                                className="text-blue-700 bg-blue-50 p-2 rounded"
+                              >
+                                <span className="font-medium">
+                                  {header.label}:
+                                </span>{" "}
+                                Use date format (YYYY-MM-DD, MM/DD/YYYY) or
+                                Excel serial number (e.g., 4638 for 2024-01-01)
+                              </div>
+                            );
+                          }
+                          if (
+                            header.type === "select" ||
+                            header.type === "radio"
+                          ) {
+                            if (header.options && header.options.length > 0) {
+                              const validOptions = header.options
+                                .map((opt) => `${opt.label} (${opt.value})`)
+                                .join(", ");
+                              return (
+                                <div
+                                  key={header.id}
+                                  className="text-blue-700 bg-blue-50 p-2 rounded"
+                                >
+                                  <span className="font-medium">
+                                    {header.label}:
+                                  </span>{" "}
+                                  Allowed values: {validOptions}
+                                </div>
+                              );
+                            }
+                          }
+                          if (header.type === "number" && header.validation) {
+                            const constraints = [];
+                            if (header.validation.min !== undefined)
+                              constraints.push(`min: ${header.validation.min}`);
+                            if (header.validation.max !== undefined)
+                              constraints.push(`max: ${header.validation.max}`);
+                            if (constraints.length > 0) {
+                              return (
+                                <div
+                                  key={header.id}
+                                  className="text-blue-700 bg-blue-50 p-2 rounded"
+                                >
+                                  <span className="font-medium">
+                                    {header.label}:
+                                  </span>{" "}
+                                  Numeric value, {constraints.join(", ")}
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })
+                        .filter(
+                          (item): item is NonNullable<typeof item> =>
+                            item !== null,
+                        )}
+                    </div>
+                  </div>
+
                   {parsedResult.data.length > 0 && (
                     <>
                       <div className="border rounded-lg overflow-hidden">
@@ -323,7 +646,7 @@ export function FrontendExcelUploadDialog({
                               <TableRow key={index}>
                                 {tableHeaders.map((header) => (
                                   <TableCell key={header.id}>
-                                    {row[header.id] || ""}
+                                    {String(row[header.id] || "")}
                                   </TableCell>
                                 ))}
                               </TableRow>
