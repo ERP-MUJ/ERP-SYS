@@ -142,4 +142,20 @@
   body {
     @apply bg-background text-foreground;
   }
+
+   table {
+    @apply border-collapse table-auto w-full;
+  }
+
+  th, td {
+    @apply border border-border px-4 py-2 text-left align-middle;
+  }
+
+  th {
+    @apply font-medium text-foreground;
+  }
+
+  td {
+    @apply text-sm text-muted-foreground;
+  }
 }
