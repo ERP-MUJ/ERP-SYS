@@ -8,7 +8,10 @@ import {
 } from "@/queries/hod/kpi";
 import { useReviewCoordinatorSubmission } from "@/queries/hod/coordinator-workflow";
 import { useDownloadHodExcelTemplate } from "@/queries/hod/excel";
-import { useGetEntryComments } from "@/queries/qc/review";
+import {
+  useGetEntryComments,
+  useSaveHodEntryComment,
+} from "@/queries/qc/review";
 import { HodExcelUploadDialog } from "@/components/hod/ExcelUploadDialog";
 import { FormElementType, FormElementInstance } from "@/lib/types";
 import ReadOnlyFormTable from "@/components/qc/readonly-form-table";

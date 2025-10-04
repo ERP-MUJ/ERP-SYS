@@ -6,6 +6,7 @@ import {
   useUpdateKpiStatus,
   useGetEntryComments,
   useSaveEntryComment,
+  useSaveHodEntryComment,
 } from "@/queries/qc/review";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import {
@@ -40,12 +41,17 @@ export default function QcKpiReviewPage() {
   const { mutate: updateStatus, isPending: updating } = useUpdateKpiStatus();
   const { mutate: saveEntryComment, isPending: savingComment } =
     useSaveEntryComment();
+  const { mutate: saveHodEntryComment, isPending: savingHodComment } =
+    useSaveHodEntryComment();
   const { mutate: downloadWorkbook, isPending: downloadingWorkbook } =
     useDownloadDepartmentKpiWorkbook();
   const [remark, setRemark] = useState("");
   const [showPanel, setShowPanel] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [savingCommentForRow, setSavingCommentForRow] = useState<
+    Record<number, boolean>
+  >({});
+  const [savingHodCommentForRow, setSavingHodCommentForRow] = useState<
     Record<number, boolean>
   >({});
 
@@ -73,6 +79,30 @@ export default function QcKpiReviewPage() {
         },
         onError: () => {
           setSavingCommentForRow((prev) => ({ ...prev, [entryIndex]: false }));
+        },
+      },
+    );
+  };
+
+  const handleSaveHodEntryComment = (entryIndex: number, comment: string) => {
+    if (!kpiId) return;
+
+    setSavingHodCommentForRow((prev) => ({ ...prev, [entryIndex]: true }));
+
+    saveHodEntryComment(
+      { kpiId, entryIndex, comment },
+      {
+        onSuccess: () => {
+          setSavingHodCommentForRow((prev) => ({
+            ...prev,
+            [entryIndex]: false,
+          }));
+        },
+        onError: () => {
+          setSavingHodCommentForRow((prev) => ({
+            ...prev,
+            [entryIndex]: false,
+          }));
         },
       },
     );
@@ -303,7 +333,8 @@ export default function QcKpiReviewPage() {
                 },
               );
               const entries = (data as any).form_responses?.entries || [];
-              const canEditComments = user?.role === "QAC";
+              const canEditQcComments = user?.role === "QAC";
+              const canEditHodComments = user?.role === "HOD";
               const showComments = ["QAC", "HOD", "FACULTY"].includes(
                 user?.role || "",
               );
@@ -313,10 +344,15 @@ export default function QcKpiReviewPage() {
                   elements={elements}
                   entries={entries}
                   enableRowComments={showComments}
+                  qcComments={entryCommentsData?.qcComments || {}}
+                  hodComments={entryCommentsData?.hodComments || {}}
                   entryComments={entryCommentsData?.entryComments || {}}
-                  canEditComments={canEditComments}
-                  onSaveComment={handleSaveEntryComment}
-                  isSavingComment={savingCommentForRow}
+                  canEditQcComments={canEditQcComments}
+                  canEditHodComments={canEditHodComments}
+                  onSaveQcComment={handleSaveEntryComment}
+                  onSaveHodComment={handleSaveHodEntryComment}
+                  isSavingQcComment={savingCommentForRow}
+                  isSavingHodComment={savingHodCommentForRow}
                 />
               );
             })()}

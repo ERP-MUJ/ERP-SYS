@@ -11,10 +11,18 @@ import { HodCoordinatorWorkflowService } from './hod-coordinator-workflow.servic
 import { HodDashboardModule } from './dashboard/hod-dashboard.module';
 import { ExcelService } from 'src/services/excel.service';
 import { KpiEntriesModule } from './kpi-entries/kpi-entries.module';
+import { QcReviewService } from 'src/qc/review/qc-review.service';
 
 @Module({
   controllers: [DepartmentInfoController, CoordinatorController, HodKpiController, HodCoordinatorWorkflowController],
-  providers: [DepartmentInfoService, CoordinatorService, HodKpiService, HodCoordinatorWorkflowService, ExcelService],
+  providers: [
+    DepartmentInfoService,
+    CoordinatorService,
+    HodKpiService,
+    HodCoordinatorWorkflowService,
+    ExcelService,
+    QcReviewService,
+  ],
   imports: [PrismaModule, HodDashboardModule, KpiEntriesModule],
 })
 export class HodModule {}

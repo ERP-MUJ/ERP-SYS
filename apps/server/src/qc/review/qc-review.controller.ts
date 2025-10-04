@@ -58,6 +58,22 @@ export class QcReviewController {
     return this.reviewService.saveEntryComment(user.id, user.role, kpiId, index, body.comment || '');
   }
 
+  @Patch('kpis/:kpiId/entries/:entryIndex/hod-comment')
+  @Roles(UserRole.HOD)
+  async saveHodEntryComment(
+    @CurrentUser() user: RequestUser,
+    @Param('kpiId') kpiId: string,
+    @Param('entryIndex') entryIndex: string,
+    @Body() body: { comment: string },
+  ) {
+    const index = parseInt(entryIndex, 10);
+    if (isNaN(index)) {
+      throw new BadRequestException('Invalid entry index');
+    }
+
+    return this.reviewService.saveHodEntryComment(user.id, user.role, kpiId, index, body.comment || '');
+  }
+
   @Get('kpis/:kpiId/entry-comments')
   @Roles(UserRole.QAC, UserRole.HOD, UserRole.FACULTY)
   async getEntryComments(@CurrentUser() user: RequestUser, @Param('kpiId') kpiId: string) {

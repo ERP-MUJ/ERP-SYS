@@ -55,7 +55,11 @@ import { useDownloadExcelTemplate } from "@/queries/excel";
 import type { UseMutationResult } from "@tanstack/react-query";
 import { ExcelUploadDialog } from "./ExcelUploadDialog";
 import { FrontendExcelUploadDialog } from "../common/FrontendExcelUploadDialog";
-import { useGetEntryComments, useSaveEntryComment } from "@/queries/qc/review";
+import {
+  useGetEntryComments,
+  useSaveEntryComment,
+  useSaveHodEntryComment,
+} from "@/queries/qc/review";
 interface TableFormRendererProps {
   name: string;
   elements: FormElementInstance[];
@@ -120,11 +124,36 @@ export default function TableFormRenderer({
     : defaultSaveHook;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // QC Comments functionality
+  // Comments functionality
   const { data: entryCommentsData } = useGetEntryComments(
     enableQcComments && kpiId ? kpiId : null,
   );
   const { mutate: saveEntryComment } = useSaveEntryComment();
+  const { mutate: saveHodEntryComment } = useSaveHodEntryComment();
+
+  const [editingQcComment, setEditingQcComment] = useState<number | null>(null);
+  const [editingHodComment, setEditingHodComment] = useState<number | null>(
+    null,
+  );
+  const [qcCommentValues, setQcCommentValues] = useState<
+    Record<number, string>
+  >({});
+  const [hodCommentValues, setHodCommentValues] = useState<
+    Record<number, string>
+  >({});
+  const [savingQcCommentForRow, setSavingQcCommentForRow] = useState<
+    Record<number, boolean>
+  >({});
+  const [savingHodCommentForRow, setSavingHodCommentForRow] = useState<
+    Record<number, boolean>
+  >({});
+
+  const canEditQcComments = userRole === "QAC";
+  const canEditHodComments = userRole === "HOD";
+  const showComments =
+    enableQcComments && ["QAC", "HOD", "FACULTY"].includes(userRole || "");
+
+  // Backward compatibility
   const [editingComment, setEditingComment] = useState<number | null>(null);
   const [commentValues, setCommentValues] = useState<Record<number, string>>(
     {},
@@ -132,10 +161,7 @@ export default function TableFormRenderer({
   const [savingCommentForRow, setSavingCommentForRow] = useState<
     Record<number, boolean>
   >({});
-
   const canEditComments = userRole === "QAC";
-  const showComments =
-    enableQcComments && ["QAC", "HOD", "FACULTY"].includes(userRole || "");
 
   // Excel operations
   const defaultDownloadHook = useDownloadExcelTemplate();
@@ -150,6 +176,93 @@ export default function TableFormRenderer({
   const localStorageKey = `kpi-form-draft-${id}`;
 
   // QC Comments handlers
+  const handleQcCommentChange = (rowIndex: number, value: string) => {
+    setQcCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: value,
+    }));
+  };
+
+  const handleHodCommentChange = (rowIndex: number, value: string) => {
+    setHodCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: value,
+    }));
+  };
+
+  const handleSaveQcComment = (rowIndex: number) => {
+    if (!kpiId) return;
+
+    const comment = qcCommentValues[rowIndex] || "";
+    setSavingQcCommentForRow((prev) => ({ ...prev, [rowIndex]: true }));
+
+    saveEntryComment(
+      { kpiId, entryIndex: rowIndex, comment },
+      {
+        onSuccess: () => {
+          setSavingQcCommentForRow((prev) => ({ ...prev, [rowIndex]: false }));
+          setEditingQcComment(null);
+        },
+        onError: () => {
+          setSavingQcCommentForRow((prev) => ({ ...prev, [rowIndex]: false }));
+        },
+      },
+    );
+  };
+
+  const handleSaveHodComment = (rowIndex: number) => {
+    if (!kpiId) return;
+
+    const comment = hodCommentValues[rowIndex] || "";
+    setSavingHodCommentForRow((prev) => ({ ...prev, [rowIndex]: true }));
+
+    saveHodEntryComment(
+      { kpiId, entryIndex: rowIndex, comment },
+      {
+        onSuccess: () => {
+          setSavingHodCommentForRow((prev) => ({ ...prev, [rowIndex]: false }));
+          setEditingHodComment(null);
+        },
+        onError: () => {
+          setSavingHodCommentForRow((prev) => ({ ...prev, [rowIndex]: false }));
+        },
+      },
+    );
+  };
+
+  const startEditingQcComment = (rowIndex: number) => {
+    const existingComment =
+      entryCommentsData?.qcComments?.[rowIndex.toString()]?.comment ||
+      entryCommentsData?.entryComments?.[rowIndex.toString()]?.comment ||
+      "";
+    setQcCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: existingComment,
+    }));
+    setEditingQcComment(rowIndex);
+  };
+
+  const startEditingHodComment = (rowIndex: number) => {
+    const existingComment =
+      entryCommentsData?.hodComments?.[rowIndex.toString()]?.comment || "";
+    setHodCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: existingComment,
+    }));
+    setEditingHodComment(rowIndex);
+  };
+
+  const cancelEditingQcComment = () => {
+    setEditingQcComment(null);
+    setQcCommentValues({});
+  };
+
+  const cancelEditingHodComment = () => {
+    setEditingHodComment(null);
+    setHodCommentValues({});
+  };
+
+  // Backward compatibility functions
   const handleCommentChange = (rowIndex: number, value: string) => {
     setCommentValues((prev) => ({
       ...prev,
@@ -687,12 +800,20 @@ export default function TableFormRenderer({
                 ))}
                 {hasComplexElements && <TableHead>Additional Fields</TableHead>}
                 {showComments && (
-                  <TableHead className="w-[250px]">
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="w-4 h-4" />
-                      QC Comments
-                    </div>
-                  </TableHead>
+                  <>
+                    <TableHead className="w-[250px]">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" />
+                        QC Comments
+                      </div>
+                    </TableHead>
+                    <TableHead className="w-[250px]">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" />
+                        Department Comments
+                      </div>
+                    </TableHead>
+                  </>
                 )}
                 <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
@@ -737,105 +858,198 @@ export default function TableFormRenderer({
                     </TableCell>
                   )}
                   {showComments && (
-                    <TableCell className="w-[250px]">
-                      <div className="space-y-2">
-                        {editingComment === rowIndex ? (
-                          <div className="space-y-2">
-                            <Textarea
-                              value={commentValues[rowIndex] || ""}
-                              onChange={(e) =>
-                                handleCommentChange(rowIndex, e.target.value)
-                              }
-                              placeholder="Add QC comment for this entry..."
-                              className="text-xs resize-none"
-                              rows={3}
-                            />
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                onClick={() => handleSaveComment(rowIndex)}
-                                disabled={savingCommentForRow[rowIndex]}
-                                className="h-6 px-2 text-xs"
-                              >
-                                {savingCommentForRow[rowIndex] ? (
-                                  "Saving..."
-                                ) : (
-                                  <>
-                                    <Save className="w-3 h-3 mr-1" />
-                                    Save
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={cancelEditingComment}
-                                className="h-6 px-2 text-xs"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            {entryCommentsData?.entryComments?.[
-                              rowIndex.toString()
-                            ] ? (
-                              <div className="space-y-1">
-                                <div className="text-xs bg-muted/50 rounded p-2 border">
-                                  {
-                                    entryCommentsData.entryComments[
-                                      rowIndex.toString()
-                                    ]?.comment
-                                  }
-                                </div>
-                                <div className="text-[10px] text-muted-foreground">
-                                  By{" "}
-                                  {
-                                    entryCommentsData.entryComments[
-                                      rowIndex.toString()
-                                    ]?.reviewed_by
-                                  }{" "}
-                                  •{" "}
-                                  {entryCommentsData.entryComments[
-                                    rowIndex.toString()
-                                  ]?.reviewed_at &&
-                                    new Date(
-                                      entryCommentsData.entryComments[
-                                        rowIndex.toString()
-                                      ]!.reviewed_at,
-                                    ).toLocaleDateString()}
-                                </div>
-                                {canEditComments && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      startEditingComment(rowIndex)
-                                    }
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    Edit
-                                  </Button>
-                                )}
-                              </div>
-                            ) : (
-                              canEditComments && (
+                    <>
+                      {/* QC Comments Column */}
+                      <TableCell className="w-[250px]">
+                        <div className="space-y-2">
+                          {editingQcComment === rowIndex ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={qcCommentValues[rowIndex] || ""}
+                                onChange={(e) =>
+                                  handleQcCommentChange(
+                                    rowIndex,
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Add QC comment for this entry..."
+                                className="text-xs resize-none"
+                                rows={3}
+                              />
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveQcComment(rowIndex)}
+                                  disabled={savingQcCommentForRow[rowIndex]}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  {savingQcCommentForRow[rowIndex] ? (
+                                    "Saving..."
+                                  ) : (
+                                    <>
+                                      <Save className="w-3 h-3 mr-1" />
+                                      Save
+                                    </>
+                                  )}
+                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => startEditingComment(rowIndex)}
+                                  onClick={cancelEditingQcComment}
                                   className="h-6 px-2 text-xs"
                                 >
-                                  <MessageSquare className="w-3 h-3 mr-1" />
-                                  Add Comment
+                                  Cancel
                                 </Button>
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              {(() => {
+                                const qcComments =
+                                  entryCommentsData?.qcComments ||
+                                  entryCommentsData?.entryComments ||
+                                  {};
+                                const comment = qcComments[rowIndex.toString()];
+                                return comment ? (
+                                  <div className="space-y-1">
+                                    <div className="text-xs bg-muted/50 rounded p-2 border">
+                                      {comment.comment}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      By {comment.reviewed_by} •{" "}
+                                      {new Date(
+                                        comment.reviewed_at,
+                                      ).toLocaleDateString()}
+                                    </div>
+                                    {canEditQcComments && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          startEditingQcComment(rowIndex)
+                                        }
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        Edit
+                                      </Button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  canEditQcComments && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        startEditingQcComment(rowIndex)
+                                      }
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      <MessageSquare className="w-3 h-3 mr-1" />
+                                      Add Comment
+                                    </Button>
+                                  )
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* HOD Comments Column */}
+                      <TableCell className="w-[250px]">
+                        <div className="space-y-2">
+                          {editingHodComment === rowIndex ? (
+                            <div className="space-y-2">
+                              <Textarea
+                                value={hodCommentValues[rowIndex] || ""}
+                                onChange={(e) =>
+                                  handleHodCommentChange(
+                                    rowIndex,
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Add department comment for this entry..."
+                                className="text-xs resize-none"
+                                rows={3}
+                              />
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveHodComment(rowIndex)}
+                                  disabled={savingHodCommentForRow[rowIndex]}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  {savingHodCommentForRow[rowIndex] ? (
+                                    "Saving..."
+                                  ) : (
+                                    <>
+                                      <Save className="w-3 h-3 mr-1" />
+                                      Save
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEditingHodComment}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              {(() => {
+                                const comment =
+                                  entryCommentsData?.hodComments?.[
+                                    rowIndex.toString()
+                                  ];
+                                return comment ? (
+                                  <div className="space-y-1">
+                                    <div className="text-xs bg-muted/50 rounded p-2 border">
+                                      {comment.comment}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      By {comment.reviewed_by} •{" "}
+                                      {new Date(
+                                        comment.reviewed_at,
+                                      ).toLocaleDateString()}
+                                    </div>
+                                    {canEditHodComments && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          startEditingHodComment(rowIndex)
+                                        }
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        Edit
+                                      </Button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  canEditHodComments && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        startEditingHodComment(rowIndex)
+                                      }
+                                      className="h-6 px-2 text-xs"
+                                    >
+                                      <MessageSquare className="w-3 h-3 mr-1" />
+                                      Add Comment
+                                    </Button>
+                                  )
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </>
                   )}
                   <TableCell>
                     <Button
