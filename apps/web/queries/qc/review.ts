@@ -99,7 +99,7 @@ export function useGetEntryComments(kpiId: string | null) {
   });
 }
 
-// Only QAC can save comments
+// Only QAC can save QC comments
 export function useSaveEntryComment() {
   const qc = useQueryClient();
   return useMutation({
@@ -126,6 +126,39 @@ export function useSaveEntryComment() {
     },
     onError: (err: any) => {
       toast.error("Failed to save comment", { description: err.message });
+    },
+  });
+}
+
+// Only HOD can save HOD comments
+export function useSaveHodEntryComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      kpiId,
+      entryIndex,
+      comment,
+    }: {
+      kpiId: string;
+      entryIndex: number;
+      comment: string;
+    }) => {
+      const res = await QcReviewService.saveHodEntryComment(
+        kpiId,
+        entryIndex,
+        comment,
+      );
+      if (res.data) return res.data;
+      throw new Error(res.error?.message || "Failed to save HOD comment");
+    },
+    onSuccess: (_data, vars) => {
+      toast.success("Department comment saved");
+      qc.invalidateQueries({ queryKey: ["qc-entry-comments", vars.kpiId] });
+    },
+    onError: (err: any) => {
+      toast.error("Failed to save department comment", {
+        description: err.message,
+      });
     },
   });
 }
