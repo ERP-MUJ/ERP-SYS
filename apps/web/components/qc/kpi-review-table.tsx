@@ -27,6 +27,7 @@ import {
 } from "@workspace/ui/components/dialog";
 import { Check, X, MessageSquare, Eye, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { renderTextWithLinks } from "@/utils/string";
 
 interface KpiReviewTableProps {
   kpiName: string;
@@ -177,10 +178,10 @@ export default function KpiReviewTable({
                     {tableHeaders.map((header) => (
                       <TableCell
                         key={header}
-                        className="min-w-[120px] max-w-[200px]"
+                        className="min-w-[120px] max-w-[300px]"
                       >
                         <div
-                          className="truncate"
+                          className="break-words overflow-wrap-anywhere"
                           title={String(row[header] || "N/A")}
                         >
                           {row[header] === null || row[header] === undefined
@@ -189,7 +190,7 @@ export default function KpiReviewTable({
                               ? row[header]
                                 ? "Yes"
                                 : "No"
-                              : String(row[header])}
+                              : renderTextWithLinks(String(row[header]))}
                         </div>
                       </TableCell>
                     ))}

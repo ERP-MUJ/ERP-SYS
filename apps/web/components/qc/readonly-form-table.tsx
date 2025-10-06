@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Save, MessageSquare } from "lucide-react";
+import { renderTextWithLinks } from "@/utils/string";
 
 export interface EntryComment {
   comment: string;
@@ -293,9 +294,13 @@ function Value({ value, type }: { value: any; type: string }) {
       return String(value);
     default: {
       if (typeof value === "object") return JSON.stringify(value);
-      // Truncate long textareas
+      // Handle text content with proper word breaking for links
       const s = String(value);
-      return s.length > 120 ? s.slice(0, 117) + "…" : s;
+      return (
+        <div className="break-words overflow-wrap-anywhere max-w-xs">
+          {renderTextWithLinks(s)}
+        </div>
+      );
     }
   }
 }
