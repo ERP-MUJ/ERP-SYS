@@ -308,6 +308,20 @@ export const getDepartmentPillarKPIs = async (departmentPillarId: string) => {
   }
 };
 
+export const getAllDepartmentPillarKPIs = async (
+  departmentPillarId: string,
+) => {
+  try {
+    const response = await ApiClient.get<DepartmentKpi[]>(
+      `/qc/department-assignment/department-pillars/${departmentPillarId}/all-kpis`,
+    );
+    return response;
+  } catch (error: unknown) {
+    const apiError = error as ApiError;
+    throw error;
+  }
+};
+
 /**
  * Assigns a KPI template to a department pillar
  * @param departmentPillarId - The department pillar ID

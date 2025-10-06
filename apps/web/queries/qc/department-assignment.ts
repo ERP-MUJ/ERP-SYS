@@ -13,6 +13,7 @@ import {
   restoreArchivedPillar,
   getArchivedDepartmentPillars,
   getDepartmentPillarKPIs,
+  getAllDepartmentPillarKPIs,
   assignKpiToDepartmentPillar,
   unassignKpiFromDepartmentPillar,
   updateDepartmentKpi,
@@ -99,6 +100,24 @@ export function useGetDepartmentPillarKPIs(departmentPillarId: string | null) {
       if (res.data) return res.data;
       throw new Error(
         res.error?.message || "Failed to fetch department pillar KPIs",
+      );
+    },
+    enabled: Boolean(departmentPillarId),
+  });
+}
+
+export function useGetAllDepartmentPillarKPIs(
+  departmentPillarId: string | null,
+) {
+  return useQuery({
+    queryKey: ["qc-all-department-pillar-kpis", departmentPillarId],
+    queryFn: async () => {
+      if (!departmentPillarId)
+        throw new Error("Department pillar ID is required");
+      const res = await getAllDepartmentPillarKPIs(departmentPillarId);
+      if (res.data) return res.data;
+      throw new Error(
+        res.error?.message || "Failed to fetch all department pillar KPIs",
       );
     },
     enabled: Boolean(departmentPillarId),
