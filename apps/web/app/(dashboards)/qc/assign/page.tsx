@@ -20,7 +20,7 @@ import {
   useGetDepartmentPillars,
   useGetAllDepartmentPillars,
   useGetArchivedDepartmentPillars,
-  useGetDepartmentPillarKPIs,
+  useGetAllDepartmentPillarKPIs,
 } from "@/queries/qc/department-assignment";
 
 export default function AssignKpiToDepartmentPage() {
@@ -63,7 +63,7 @@ export default function AssignKpiToDepartmentPage() {
   const shouldFetchDepartmentKPIs =
     selectedPillarId && selectedDepartmentPillar;
   const { data: departmentPillarKPIs = [], isLoading: kpisLoading } =
-    useGetDepartmentPillarKPIs(
+    useGetAllDepartmentPillarKPIs(
       shouldFetchDepartmentKPIs ? selectedDepartmentPillar.id : null,
     );
 
