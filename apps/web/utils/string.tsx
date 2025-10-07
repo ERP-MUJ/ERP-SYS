@@ -161,3 +161,60 @@ export const renderTextWithLinks = (text: string) => {
     })
     .filter(Boolean);
 };
+
+export const renderTextWithCompactLinks = (text: string) => {
+  const linkRegex =
+    /(\bhttps?:\/\/[^\s<>"']+|\bwww\.[^\s<>"']+|\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/gi;
+  const parts = text.split(linkRegex);
+
+  return parts
+    .map((part, index) => {
+      if (!part) return null;
+
+      if (/^https?:\/\//.test(part)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+            title={part}
+          >
+            link
+          </a>
+        );
+      }
+
+      if (/^www\./.test(part)) {
+        return (
+          <a
+            key={index}
+            href={`http://${part}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+            title={part}
+          >
+            link
+          </a>
+        );
+      }
+
+      if (/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(part)) {
+        return (
+          <a
+            key={index}
+            href={`mailto:${part}`}
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+            title={part}
+          >
+            {part}
+          </a>
+        );
+      }
+
+      return <span key={index}>{part}</span>;
+    })
+    .filter(Boolean);
+};

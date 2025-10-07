@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Save, MessageSquare } from "lucide-react";
-import { renderTextWithLinks } from "@/utils/string";
+import { renderTextWithCompactLinks } from "@/utils/string";
 
 export interface EntryComment {
   comment: string;
@@ -458,11 +458,11 @@ function Value({ value, type }: { value: any; type: string }) {
       return String(value);
     default: {
       if (typeof value === "object") return JSON.stringify(value);
-      // Handle text content with proper word breaking for links
+      // Handle text content with compact links to prevent cell overflow
       const s = String(value);
       return (
         <div className="break-words overflow-wrap-anywhere max-w-xs">
-          {renderTextWithLinks(s)}
+          {renderTextWithCompactLinks(s)}
         </div>
       );
     }
