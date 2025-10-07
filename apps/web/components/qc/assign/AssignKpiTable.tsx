@@ -11,6 +11,7 @@ import { Card } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import React, { useMemo } from "react";
 import { KpiData } from "@/lib/types/qc-assignment";
+import { renderTextWithLinks } from "@/utils/string";
 
 interface KpiValue {
   weightage: string;
@@ -130,10 +131,12 @@ export function AssignKpiTable({
               </TableCell>
               <TableCell className="text-left align-middle">
                 <div
-                  className="truncate max-w-[24rem]"
+                  className="break-words overflow-wrap-anywhere max-w-[24rem]"
                   title={kpi.metric ?? kpi.kpi_metric_name ?? "-"}
                 >
-                  {kpi.metric ?? kpi.kpi_metric_name ?? "-"}
+                  {renderTextWithLinks(
+                    kpi.metric ?? kpi.kpi_metric_name ?? "-",
+                  )}
                 </div>
               </TableCell>
               <TableCell className="text-center align-middle">

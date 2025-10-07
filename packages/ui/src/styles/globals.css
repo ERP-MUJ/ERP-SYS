@@ -142,4 +142,49 @@
   body {
     @apply bg-background text-foreground;
   }
+
+   table {
+    @apply border-collapse table-auto w-full;
+  }
+
+  th, td {
+    @apply border border-border px-4 py-2 text-left align-middle;
+  }
+
+  th {
+    @apply font-medium text-foreground;
+  }
+
+  td {
+    @apply text-sm text-muted-foreground;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  .link-container {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+
+  .no-truncate-links {
+    overflow: visible !important;
+    text-overflow: unset !important;
+    white-space: normal !important;
+  }
+
+  td a, th a {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .clickable-link {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+  }
 }
