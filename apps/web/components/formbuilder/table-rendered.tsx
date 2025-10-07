@@ -775,7 +775,7 @@ export default function TableFormRenderer({
             ) : (
               <ExcelUploadDialog kpiId={id} />
             )}
-            <Button
+            {/*<Button
               variant="outline"
               onClick={() => {
                 toast.success("PDF download functionality will be implemented");
@@ -783,7 +783,7 @@ export default function TableFormRenderer({
             >
               <FileText className="mr-2 h-4 w-4" />
               Download PDF
-            </Button>
+            </Button>*/}
           </div>
         </div>
       </CardHeader>
