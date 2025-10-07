@@ -27,7 +27,7 @@ import {
 } from "@workspace/ui/components/dialog";
 import { Check, X, MessageSquare, Eye, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { renderTextWithLinks } from "@/utils/string";
+import { renderTextWithCompactLinks } from "@/utils/string";
 
 interface KpiReviewTableProps {
   kpiName: string;
@@ -190,7 +190,7 @@ export default function KpiReviewTable({
                               ? row[header]
                                 ? "Yes"
                                 : "No"
-                              : renderTextWithLinks(String(row[header]))}
+                              : renderTextWithCompactLinks(String(row[header]))}
                         </div>
                       </TableCell>
                     ))}
