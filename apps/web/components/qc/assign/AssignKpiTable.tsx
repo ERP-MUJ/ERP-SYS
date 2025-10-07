@@ -134,7 +134,9 @@ export function AssignKpiTable({
                   className="break-words overflow-wrap-anywhere max-w-[24rem]"
                   title={kpi.metric ?? kpi.kpi_metric_name ?? "-"}
                 >
-                  {renderTextWithLinks(kpi.metric ?? kpi.kpi_metric_name ?? "-")}
+                  {renderTextWithLinks(
+                    kpi.metric ?? kpi.kpi_metric_name ?? "-",
+                  )}
                 </div>
               </TableCell>
               <TableCell className="text-center align-middle">
