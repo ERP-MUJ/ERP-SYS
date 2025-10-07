@@ -4,12 +4,14 @@ import { UserRole, KpiStatus } from '@repo/db/prisma/client';
 import { ExcelService, ExcelValidationService } from 'src/services/excel.service';
 import { ExcelTemplateResponseDto } from 'src/coordinator/dto/excel.dto';
 import { ExcelUploadResponseDto } from 'src/coordinator/dto/excel-upload.dto';
+import { QcReviewService } from 'src/qc/review/qc-review.service';
 import type { FormElementInstance } from '@workspace/types/types';
 @Injectable()
 export class HodKpiService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly excelService: ExcelService,
+    private readonly qcReviewService: QcReviewService,
   ) {}
   private assertHodRole(role: UserRole) {
     if (role !== UserRole.HOD) throw new ForbiddenException('Only HOD users can perform this action');
@@ -569,5 +571,19 @@ export class HodKpiService {
         dataSaved: false,
       };
     }
+  }
+
+  /**
+   * Get entry comments for a KPI (delegates to QC service)
+   */
+  async getEntryComments(userId: string, userRole: UserRole, kpiId: string) {
+    return this.qcReviewService.getEntryComments(userId, userRole, kpiId);
+  }
+
+  /**
+   * Save entry comment for a KPI (delegates to QC service)
+   */
+  async saveEntryComment(userId: string, userRole: UserRole, kpiId: string, entryIndex: number, comment: string) {
+    return this.qcReviewService.saveEntryComment(userId, userRole, kpiId, entryIndex, comment);
   }
 }

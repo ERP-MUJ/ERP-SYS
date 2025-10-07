@@ -29,7 +29,17 @@ interface ReadOnlyFormTableProps {
   compact?: boolean;
   // Row comments functionality
   enableRowComments?: boolean;
+  qcComments?: Record<string, EntryComment>;
+  hodComments?: Record<string, EntryComment>;
+  // Backward compatibility
   entryComments?: Record<string, EntryComment>;
+  canEditQcComments?: boolean;
+  canEditHodComments?: boolean;
+  onSaveQcComment?: (entryIndex: number, comment: string) => void;
+  onSaveHodComment?: (entryIndex: number, comment: string) => void;
+  isSavingQcComment?: Record<number, boolean>;
+  isSavingHodComment?: Record<number, boolean>;
+  // Legacy props for backward compatibility
   canEditComments?: boolean;
   onSaveComment?: (entryIndex: number, comment: string) => void;
   isSavingComment?: Record<number, boolean>;
@@ -42,44 +52,97 @@ export function ReadOnlyFormTable({
   rowNumbers = true,
   compact = true,
   enableRowComments = false,
+  qcComments = {},
+  hodComments = {},
   entryComments = {},
+  canEditQcComments = false,
+  canEditHodComments = false,
+  onSaveQcComment,
+  onSaveHodComment,
+  isSavingQcComment = {},
+  isSavingHodComment = {},
+  // Legacy props for backward compatibility
   canEditComments = false,
   onSaveComment,
   isSavingComment = {},
 }: ReadOnlyFormTableProps) {
-  const [commentValues, setCommentValues] = useState<Record<number, string>>(
-    {},
+  const [qcCommentValues, setQcCommentValues] = useState<
+    Record<number, string>
+  >({});
+  const [hodCommentValues, setHodCommentValues] = useState<
+    Record<number, string>
+  >({});
+  const [editingQcComment, setEditingQcComment] = useState<number | null>(null);
+  const [editingHodComment, setEditingHodComment] = useState<number | null>(
+    null,
   );
-  const [editingComment, setEditingComment] = useState<number | null>(null);
 
   const cols = React.useMemo(() => elements, [elements]);
   const cellPad = compact ? "px-3 py-2" : "px-4 py-2.5";
 
-  const handleCommentChange = (rowIndex: number, value: string) => {
-    setCommentValues((prev) => ({
+  // Handle backward compatibility
+  const effectiveQcComments =
+    Object.keys(qcComments).length > 0 ? qcComments : entryComments;
+  const effectiveCanEditQc = canEditQcComments || canEditComments;
+  const effectiveOnSaveQc = onSaveQcComment || onSaveComment;
+  const effectiveIsSavingQc =
+    Object.keys(isSavingQcComment).length > 0
+      ? isSavingQcComment
+      : isSavingComment;
+
+  const handleQcCommentChange = (rowIndex: number, value: string) => {
+    setQcCommentValues((prev) => ({
       ...prev,
       [rowIndex]: value,
     }));
   };
 
-  const handleSaveComment = (rowIndex: number) => {
-    const comment = commentValues[rowIndex] || "";
-    onSaveComment?.(rowIndex, comment);
-    setEditingComment(null);
+  const handleHodCommentChange = (rowIndex: number, value: string) => {
+    setHodCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: value,
+    }));
   };
 
-  const startEditingComment = (rowIndex: number) => {
-    const existingComment = entryComments[rowIndex.toString()]?.comment || "";
-    setCommentValues((prev) => ({
+  const handleSaveQcComment = (rowIndex: number) => {
+    const comment = qcCommentValues[rowIndex] || "";
+    effectiveOnSaveQc?.(rowIndex, comment);
+    setEditingQcComment(null);
+  };
+
+  const handleSaveHodComment = (rowIndex: number) => {
+    const comment = hodCommentValues[rowIndex] || "";
+    onSaveHodComment?.(rowIndex, comment);
+    setEditingHodComment(null);
+  };
+
+  const startEditingQcComment = (rowIndex: number) => {
+    const existingComment =
+      effectiveQcComments[rowIndex.toString()]?.comment || "";
+    setQcCommentValues((prev) => ({
       ...prev,
       [rowIndex]: existingComment,
     }));
-    setEditingComment(rowIndex);
+    setEditingQcComment(rowIndex);
   };
 
-  const cancelEditingComment = () => {
-    setEditingComment(null);
-    setCommentValues({});
+  const startEditingHodComment = (rowIndex: number) => {
+    const existingComment = hodComments[rowIndex.toString()]?.comment || "";
+    setHodCommentValues((prev) => ({
+      ...prev,
+      [rowIndex]: existingComment,
+    }));
+    setEditingHodComment(rowIndex);
+  };
+
+  const cancelEditingQcComment = () => {
+    setEditingQcComment(null);
+    setQcCommentValues({});
+  };
+
+  const cancelEditingHodComment = () => {
+    setEditingHodComment(null);
+    setHodCommentValues({});
   };
 
   if (!entries || entries.length === 0)
@@ -124,17 +187,30 @@ export function ReadOnlyFormTable({
               </TableHead>
             ))}
             {enableRowComments && (
-              <TableHead
-                className={
-                  "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase w-64 select-none " +
-                  cellPad
-                }
-              >
-                <div className="flex items-center gap-1">
-                  <MessageSquare className="w-3 h-3" />
-                  QC Comments
-                </div>
-              </TableHead>
+              <>
+                <TableHead
+                  className={
+                    "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase w-64 select-none " +
+                    cellPad
+                  }
+                >
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" />
+                    QC Comments
+                  </div>
+                </TableHead>
+                <TableHead
+                  className={
+                    "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase w-64 select-none " +
+                    cellPad
+                  }
+                >
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" />
+                    Department Comments
+                  </div>
+                </TableHead>
+              </>
             )}
           </TableRow>
         </TableHeader>
@@ -171,89 +247,177 @@ export function ReadOnlyFormTable({
                 </TableCell>
               ))}
               {enableRowComments && (
-                <TableCell className={cellPad + " align-top w-64"}>
-                  <div className="space-y-2">
-                    {editingComment === rI ? (
-                      <div className="space-y-2">
-                        <Textarea
-                          value={commentValues[rI] || ""}
-                          onChange={(e) =>
-                            handleCommentChange(rI, e.target.value)
-                          }
-                          placeholder="Add QC comment for this entry..."
-                          className="text-xs resize-none"
-                          rows={3}
-                        />
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            onClick={() => handleSaveComment(rI)}
-                            disabled={isSavingComment[rI]}
-                            className="h-6 px-2 text-xs"
-                          >
-                            {isSavingComment[rI] ? (
-                              "Saving..."
-                            ) : (
-                              <>
-                                <Save className="w-3 h-3 mr-1" />
-                                Save
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={cancelEditingComment}
-                            className="h-6 px-2 text-xs"
-                          >
-                            Cancel
-                          </Button>
+                <>
+                  {/* QC Comments Column */}
+                  <TableCell className={cellPad + " align-top w-64"}>
+                    <div className="space-y-2">
+                      {editingQcComment === rI ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={qcCommentValues[rI] || ""}
+                            onChange={(e) =>
+                              handleQcCommentChange(rI, e.target.value)
+                            }
+                            placeholder="Add QC comment for this entry..."
+                            className="text-xs resize-none"
+                            rows={3}
+                          />
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveQcComment(rI)}
+                              disabled={effectiveIsSavingQc[rI]}
+                              className="h-6 px-2 text-xs"
+                            >
+                              {effectiveIsSavingQc[rI] ? (
+                                "Saving..."
+                              ) : (
+                                <>
+                                  <Save className="w-3 h-3 mr-1" />
+                                  Save
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelEditingQcComment}
+                              className="h-6 px-2 text-xs"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        {(() => {
-                          const comment = entryComments[rI.toString()];
-                          return comment ? (
-                            <div className="space-y-1">
-                              <div className="text-xs bg-muted/50 rounded p-2 border">
-                                {comment.comment}
+                      ) : (
+                        <div>
+                          {(() => {
+                            const comment = effectiveQcComments[rI.toString()];
+                            return comment ? (
+                              <div className="space-y-1">
+                                <div className="text-xs bg-muted/50 rounded p-2 border">
+                                  {comment.comment}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground">
+                                  By {comment.reviewed_by} •{" "}
+                                  {new Date(
+                                    comment.reviewed_at,
+                                  ).toLocaleDateString()}
+                                </div>
+                                {effectiveCanEditQc && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => startEditingQcComment(rI)}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
                               </div>
-                              <div className="text-[10px] text-muted-foreground">
-                                By {comment.reviewed_by} •{" "}
-                                {new Date(
-                                  comment.reviewed_at,
-                                ).toLocaleDateString()}
-                              </div>
-                              {canEditComments && (
+                            ) : (
+                              effectiveCanEditQc && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => startEditingComment(rI)}
+                                  onClick={() => startEditingQcComment(rI)}
                                   className="h-6 px-2 text-xs"
                                 >
-                                  Edit
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  Add Comment
                                 </Button>
+                              )
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+
+                  {/* HOD Comments Column */}
+                  <TableCell className={cellPad + " align-top w-64"}>
+                    <div className="space-y-2">
+                      {editingHodComment === rI ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={hodCommentValues[rI] || ""}
+                            onChange={(e) =>
+                              handleHodCommentChange(rI, e.target.value)
+                            }
+                            placeholder="Add department comment for this entry..."
+                            className="text-xs resize-none"
+                            rows={3}
+                          />
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveHodComment(rI)}
+                              disabled={isSavingHodComment[rI]}
+                              className="h-6 px-2 text-xs"
+                            >
+                              {isSavingHodComment[rI] ? (
+                                "Saving..."
+                              ) : (
+                                <>
+                                  <Save className="w-3 h-3 mr-1" />
+                                  Save
+                                </>
                               )}
-                            </div>
-                          ) : (
-                            canEditComments && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => startEditingComment(rI)}
-                                className="h-6 px-2 text-xs"
-                              >
-                                <MessageSquare className="w-3 h-3 mr-1" />
-                                Add Comment
-                              </Button>
-                            )
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelEditingHodComment}
+                              className="h-6 px-2 text-xs"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          {(() => {
+                            const comment = hodComments[rI.toString()];
+                            return comment ? (
+                              <div className="space-y-1">
+                                <div className="text-xs bg-muted/50 rounded p-2 border">
+                                  {comment.comment}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground">
+                                  By {comment.reviewed_by} •{" "}
+                                  {new Date(
+                                    comment.reviewed_at,
+                                  ).toLocaleDateString()}
+                                </div>
+                                {canEditHodComments && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => startEditingHodComment(rI)}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              canEditHodComments && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => startEditingHodComment(rI)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  Add Comment
+                                </Button>
+                              )
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                </>
               )}
             </TableRow>
           ))}

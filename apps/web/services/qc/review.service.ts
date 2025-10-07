@@ -24,6 +24,9 @@ export interface EntryComment {
 
 export interface EntryCommentsResponse {
   kpiId: string;
+  qcComments: Record<string, EntryComment>;
+  hodComments: Record<string, EntryComment>;
+  // Backward compatibility
   entryComments: Record<string, EntryComment>;
 }
 
@@ -52,6 +55,17 @@ export class QcReviewService {
   ) {
     return ApiClient.patch<{ message: string; data: EntryComment }>(
       `/qc/review/kpis/${kpiId}/entries/${entryIndex}/comment`,
+      { comment },
+    );
+  }
+
+  static async saveHodEntryComment(
+    kpiId: string,
+    entryIndex: number,
+    comment: string,
+  ) {
+    return ApiClient.patch<{ message: string; data: EntryComment }>(
+      `/qc/review/kpis/${kpiId}/entries/${entryIndex}/hod-comment`,
       { comment },
     );
   }

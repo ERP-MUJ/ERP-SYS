@@ -524,6 +524,30 @@ export class DepartmentAssignmentService {
       });
   }
 
+  async getAllDepartmentPillarKPIs(userId: string, userRole: UserRole, departmentPillarId: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+    this.assertQacRole(userRole);
+    const departmentPillar = await this.prisma.departmentPillar.findUnique({
+      where: { id: departmentPillarId },
+    });
+    if (!departmentPillar) {
+      throw new NotFoundException('Department pillar not found');
+    }
+    const kpis = await this.prisma.departmentKpi.findMany({
+      where: { dept_pillar_id: departmentPillarId },
+      include: {
+        assigned_users: {
+          select: { id: true, user_name: true, user_email: true, user_role: true },
+        },
+      },
+      orderBy: { kpi_number: 'asc' },
+    });
+    return kpis.map((kpi) => ({
+      ...kpi,
+      total_entries: this.countFormEntries(kpi.form_responses),
+    }));
+  }
+
   private countFormEntries(formResponses: unknown): number {
     if (!formResponses) {
       return 0;

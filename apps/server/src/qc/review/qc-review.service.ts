@@ -258,11 +258,11 @@ export class QcReviewService {
     }
 
     const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown>;
-    const existingComments = (existingMetrics.entry_comments as Record<string, unknown>) || {};
+    const existingQcComments = (existingMetrics.qc_comments as Record<string, unknown>) || {};
 
-    // Update or add comment
-    const updatedComments = {
-      ...existingComments,
+    // Update or add QC comment
+    const updatedQcComments = {
+      ...existingQcComments,
       [entryIndex.toString()]: {
         comment: comment.trim(),
         reviewed_by: user.user_name ?? user.user_email ?? userId,
@@ -273,12 +273,14 @@ export class QcReviewService {
 
     // If comment is empty, remove the entry
     if (!comment.trim()) {
-      delete updatedComments[entryIndex.toString()];
+      delete updatedQcComments[entryIndex.toString()];
     }
 
     const updatedMetrics = {
       ...existingMetrics,
-      entry_comments: updatedComments,
+      qc_comments: updatedQcComments,
+      // Keep backward compatibility with existing entry_comments field
+      entry_comments: updatedQcComments,
     };
 
     await this.prisma.departmentKpi.update({
@@ -290,6 +292,87 @@ export class QcReviewService {
 
     return {
       message: 'Entry comment saved successfully',
+      data: {
+        entryIndex,
+        comment: comment.trim(),
+        reviewed_by: user.user_name ?? user.user_email ?? userId,
+        reviewed_at: new Date().toISOString(),
+      },
+    };
+  }
+
+  async saveHodEntryComment(userId: string, userRole: UserRole, kpiId: string, entryIndex: number, comment: string) {
+    if (!userId) throw new ForbiddenException('User not authenticated');
+
+    if (userRole !== UserRole.HOD) {
+      throw new ForbiddenException('Only HOD can save department comments');
+    }
+
+    if (entryIndex < 0) {
+      throw new BadRequestException('Invalid entry index');
+    }
+
+    const kpi = await this.prisma.departmentKpi.findUnique({
+      where: { id: kpiId },
+      include: {
+        department: { select: { hod_id: true } },
+      },
+    });
+
+    if (!kpi) throw new NotFoundException('KPI not found');
+
+    // Verify HOD has access to this KPI
+    if (kpi.department?.hod_id !== userId) {
+      throw new ForbiddenException('You do not have access to this KPI');
+    }
+
+    // Get user information for comment tracking
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { user_name: true, user_email: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Verify entry exists
+    const formResponses = (kpi.form_responses || {}) as Record<string, unknown>;
+    const entries = (formResponses['entries'] as unknown[]) || [];
+    if (entryIndex >= entries.length) {
+      throw new BadRequestException('Entry index out of range');
+    }
+
+    const existingMetrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown>;
+    const existingHodComments = (existingMetrics.hod_comments as Record<string, unknown>) || {};
+
+    // Update or add HOD comment
+    const updatedHodComments = {
+      ...existingHodComments,
+      [entryIndex.toString()]: {
+        comment: comment.trim(),
+        reviewed_by: user.user_name ?? user.user_email ?? userId,
+        reviewed_by_id: userId,
+        reviewed_at: new Date().toISOString(),
+      },
+    };
+
+    // If comment is empty, remove the entry
+    if (!comment.trim()) {
+      delete updatedHodComments[entryIndex.toString()];
+    }
+
+    const updatedMetrics = {
+      ...existingMetrics,
+      hod_comments: updatedHodComments,
+    };
+
+    await this.prisma.departmentKpi.update({
+      where: { id: kpiId },
+      data: {
+        kpi_calculated_metrics: updatedMetrics as object,
+      },
+    });
+
+    return {
+      message: 'HOD comment saved successfully',
       data: {
         entryIndex,
         comment: comment.trim(),
@@ -342,11 +425,20 @@ export class QcReviewService {
     }
 
     const metrics = (kpi.kpi_calculated_metrics ?? {}) as Record<string, unknown>;
+    const qcComments = (metrics.qc_comments as Record<string, unknown>) || {};
+    const hodComments = (metrics.hod_comments as Record<string, unknown>) || {};
+
+    // For backward compatibility, check if entry_comments exists and merge with qc_comments
     const entryComments = (metrics.entry_comments as Record<string, unknown>) || {};
+    const mergedQcComments =
+      Object.keys(entryComments).length > 0 && Object.keys(qcComments).length === 0 ? entryComments : qcComments;
 
     return {
       kpiId,
-      entryComments,
+      qcComments: mergedQcComments,
+      hodComments,
+      // Keep backward compatibility
+      entryComments: mergedQcComments,
     };
   }
 }

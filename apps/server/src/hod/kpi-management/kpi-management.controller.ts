@@ -1,4 +1,15 @@
-import { Controller, Get, Put, Param, Body, UseGuards, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Param,
+  Body,
+  UseGuards,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/user.decorator';
@@ -118,5 +129,29 @@ export class HodKpiController {
     @CurrentUser() user: RequestUser,
   ): Promise<ExcelUploadResponseDto> {
     return await this.hodKpiService.uploadExcel(user.id, user.role, kpiId, file);
+  }
+
+  @Get('/kpi/:kpiId/entry-comments')
+  @ApiOperation({ summary: 'Get entry comments for KPI' })
+  @ApiResponse({ status: 200, description: 'Returns entry comments for the KPI' })
+  async getEntryComments(@CurrentUser() user: RequestUser, @Param('kpiId') kpiId: string) {
+    return this.hodKpiService.getEntryComments(user.id, user.role, kpiId);
+  }
+
+  @Put('/kpi/:kpiId/entries/:entryIndex/comment')
+  @ApiOperation({ summary: 'Save entry comment for KPI (only when in REVISION status)' })
+  @ApiResponse({ status: 200, description: 'Entry comment saved successfully' })
+  async saveEntryComment(
+    @CurrentUser() user: RequestUser,
+    @Param('kpiId') kpiId: string,
+    @Param('entryIndex') entryIndex: string,
+    @Body() body: { comment: string },
+  ) {
+    const index = parseInt(entryIndex, 10);
+    if (isNaN(index)) {
+      throw new BadRequestException('Invalid entry index');
+    }
+
+    return this.hodKpiService.saveEntryComment(user.id, user.role, kpiId, index, body.comment || '');
   }
 }

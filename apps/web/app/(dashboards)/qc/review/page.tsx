@@ -94,10 +94,10 @@ export default function QACSubmissionReview() {
           kpi_no: kpi.kpi_number,
           metric: kpi.kpi_metric_name,
           dataProvidedBy: kpi.data_provided_by || "HoD",
-          target: kpi.kpi_value?.toString() ?? "-",
+          target: kpi.kpi_value?.toString() ?? "-", // This is now Weightage
           actual: kpi.kpi_data?.actual ?? "-",
           percentAchieved: kpi.percentage_target_achieved ?? "-",
-          value: kpi.performance ?? "",
+          value: kpi.kpi_target?.toString() ?? "-", // This is now Target (kpi_target)
           status: kpi.kpi_status?.toLowerCase() ?? "pending",
           kpiId: kpi.id,
           isSubmittedToQc, // Pass submission status to the component

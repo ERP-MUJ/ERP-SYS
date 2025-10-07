@@ -88,6 +88,14 @@ export class DepartmentAssignmentController {
     return this.departmentAssignmentService.getDepartmentPillarKPIs(user.id, user.role, departmentPillarId);
   }
 
+  @Get('department-pillars/:departmentPillarId/all-kpis')
+  getAllDepartmentPillarKPIs(
+    @CurrentUser() user: RequestUser,
+    @Param('departmentPillarId') departmentPillarId: string,
+  ) {
+    return this.departmentAssignmentService.getAllDepartmentPillarKPIs(user.id, user.role, departmentPillarId);
+  }
+
   @Post('department-pillars/:departmentPillarId/kpis')
   assignKpiToDepartmentPillar(
     @CurrentUser() user: RequestUser,

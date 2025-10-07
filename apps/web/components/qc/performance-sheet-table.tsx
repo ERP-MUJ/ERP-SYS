@@ -93,8 +93,11 @@ export const PillarKpiTable: React.FC<
     );
   };
 
-  // Helper to sum the value field in the current data (dynamic)
-  const totalValue = data.reduce((sum, row) => sum + Number(row.value ?? 0), 0);
+  // Helper to sum the weightage field (target field) in the current data
+  const totalWeightage = data.reduce(
+    (sum, row) => sum + Number(row.target ?? 0),
+    0,
+  );
 
   return (
     <Card className="shadow-md px-2 border rounded-lg">
@@ -112,19 +115,16 @@ export const PillarKpiTable: React.FC<
                 Data Provided By
               </TableHead>
               <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
+                Weightage
+              </TableHead>
+              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
                 Target
-              </TableHead>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                Actual
-              </TableHead>
-              <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                % Target Achieved
               </TableHead>
               <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
                 Total Entries
               </TableHead>
               <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
-                Value
+                % Target Achieved
               </TableHead>
               {showStatusColumn && (
                 <TableHead className="bg-muted/50 text-xs font-semibold uppercase">
@@ -148,21 +148,14 @@ export const PillarKpiTable: React.FC<
                   {row.dataProvidedBy}
                 </TableCell>
                 <TableCell className="text-center">{row.target}</TableCell>
-                <TableCell className="text-center">{row.actual}</TableCell>
                 <TableCell className="text-center">
-                  {row.percentAchieved}
+                  {row.value ?? "-"}
                 </TableCell>
                 <TableCell className="text-center">
                   {row.totalEntries ?? 0}
                 </TableCell>
                 <TableCell className="text-center">
-                  <Input
-                    className="w-24 text-center"
-                    value={row.value ?? ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleValueChange(rowIndex, e.target.value)
-                    }
-                  />
+                  {row.percentAchieved}
                 </TableCell>
                 {showStatusColumn && (
                   <TableCell className="text-center">
@@ -222,13 +215,14 @@ export const PillarKpiTable: React.FC<
           </TableBody>
           <TableFooter>
             <TableRow>
-              {/* Empty cells before Value column */}
-              <TableCell colSpan={7} className="font-bold text-right">
-                Total Value
+              {/* Empty cells before Weightage column */}
+              <TableCell colSpan={3} className="font-bold text-right">
+                Total Weightage
               </TableCell>
               <TableCell className="font-bold text-center">
-                {totalValue}
+                {totalWeightage.toFixed(2)}
               </TableCell>
+              <TableCell colSpan={3} />
               {showStatusColumn && <TableCell />}
               <TableCell />
             </TableRow>
