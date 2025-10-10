@@ -60,6 +60,93 @@ import {
   useSaveEntryComment,
   useSaveHodEntryComment,
 } from "@/queries/qc/review";
+
+/**
+ * Smart column name breaking utility
+ * Breaks long column names at special characters and numbered lists
+ */
+function smartBreakColumnName(label: string): React.ReactNode {
+  if (!label || label.length <= 20) {
+    return <span className="whitespace-nowrap">{label}</span>; // Keep short labels on one line
+  }
+
+  let result = label;
+
+  // Break BEFORE numbered lists (1., 2., 3., etc.) - not after
+  result = result.replace(/\s+(\d+\.)/g, "\n$1");
+
+  // Break before special characters if preceded by text
+  result = result.replace(/\s+([,;:])/g, "\n$1");
+
+  // Break before opening parenthesis if preceded by text
+  result = result.replace(/\s+(\()/g, "\n$1");
+
+  // Break after closing parenthesis if followed by text
+  result = result.replace(/(\))\s+/g, "$1\n");
+
+  // Now handle word wrapping for lines that are still too long
+  const lines = result.split("\n");
+  const finalLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine) continue;
+
+    if (trimmedLine.length <= 25) {
+      finalLines.push(trimmedLine);
+    } else {
+      // Break long lines at word boundaries
+      const words = trimmedLine.split(/\s+/);
+      let currentLine = "";
+
+      for (const word of words) {
+        if (currentLine.length === 0) {
+          currentLine = word;
+        } else if ((currentLine + " " + word).length <= 25) {
+          currentLine += " " + word;
+        } else {
+          // Push current line and start new one
+          if (currentLine) {
+            finalLines.push(currentLine);
+          }
+          currentLine = word;
+        }
+      }
+
+      // Don't forget the last line
+      if (currentLine) {
+        finalLines.push(currentLine);
+      }
+    }
+  }
+
+  // Remove empty lines but don't limit to 3 lines - show all content
+  const cleanLines = finalLines.filter((line) => line.trim().length > 0);
+
+  if (cleanLines.length === 0) {
+    return <span className="break-words overflow-hidden">{label}</span>;
+  }
+
+  if (cleanLines.length === 1) {
+    return (
+      <span className="break-words overflow-hidden leading-tight">
+        {cleanLines[0]}
+      </span>
+    );
+  }
+
+  // Return JSX with controlled line breaks and proper containment
+  return (
+    <span className="leading-tight block overflow-hidden break-words text-left">
+      {cleanLines.map((line, index) => (
+        <span key={index} className="block overflow-hidden text-left">
+          {line}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 interface TableFormRendererProps {
   name: string;
   elements: FormElementInstance[];
@@ -738,7 +825,7 @@ export default function TableFormRenderer({
               ) : (
                 <FileDown className="mr-2 h-4 w-4" />
               )}
-              Download Excel
+              Download Excel Template
             </Button>
             {useFrontendExcelUpload ? (
               <FrontendExcelUploadDialog
@@ -792,13 +879,59 @@ export default function TableFormRenderer({
           <ReactTable>
             <TableHeader>
               <TableRow>
-                {tableElements.map((element) => (
-                  <TableHead key={element.id} className="whitespace-nowrap">
-                    {element.attributes.label}
-                    {element.attributes.required && " *"}
+                {tableElements.map((element) => {
+                  const fieldLabel = element.attributes.label;
+                  // Calculate dynamic width based on field name length
+                  const getDynamicWidth = (text: string) => {
+                    const baseWidth = 100; // Minimum base width
+                    const charWidth = 6; // Approximate pixels per character (more conservative)
+                    const calculatedWidth = Math.min(
+                      baseWidth + text.length * charWidth,
+                      160,
+                    );
+                    return Math.max(calculatedWidth, 100); // Ensure minimum of 100px
+                  };
+
+                  const dynamicWidth = getDynamicWidth(fieldLabel);
+
+                  // Get appropriate Tailwind class for width
+                  const getWidthClass = (width: number) => {
+                    if (width <= 80) return "w-[80px]";
+                    if (width <= 90) return "w-[90px]";
+                    if (width <= 100) return "w-[100px]";
+                    if (width <= 110) return "w-[110px]";
+                    if (width <= 120) return "w-[120px]";
+                    if (width <= 130) return "w-[130px]";
+                    if (width <= 140) return "w-[140px]";
+                    if (width <= 150) return "w-[150px]";
+                    return "w-[160px]"; // Maximum
+                  };
+
+                  const widthClass = getWidthClass(dynamicWidth);
+
+                  return (
+                    <TableHead
+                      key={element.id}
+                      className={`${widthClass} max-w-[160px] min-w-[100px] p-2 text-left align-middle border-r`}
+                    >
+                      <div className="w-full h-full overflow-hidden break-words leading-tight text-xs font-medium flex items-center">
+                        <span>
+                          {smartBreakColumnName(fieldLabel)}
+                          {element.attributes.required && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
+                        </span>
+                      </div>
+                    </TableHead>
+                  );
+                })}
+                {hasComplexElements && (
+                  <TableHead className="w-[130px] max-w-[160px] min-w-[100px] p-2 text-left align-middle border-r">
+                    <div className="w-full h-full overflow-hidden break-words leading-tight text-xs font-medium flex items-center">
+                      <span>{smartBreakColumnName("Additional Fields")}</span>
+                    </div>
                   </TableHead>
-                ))}
-                {hasComplexElements && <TableHead>Additional Fields</TableHead>}
+                )}
                 {showComments && (
                   <>
                     <TableHead className="w-[250px]">
@@ -839,6 +972,44 @@ export default function TableFormRenderer({
                             entry[element.id] !== undefined &&
                             entry[element.id] !== null &&
                             entry[element.id] !== "";
+
+                          // Create a shortened button label
+                          const getShortLabel = (label: string) => {
+                            if (!label || label.length <= 20) return label;
+
+                            // Try to break at special characters and take first part
+                            const parts = label.split(/[,;:]/);
+                            if (parts[0] && parts[0].trim().length <= 25) {
+                              return (
+                                parts[0].trim() +
+                                (parts.length > 1 ? "..." : "")
+                              );
+                            }
+
+                            // Try numbered lists
+                            const numberMatch = label.match(
+                              /^(\d+\.\s*[^,;:]{1,20})/,
+                            );
+                            if (numberMatch) {
+                              return numberMatch[1] + "...";
+                            }
+
+                            // Fallback to word boundary
+                            const words = label.split(" ");
+                            let result = words[0] || "";
+                            for (let i = 1; i < words.length; i++) {
+                              if ((result + " " + words[i]).length <= 20) {
+                                result += " " + words[i];
+                              } else {
+                                break;
+                              }
+                            }
+                            return (
+                              result +
+                              (result.length < label.length ? "..." : "")
+                            );
+                          };
+
                           return (
                             <Button
                               key={element.id}
@@ -847,10 +1018,13 @@ export default function TableFormRenderer({
                               onClick={() =>
                                 openComplexEditor(rowIndex, element)
                               }
-                              className="text-xs h-7"
+                              className="text-xs h-7 max-w-[120px]"
+                              title={element.attributes.label} // Full label on hover
                             >
-                              {element.attributes.label}
-                              {hasValue && " ✓"}
+                              <span className="truncate">
+                                {getShortLabel(element.attributes.label)}
+                                {hasValue && " ✓"}
+                              </span>
                             </Button>
                           );
                         })}

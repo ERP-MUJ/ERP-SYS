@@ -14,6 +14,103 @@ import {
 import { Save, MessageSquare } from "lucide-react";
 import { renderTextWithCompactLinks } from "@/utils/string";
 
+/**
+ * Smart column name breaking utility
+ * Breaks long column names at special characters and numbered lists
+ */
+function smartBreakColumnName(label: string): React.ReactNode {
+  if (!label || label.length <= 30) {
+    return (
+      <span className="break-words overflow-wrap-anywhere whitespace-normal">
+        {label}
+      </span>
+    ); // Keep short labels on one line but allow wrapping
+  }
+
+  let result = label;
+
+  // Break BEFORE numbered lists (1., 2., 3., etc.) - not after
+  result = result.replace(/\s+(\d+\.)/g, "\n$1");
+
+  // Break before special characters if preceded by text
+  result = result.replace(/\s+([,;:])/g, "\n$1");
+
+  // Break before opening parenthesis if preceded by text
+  result = result.replace(/\s+(\()/g, "\n$1");
+
+  // Break after closing parenthesis if followed by text
+  result = result.replace(/(\))\s+/g, "$1\n");
+
+  // Now handle word wrapping for lines that are still too long
+  const lines = result.split("\n");
+  const finalLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine) continue;
+
+    if (trimmedLine.length <= 35) {
+      finalLines.push(trimmedLine);
+    } else {
+      // Break long lines at word boundaries - more generous
+      const words = trimmedLine.split(/\s+/);
+      let currentLine = "";
+
+      for (const word of words) {
+        if (currentLine.length === 0) {
+          currentLine = word;
+        } else if ((currentLine + " " + word).length <= 35) {
+          currentLine += " " + word;
+        } else {
+          // Push current line and start new one
+          if (currentLine) {
+            finalLines.push(currentLine);
+          }
+          currentLine = word;
+        }
+      }
+
+      // Don't forget the last line
+      if (currentLine) {
+        finalLines.push(currentLine);
+      }
+    }
+  }
+
+  // Remove empty lines but don't limit to 3 lines - show all content
+  const cleanLines = finalLines.filter((line) => line.trim().length > 0);
+
+  if (cleanLines.length === 0) {
+    return (
+      <span className="break-words overflow-wrap-anywhere whitespace-normal">
+        {label}
+      </span>
+    );
+  }
+
+  if (cleanLines.length === 1) {
+    return (
+      <span className="break-words overflow-wrap-anywhere leading-tight whitespace-normal">
+        {cleanLines[0]}
+      </span>
+    );
+  }
+
+  // Return JSX with controlled line breaks and proper containment - ensure no mid-word cuts
+  return (
+    <span className="leading-tight block overflow-hidden break-words overflow-wrap-anywhere text-left whitespace-normal">
+      {cleanLines.map((line, index) => (
+        <span
+          key={index}
+          className="block overflow-hidden break-words overflow-wrap-anywhere text-left whitespace-normal"
+        >
+          {line}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export interface EntryComment {
   comment: string;
   reviewed_by: string;
@@ -172,42 +269,84 @@ export function ReadOnlyFormTable({
                 #
               </TableHead>
             )}
-            {cols.map((c) => (
-              <TableHead
-                key={c.id}
-                className={
-                  "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase border-r border-border/60 last:border-r-0 select-none " +
-                  cellPad
-                }
-              >
-                {c.attributes.label || c.attributes.name || c.id}
-                {c.attributes.required && (
-                  <span className="text-rose-500 ml-0.5">*</span>
-                )}
-              </TableHead>
-            ))}
+            {cols.map((c) => {
+              const fieldLabel =
+                c.attributes.label || c.attributes.name || c.id;
+              // Calculate dynamic width based on field name length
+              const getDynamicWidth = (text: string) => {
+                const baseWidth = 100; // Minimum base width
+                const charWidth = 7; // Slightly more generous pixels per character
+                const calculatedWidth = Math.min(
+                  baseWidth + text.length * charWidth,
+                  220,
+                );
+                return Math.max(calculatedWidth, 100); // Ensure minimum of 100px
+              };
+
+              const dynamicWidth = getDynamicWidth(fieldLabel);
+
+              // Get appropriate Tailwind class for width - more granular steps
+              const getWidthClass = (width: number) => {
+                if (width <= 100) return "w-[100px]";
+                if (width <= 120) return "w-[120px]";
+                if (width <= 140) return "w-[140px]";
+                if (width <= 160) return "w-[160px]";
+                if (width <= 180) return "w-[180px]";
+                if (width <= 200) return "w-[200px]";
+                return "w-[220px]"; // Increased maximum for very long names
+              };
+
+              const widthClass = getWidthClass(dynamicWidth);
+
+              return (
+                <TableHead
+                  key={c.id}
+                  className={
+                    `${widthClass} max-w-[220px] min-w-[100px] font-semibold text-[11px] tracking-wide uppercase border-r border-border/60 last:border-r-0 select-none text-left align-middle ` +
+                    cellPad
+                  }
+                >
+                  <div className="w-full h-full overflow-hidden break-words hyphens-auto leading-tight flex items-center">
+                    <span className="overflow-wrap-anywhere word-break-break-word text-left">
+                      {smartBreakColumnName(fieldLabel)}
+                      {c.attributes.required && (
+                        <span className="text-rose-500 ml-0.5">*</span>
+                      )}
+                    </span>
+                  </div>
+                </TableHead>
+              );
+            })}
             {enableRowComments && (
               <>
                 <TableHead
                   className={
-                    "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase w-64 select-none " +
+                    "w-64 font-semibold text-[11px] tracking-wide uppercase select-none text-left align-middle border-r border-border/60 " +
                     cellPad
                   }
                 >
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-3 h-3" />
-                    QC Comments
+                  <div className="w-full h-full overflow-hidden break-words leading-tight flex items-center">
+                    <span>
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        {smartBreakColumnName("QC Comments")}
+                      </div>
+                    </span>
                   </div>
                 </TableHead>
                 <TableHead
                   className={
-                    "whitespace-nowrap font-semibold text-[11px] tracking-wide uppercase w-64 select-none " +
+                    "w-64 font-semibold text-[11px] tracking-wide uppercase select-none text-left align-middle " +
                     cellPad
                   }
                 >
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-3 h-3" />
-                    Department Comments
+                  <div className="w-full h-full overflow-hidden break-words leading-tight flex items-center">
+                    <span>
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        {smartBreakColumnName("Department Comments")}
+                      </div>
+                    </span>
                   </div>
                 </TableHead>
               </>
