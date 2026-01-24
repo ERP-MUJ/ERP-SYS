@@ -1,5 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
+import { format } from "date-fns";
 import {
   useDownloadDepartmentKpiWorkbook,
   useGetKpi,
@@ -285,7 +286,7 @@ export default function QcKpiReviewPage() {
                             <div className="flex justify-between mb-1">
                               <span className="font-medium">{r.action}</span>
                               <span className="text-muted-foreground">
-                                {new Date(r.at).toLocaleString()}
+                                {format(new Date(r.at), "dd/MM/yyyy HH:mm:ss")}
                               </span>
                             </div>
                             {r.remark && (

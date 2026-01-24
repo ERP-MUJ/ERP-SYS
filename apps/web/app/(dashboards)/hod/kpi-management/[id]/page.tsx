@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { format } from "date-fns";
 import TableFormRenderer from "@/components/formbuilder/table-rendered";
 import {
   useGetKpiDetails,
@@ -501,7 +502,10 @@ export default function HodKpiPage({
                                       : review.action}
                               </Badge>
                               <span className="text-muted-foreground">
-                                {new Date(review.at).toLocaleString()}
+                                {format(
+                                  new Date(review.at),
+                                  "dd/MM/yyyy HH:mm:ss",
+                                )}
                               </span>
                             </div>
                             {review.remark && (
@@ -594,7 +598,7 @@ export default function HodKpiPage({
                                   : review.action}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {new Date(review.at).toLocaleString()}
+                            {format(new Date(review.at), "dd/MM/yyyy HH:mm:ss")}
                           </span>
                         </div>
                         {review.remark && (

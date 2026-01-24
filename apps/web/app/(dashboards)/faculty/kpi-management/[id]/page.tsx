@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { format } from "date-fns";
 import TableFormRenderer from "@/components/formbuilder/table-rendered";
 import { useGetKpiDetails, useSaveHodKpiData } from "@/queries/hod/kpi";
 import {
@@ -160,7 +161,10 @@ export default function FacultyKpiPage({
                       <div className="flex justify-between items-center mt-2">
                         <p className="text-xs text-muted-foreground">
                           Reviewed on{" "}
-                          {new Date(hodReview.reviewed_at).toLocaleString()}
+                          {format(
+                            new Date(hodReview.reviewed_at),
+                            "dd/MM/yyyy HH:mm:ss",
+                          )}
                         </p>
                         {hodReview.by && (
                           <p className="text-xs text-muted-foreground">

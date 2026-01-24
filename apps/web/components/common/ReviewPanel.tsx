@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { format } from "date-fns";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { toast } from "sonner";
@@ -157,7 +158,7 @@ export function ReviewPanel({
                       <div className="flex justify-between mb-1">
                         <span className="font-medium">{review.action}</span>
                         <span className="text-muted-foreground">
-                          {new Date(review.at).toLocaleString()}
+                          {format(new Date(review.at), "dd/MM/yyyy HH:mm:ss")}
                         </span>
                       </div>
                       {(review.remark || review.comments) && (

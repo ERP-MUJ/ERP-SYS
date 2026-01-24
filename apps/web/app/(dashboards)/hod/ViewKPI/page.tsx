@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@workspace/ui/components/button";
+import { format } from "date-fns";
 import {
   Card,
   CardContent,
@@ -84,7 +85,7 @@ export default function FormsPage() {
                 <div>
                   <CardTitle>{form.title}</CardTitle>
                   <CardDescription>
-                    Created on {new Date(form.createdAt).toLocaleDateString()}
+                    Created on {format(new Date(form.createdAt), "dd/MM/yyyy")}
                   </CardDescription>
                 </div>
                 <Badge>{form.value}</Badge>

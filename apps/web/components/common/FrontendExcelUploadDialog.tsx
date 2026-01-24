@@ -148,7 +148,7 @@ export function FrontendExcelUploadDialog({
     return {
       isValid: false,
       processedValue: value,
-      error: `Invalid date format for field '${fieldName}'. Expected: YYYY-MM-DD, MM/DD/YYYY, or Excel date serial number`,
+      error: `Invalid date format for field '${fieldName}'. Expected: DD/MM/YYYY or Excel date serial number`,
     };
   };
 
@@ -573,8 +573,8 @@ export function FrontendExcelUploadDialog({
                                 <span className="font-medium">
                                   {header.label}:
                                 </span>{" "}
-                                Use date format (YYYY-MM-DD, MM/DD/YYYY) or
-                                Excel serial number (e.g., 4638 for 2024-01-01)
+                                Use date format (DD/MM/YYYY) or Excel serial
+                                number (e.g., 4638 for 2024-01-01)
                               </div>
                             );
                           }

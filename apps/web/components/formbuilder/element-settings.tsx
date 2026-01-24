@@ -129,6 +129,29 @@ export default function ElementSettings({
         return (
           <OptionsEditor element={element} updateElement={updateElement} />
         );
+      case "date-range":
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="minDate">Minimum Date</Label>
+              <Input
+                id="minDate"
+                type="date"
+                value={attributes.minDate || ""}
+                onChange={(e) => handleChange("minDate", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="maxDate">Maximum Date</Label>
+              <Input
+                id="maxDate"
+                type="date"
+                value={attributes.maxDate || ""}
+                onChange={(e) => handleChange("maxDate", e.target.value)}
+              />
+            </div>
+          </div>
+        );
       case "file":
         return (
           <>

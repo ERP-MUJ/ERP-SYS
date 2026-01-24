@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { format } from "date-fns";
 import {
   Card,
   CardContent,
@@ -131,7 +132,7 @@ export function ReviewStatusDisplay({
                         {getStatusDisplayText(review.action)}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(review.at).toLocaleString()}
+                        {format(new Date(review.at), "dd/MM/yyyy HH:mm:ss")}
                       </span>
                     </div>
                     {(review.remark || review.comments) && (

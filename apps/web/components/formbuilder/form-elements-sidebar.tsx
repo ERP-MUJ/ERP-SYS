@@ -13,6 +13,7 @@ import type { FormElementType } from "@/lib/types";
 import {
   AlignLeft,
   Calendar,
+  CalendarRange,
   CheckSquare,
   File,
   Hash,
@@ -66,6 +67,11 @@ export default function FormElementsSidebar() {
     { type: "checkbox", icon: <CheckSquare size={18} />, label: "Checkbox" },
     { type: "radio", icon: <RadioIcon size={18} />, label: "Radio Group" },
     { type: "date", icon: <Calendar size={18} />, label: "Date" },
+    {
+      type: "date-range",
+      icon: <CalendarRange size={18} />,
+      label: "Date Range",
+    },
     { type: "email", icon: <Mail size={18} />, label: "Email" },
     { type: "file", icon: <File size={18} />, label: "File Upload" },
   ];

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import type { FormElementInstance } from "@/lib/types";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -469,9 +470,15 @@ export default function TableFormRenderer({
   }, [entries, id, saveKpiData, isSubmitting, lastSavedEntries]);
   // Filter elements that can be displayed in a table (simple inputs)
   const tableElements = elements.filter((element) =>
-    ["text", "number", "email", "date", "select", "checkbox"].includes(
-      element.type,
-    ),
+    [
+      "text",
+      "number",
+      "email",
+      "date",
+      "date-range",
+      "select",
+      "checkbox",
+    ].includes(element.type),
   );
   // Complex elements that need a dialog (but can still be populated from Excel)
   const complexElements = elements.filter((element) =>
@@ -592,8 +599,48 @@ export default function TableFormRenderer({
         return;
       }
       elements.forEach((element) => {
-        if (element.attributes.required && !entry[element.id]) {
-          invalidRows.push(index + 1); // +1 for human-readable row numbers
+        const value = entry[element.id];
+
+        // Required check
+        if (element.attributes.required) {
+          if (!value) {
+            invalidRows.push(index + 1);
+          } else if (element.type === "date-range") {
+            const [start, end] = String(value).split("|");
+            if (!start || !end) {
+              if (!invalidRows.includes(index + 1)) invalidRows.push(index + 1);
+            }
+          }
+        }
+
+        // Date range specific validation
+        if (element.type === "date-range" && value) {
+          const [start, end] = String(value).split("|");
+
+          // Logic check: Start <= End
+          if (start && end && start > end) {
+            if (!invalidRows.includes(index + 1)) invalidRows.push(index + 1);
+          }
+
+          // Min date check
+          if (element.attributes.minDate) {
+            if (
+              (start && start < element.attributes.minDate) ||
+              (end && end < element.attributes.minDate)
+            ) {
+              if (!invalidRows.includes(index + 1)) invalidRows.push(index + 1);
+            }
+          }
+
+          // Max date check
+          if (element.attributes.maxDate) {
+            if (
+              (start && start > element.attributes.maxDate) ||
+              (end && end > element.attributes.maxDate)
+            ) {
+              if (!invalidRows.includes(index + 1)) invalidRows.push(index + 1);
+            }
+          }
         }
       });
     });
@@ -908,11 +955,18 @@ export default function TableFormRenderer({
                   };
 
                   const widthClass = getWidthClass(dynamicWidth);
+                  const isDateRange = element.type === "date-range";
+                  const finalWidthClass = isDateRange
+                    ? "w-[300px]"
+                    : widthClass;
+                  const maxWidthClass = isDateRange
+                    ? "max-w-[300px]"
+                    : "max-w-[160px]";
 
                   return (
                     <TableHead
                       key={element.id}
-                      className={`${widthClass} max-w-[160px] min-w-[100px] p-2 text-left align-middle border-r`}
+                      className={`${finalWidthClass} ${maxWidthClass} min-w-[100px] p-2 text-left align-middle border-r`}
                     >
                       <div className="w-full h-full overflow-hidden break-words leading-tight text-xs font-medium flex items-center">
                         <span>
@@ -1091,9 +1145,10 @@ export default function TableFormRenderer({
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
                                       By {comment.reviewed_by} •{" "}
-                                      {new Date(
-                                        comment.reviewed_at,
-                                      ).toLocaleDateString()}
+                                      {format(
+                                        new Date(comment.reviewed_at),
+                                        "dd/MM/yyyy",
+                                      )}
                                     </div>
                                     {canEditQcComments && (
                                       <Button
@@ -1186,9 +1241,10 @@ export default function TableFormRenderer({
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
                                       By {comment.reviewed_by} •{" "}
-                                      {new Date(
-                                        comment.reviewed_at,
-                                      ).toLocaleDateString()}
+                                      {format(
+                                        new Date(comment.reviewed_at),
+                                        "dd/MM/yyyy",
+                                      )}
                                     </div>
                                     {canEditHodComments && (
                                       <Button
@@ -1353,6 +1409,58 @@ function renderTableCellInput(
           className="h-8 w-full"
         />
       );
+    case "date-range": {
+      const parts = String(value || "").split("|");
+      const start = parts[0] || "";
+      const end = parts[1] || "";
+
+      // Simple validation for UI feedback
+      const isStartInvalid =
+        attributes.minDate &&
+        start &&
+        (start < attributes.minDate ||
+          (attributes.maxDate && start > attributes.maxDate));
+      const isEndInvalid =
+        attributes.minDate &&
+        end &&
+        (end < attributes.minDate ||
+          (attributes.maxDate && end > attributes.maxDate));
+      const isRangeInvalid = start && end && start > end;
+
+      return (
+        <div className="flex flex-col gap-1 min-w-[150px] py-1">
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 w-6">From</span>
+            <Input
+              type="date"
+              value={start}
+              onChange={(e) =>
+                updateEntry(rowIndex, id, `${e.target.value}|${end}`)
+              }
+              min={attributes.minDate}
+              max={attributes.maxDate}
+              className={`h-7 text-xs px-1 w-full ${isStartInvalid ? "border-red-500 bg-red-50" : ""}`}
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 w-6">To</span>
+            <Input
+              type="date"
+              value={end}
+              onChange={(e) =>
+                updateEntry(rowIndex, id, `${start}|${e.target.value}`)
+              }
+              min={attributes.minDate}
+              max={attributes.maxDate}
+              className={`h-7 text-xs px-1 w-full ${isEndInvalid ? "border-red-500 bg-red-50" : ""}`}
+            />
+          </div>
+          {isRangeInvalid && (
+            <div className="text-[9px] text-red-500">Invalid range</div>
+          )}
+        </div>
+      );
+    }
     case "select":
       return (
         <Select
