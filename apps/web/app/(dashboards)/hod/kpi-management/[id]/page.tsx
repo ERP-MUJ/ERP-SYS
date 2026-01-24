@@ -1,6 +1,12 @@
 "use client";
 import React from "react";
-import { format } from "date-fns";
+
+import { format, isValid } from "date-fns";
+
+const formatTimestamp = (value: string | Date) => {
+  const d = new Date(value);
+  return isValid(d) ? format(d, "dd/MM/yyyy HH:mm:ss") : "—";
+};
 import TableFormRenderer from "@/components/formbuilder/table-rendered";
 import {
   useGetKpiDetails,

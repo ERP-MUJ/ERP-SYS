@@ -613,7 +613,7 @@ export default function TableFormRenderer({
           }
         }
 
-        // Date range specific validation
+        // we are checking Date range specific validation
         if (element.type === "date-range" && value) {
           const [start, end] = String(value).split("|");
 
@@ -1416,15 +1416,14 @@ function renderTableCellInput(
 
       // Simple validation for UI feedback
       const isStartInvalid =
-        attributes.minDate &&
         start &&
-        (start < attributes.minDate ||
+        ((attributes.minDate && start < attributes.minDate) ||
           (attributes.maxDate && start > attributes.maxDate));
       const isEndInvalid =
-        attributes.minDate &&
         end &&
-        (end < attributes.minDate ||
+        ((attributes.minDate && end < attributes.minDate) ||
           (attributes.maxDate && end > attributes.maxDate));
+
       const isRangeInvalid = start && end && start > end;
 
       return (
