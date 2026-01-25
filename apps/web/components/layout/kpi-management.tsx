@@ -300,9 +300,9 @@ function Kpi3Form() {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "dd-MM-yyyy")
+                              format(field.value, "dd/MM/yyyy")
                             ) : (
-                              <span>DD-MM-YYYY</span>
+                              <span>DD/MM/YYYY</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -701,9 +701,9 @@ function Kpi4Form() {
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "dd-MM-yyyy")
+                              format(field.value, "dd/MM/yyyy")
                             ) : (
-                              <span>DD-MM-YYYY</span>
+                              <span>DD/MM/YYYY</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>

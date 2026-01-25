@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import { format } from "date-fns";
 import { FormElementInstance } from "@/lib/types";
+
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import {
@@ -438,9 +440,10 @@ export function ReadOnlyFormTable({
                                 </div>
                                 <div className="text-[10px] text-muted-foreground">
                                   By {comment.reviewed_by} •{" "}
-                                  {new Date(
-                                    comment.reviewed_at,
-                                  ).toLocaleDateString()}
+                                  {format(
+                                    new Date(comment.reviewed_at),
+                                    "dd/MM/yyyy",
+                                  )}
                                 </div>
                                 {effectiveCanEditQc && (
                                   <Button
@@ -523,9 +526,10 @@ export function ReadOnlyFormTable({
                                 </div>
                                 <div className="text-[10px] text-muted-foreground">
                                   By {comment.reviewed_by} •{" "}
-                                  {new Date(
-                                    comment.reviewed_at,
-                                  ).toLocaleDateString()}
+                                  {format(
+                                    new Date(comment.reviewed_at),
+                                    "dd/MM/yyyy",
+                                  )}
                                 </div>
                                 {canEditHodComments && (
                                   <Button
@@ -585,7 +589,9 @@ function Value({ value, type }: { value: any; type: string }) {
       );
     case "date": {
       const d = new Date(value);
-      return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
+      return Number.isNaN(d.getTime())
+        ? String(value)
+        : format(d, "dd/MM/yyyy");
     }
     case "number": {
       if (typeof value === "number") return value;

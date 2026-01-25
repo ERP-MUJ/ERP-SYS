@@ -34,6 +34,7 @@ import {
 import {
   AlignLeft,
   Calendar,
+  CalendarRange,
   CheckSquare,
   File,
   Grip,
@@ -96,6 +97,8 @@ export default function FormElement({
         return <RadioIcon size={18} />;
       case "date":
         return <Calendar size={18} />;
+      case "date-range":
+        return <CalendarRange size={18} />;
       case "email":
         return <Mail size={18} />;
       case "file":
@@ -187,6 +190,23 @@ export default function FormElement({
           <div className="space-y-2">
             <Label>{attributes.label}</Label>
             <Input type="date" />
+          </div>
+        );
+      case "date-range":
+        return (
+          <div className="space-y-2">
+            <Label>{attributes.label}</Label>
+            <div className="flex gap-2 items-center">
+              <Input type="date" className="w-full" disabled />
+              <span className="text-sm text-gray-500">to</span>
+              <Input type="date" className="w-full" disabled />
+            </div>
+            {(attributes.minDate || attributes.maxDate) && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Range: {attributes.minDate || "Any"} to{" "}
+                {attributes.maxDate || "Any"}
+              </p>
+            )}
           </div>
         );
       case "email":

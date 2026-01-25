@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@workspace/ui/components/badge";
+import { format } from "date-fns";
 import {
   Card,
   CardContent,
@@ -369,7 +370,7 @@ export default function QACDashboard() {
                       </TableCell>
                       <TableCell>
                         {dept.lastSubmission
-                          ? new Date(dept.lastSubmission).toLocaleDateString()
+                          ? format(new Date(dept.lastSubmission), "dd/MM/yyyy")
                           : "N/A"}
                       </TableCell>
                     </TableRow>

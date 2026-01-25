@@ -381,7 +381,7 @@ export function HodExcelUploadDialog({
                           provided options for dropdown/radio fields
                         </p>
                         <p>
-                          4. <strong>Date Format:</strong> Use YYYY-MM-DD format
+                          4. <strong>Date Format:</strong> Use DD/MM/YYYY format
                           for dates
                         </p>
                         <p>

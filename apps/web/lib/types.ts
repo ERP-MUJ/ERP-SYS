@@ -38,6 +38,7 @@ export type FormElementType =
   | "checkbox"
   | "radio"
   | "date"
+  | "date-range"
   | "email"
   | "file";
 
