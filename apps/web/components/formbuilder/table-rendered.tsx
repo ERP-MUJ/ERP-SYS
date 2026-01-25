@@ -1,6 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+const formatDateSafe = (
+  value: string | number | Date | null | undefined,
+  pattern: string,
+) => {
+  const d = new Date(value ?? "");
+  return Number.isNaN(d.getTime()) ? "—" : format(d, pattern);
+};
+
 import type { FormElementInstance } from "@/lib/types";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -603,7 +611,11 @@ export default function TableFormRenderer({
 
         // Required check
         if (element.attributes.required) {
-          if (!value) {
+          const isMissing =
+            value == null ||
+            value === "" ||
+            (element.type === "checkbox" ? value !== true : false);
+          if (isMissing) {
             invalidRows.push(index + 1);
           } else if (element.type === "date-range") {
             const [start, end] = String(value).split("|");
@@ -1145,8 +1157,8 @@ export default function TableFormRenderer({
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
                                       By {comment.reviewed_by} •{" "}
-                                      {format(
-                                        new Date(comment.reviewed_at),
+                                      {formatDateSafe(
+                                        comment.reviewed_at,
                                         "dd/MM/yyyy",
                                       )}
                                     </div>
@@ -1241,8 +1253,8 @@ export default function TableFormRenderer({
                                     </div>
                                     <div className="text-[10px] text-muted-foreground">
                                       By {comment.reviewed_by} •{" "}
-                                      {format(
-                                        new Date(comment.reviewed_at),
+                                      {formatDateSafe(
+                                        comment.reviewed_at,
                                         "dd/MM/yyyy",
                                       )}
                                     </div>
